@@ -9,7 +9,7 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="mb-16">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          The Vibe Coder
+          Vibes Coder
         </h1>
         <p className="mt-4 text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl">
           Thoughts on software development, AI-assisted coding, and the craft of

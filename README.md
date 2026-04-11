@@ -1,4 +1,4 @@
-# The Vibe Coder
+# Vibes Coder
 
 A personal blog about software development, AI-assisted coding, and the craft of building software.
 

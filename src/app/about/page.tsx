@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "About The Vibe Coder blog.",
+  description: "About Vibes Coder blog.",
 };
 
 export default function AboutPage() {
   return (
     <div className="prose dark:prose-invert">
       <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-        About The Vibe Coder
+        About Vibes Coder
       </h1>
 
       <p className="mt-6 text-neutral-700 dark:text-neutral-300 leading-relaxed">

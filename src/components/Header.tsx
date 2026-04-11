@@ -19,7 +19,7 @@ export function Header() {
           href="/"
           className="font-sans text-lg font-semibold tracking-tight text-foreground transition-opacity hover:opacity-70"
         >
-          The Vibe Coder
+          Vibes Coder
         </Link>
 
         {/* Desktop nav */}

@@ -12,8 +12,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "The Vibe Coder",
-    template: "%s | The Vibe Coder",
+    default: "Vibes Coder",
+    template: "%s | Vibes Coder",
   },
   description:
     "Thoughts on software development, AI-assisted coding, and the craft of building software.",
