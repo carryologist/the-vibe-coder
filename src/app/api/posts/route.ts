@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { commitFile, deleteFile, readFile } from "@/lib/github";
+import { commitFile, commitFileRaw, deleteFile, readFile } from "@/lib/github";
 
 function sanitizeSlug(slug: string): string {
   return slug
@@ -9,10 +9,14 @@ function sanitizeSlug(slug: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// Create a new post.
+// Create a new post, optionally with images.
 export async function POST(request: NextRequest) {
   try {
-    const { slug, content } = await request.json();
+    const { slug, content, images = [] } = (await request.json()) as {
+      slug: string;
+      content: string;
+      images?: { name: string; base64: string }[];
+    };
 
     if (!slug || !content) {
       return NextResponse.json(
@@ -22,6 +26,18 @@ export async function POST(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+
+    // Commit images first.
+    for (const image of images) {
+      const imagePath = `public/images/${safeSlug}/${image.name}`;
+      await commitFileRaw(
+        imagePath,
+        image.base64,
+        `post: add image "${image.name}" for "${safeSlug}"`
+      );
+    }
+
+    // Commit the post MDX file.
     const path = `content/posts/${safeSlug}.mdx`;
     const sha = await commitFile(path, content, `post: add "${safeSlug}"`);
 

@@ -4,9 +4,24 @@ import { readFile } from "@/lib/github";
 
 export const maxDuration = 120;
 
+interface ArtifactPayload {
+  name: string;
+  type: "image" | "pdf" | "text";
+  mimeType: string;
+  base64: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { transcript, stylePrompt: overridePrompt } = await request.json();
+    const {
+      transcript,
+      stylePrompt: overridePrompt,
+      artifacts = [],
+    } = (await request.json()) as {
+      transcript?: string;
+      stylePrompt?: string;
+      artifacts?: ArtifactPayload[];
+    };
 
     if (!transcript) {
       return NextResponse.json(
@@ -30,7 +45,7 @@ export async function POST(request: NextRequest) {
         "Transform this transcript into a well-structured blog post with MDX frontmatter.";
     }
 
-    const mdx = await generateBlogPost(transcript, stylePrompt);
+    const mdx = await generateBlogPost(transcript, stylePrompt, artifacts);
 
     return NextResponse.json({ mdx });
   } catch (error) {

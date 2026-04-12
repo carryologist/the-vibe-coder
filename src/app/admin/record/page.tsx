@@ -4,16 +4,22 @@ import { useState } from "react";
 import { AudioRecorder } from "@/components/admin/AudioRecorder";
 import { TranscriptEditor } from "@/components/admin/TranscriptEditor";
 import { PostPreview } from "@/components/admin/PostPreview";
+import { ArtifactUploader } from "@/components/admin/ArtifactUploader";
+import type { Artifact } from "@/components/admin/ArtifactUploader";
 
 type Step = "record" | "transcript" | "preview" | "published";
 
 export default function RecordPage() {
   const [step, setStep] = useState<Step>("record");
   const [transcript, setTranscript] = useState("");
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [mdx, setMdx] = useState("");
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [publishResult, setPublishResult] = useState<{ sha: string; path: string } | null>(null);
+  const [publishResult, setPublishResult] = useState<{
+    sha: string;
+    path: string;
+  } | null>(null);
   const [error, setError] = useState("");
 
   function handleTranscriptReady(text: string) {
@@ -26,10 +32,18 @@ export default function RecordPage() {
     setError("");
 
     try {
+      // Prepare artifacts payload (strip preview and id for the API).
+      const artifactPayload = artifacts.map(({ name, type, mimeType, base64 }) => ({
+        name,
+        type,
+        mimeType,
+        base64,
+      }));
+
       const res = await fetch("/api/generate-post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript }),
+        body: JSON.stringify({ transcript, artifacts: artifactPayload }),
       });
 
       if (!res.ok) throw new Error("Generation failed");
@@ -49,10 +63,15 @@ export default function RecordPage() {
     setError("");
 
     try {
+      // Collect image artifacts to commit alongside the post.
+      const images = artifacts
+        .filter((a) => a.type === "image")
+        .map(({ name, base64 }) => ({ name, base64 }));
+
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, content: mdx }),
+        body: JSON.stringify({ slug, content: mdx, images }),
       });
 
       if (!res.ok) throw new Error("Publishing failed");
@@ -70,6 +89,7 @@ export default function RecordPage() {
   function handleReset() {
     setStep("record");
     setTranscript("");
+    setArtifacts([]);
     setMdx("");
     setPublishResult(null);
     setError("");
@@ -84,9 +104,7 @@ export default function RecordPage() {
             <span key={s} className="flex items-center gap-3">
               {i > 0 && <span className="text-[#333333]">→</span>}
               <span
-                className={
-                  step === s ? "text-[#A3E635]" : "text-[#555555]"
-                }
+                className={step === s ? "text-[#A3E635]" : "text-[#555555]"}
               >
                 {s}
               </span>
@@ -113,12 +131,18 @@ export default function RecordPage() {
       )}
 
       {step === "transcript" && (
-        <TranscriptEditor
-          transcript={transcript}
-          onTranscriptChange={setTranscript}
-          onGenerate={handleGenerate}
-          generating={generating}
-        />
+        <div className="flex flex-col gap-8">
+          <TranscriptEditor
+            transcript={transcript}
+            onTranscriptChange={setTranscript}
+            onGenerate={handleGenerate}
+            generating={generating}
+          />
+          <ArtifactUploader
+            artifacts={artifacts}
+            onArtifactsChange={setArtifacts}
+          />
+        </div>
       )}
 
       {step === "preview" && (

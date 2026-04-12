@@ -114,3 +114,45 @@ export async function deleteFile(
   const data = await res.json();
   return data.commit.sha;
 }
+
+/**
+ * Create or update a file using pre-encoded base64 content.
+ * Used for binary files (images) that are already base64-encoded.
+ */
+export async function commitFileRaw(
+  path: string,
+  base64Content: string,
+  message: string
+): Promise<string> {
+  const { token, repo } = getConfig();
+  const url = `${GITHUB_API}/repos/${repo}/contents/${path}`;
+
+  // Check if file already exists.
+  let sha: string | undefined;
+  const existing = await fetch(url, { headers: headers(token) });
+  if (existing.ok) {
+    const data = await existing.json();
+    sha = data.sha;
+  }
+
+  const body: Record<string, string> = {
+    message,
+    content: base64Content,
+    branch: "main",
+  };
+  if (sha) body.sha = sha;
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: headers(token),
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GitHub API error: ${res.status} ${err}`);
+  }
+
+  const data = await res.json();
+  return data.commit.sha;
+}
