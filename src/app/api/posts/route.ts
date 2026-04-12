@@ -29,7 +29,13 @@ export async function POST(request: NextRequest) {
 
     // Commit images first.
     for (const image of images) {
-      const imagePath = `public/images/${safeSlug}/${image.name}`;
+      // Strip path separators and dangerous characters to prevent
+      // path traversal attacks (e.g., "../../src/middleware.ts").
+      const safeName = image.name
+        .replace(/[\/\\]/g, "")
+        .replace(/\.\./g, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+      const imagePath = `public/images/${safeSlug}/${safeName}`;
       await commitFileRaw(
         imagePath,
         image.base64,

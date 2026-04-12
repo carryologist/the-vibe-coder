@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
@@ -62,5 +63,10 @@ export function clearSessionCookie() {
 export function validatePassword(password: string): boolean {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) throw new Error("ADMIN_PASSWORD is not set");
-  return password === adminPassword;
+
+  // Use timing-safe comparison to prevent timing attacks.
+  const a = Buffer.from(password);
+  const b = Buffer.from(adminPassword);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }

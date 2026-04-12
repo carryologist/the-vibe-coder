@@ -47,3 +47,6 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# plans
+PLAN.md
