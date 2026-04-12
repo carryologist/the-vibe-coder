@@ -3,13 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 
 /* ------------------------------------------------------------------ */
-/*  Shared prose-like styles for MDX content                          */
+/*  Dark-first prose styles — "Medium meets VS Code"                  */
+/*  BG: #0A0A0A  Surface: #111111  Border: #1F1F1F                   */
+/*  Text: #EDEDED  Secondary: #888888  Accent: #A3E635               */
 /* ------------------------------------------------------------------ */
 
 function H1(props: ComponentPropsWithoutRef<"h1">) {
   return (
     <h1
-      className="mb-4 mt-10 font-sans text-3xl font-bold tracking-tight text-foreground first:mt-0"
+      className="mb-4 mt-10 text-3xl font-bold tracking-tight text-[#EDEDED] first:mt-0"
       {...props}
     />
   );
@@ -18,7 +20,7 @@ function H1(props: ComponentPropsWithoutRef<"h1">) {
 function H2(props: ComponentPropsWithoutRef<"h2">) {
   return (
     <h2
-      className="mb-3 mt-10 font-sans text-2xl font-semibold tracking-tight text-foreground"
+      className="mb-3 mt-10 text-2xl font-semibold tracking-tight text-[#EDEDED]"
       {...props}
     />
   );
@@ -27,7 +29,7 @@ function H2(props: ComponentPropsWithoutRef<"h2">) {
 function H3(props: ComponentPropsWithoutRef<"h3">) {
   return (
     <h3
-      className="mb-2 mt-8 font-sans text-xl font-semibold text-foreground"
+      className="mb-2 mt-8 text-xl font-semibold text-[#EDEDED]"
       {...props}
     />
   );
@@ -36,7 +38,7 @@ function H3(props: ComponentPropsWithoutRef<"h3">) {
 function H4(props: ComponentPropsWithoutRef<"h4">) {
   return (
     <h4
-      className="mb-2 mt-6 font-sans text-lg font-medium text-foreground"
+      className="mb-2 mt-6 text-lg font-medium text-[#EDEDED]"
       {...props}
     />
   );
@@ -45,7 +47,7 @@ function H4(props: ComponentPropsWithoutRef<"h4">) {
 function Paragraph(props: ComponentPropsWithoutRef<"p">) {
   return (
     <p
-      className="my-5 text-base leading-7 text-neutral-700 dark:text-neutral-300"
+      className="my-5 text-base leading-[1.8] text-[#CCCCCC]"
       {...props}
     />
   );
@@ -59,7 +61,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
     return (
       <a
         href={href}
-        className="text-neutral-900 underline decoration-neutral-300 underline-offset-2 transition-colors hover:decoration-neutral-500 dark:text-neutral-100 dark:decoration-neutral-600 dark:hover:decoration-neutral-400"
+        className="text-[#A3E635] underline decoration-[#A3E635]/30 underline-offset-2 transition-colors hover:decoration-[#A3E635] hover:text-[#A3E635]/70"
         target="_blank"
         rel="noopener noreferrer"
         {...rest}
@@ -72,7 +74,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
   return (
     <Link
       href={href}
-      className="text-neutral-900 underline decoration-neutral-300 underline-offset-2 transition-colors hover:decoration-neutral-500 dark:text-neutral-100 dark:decoration-neutral-600 dark:hover:decoration-neutral-400"
+      className="text-[#A3E635] underline decoration-[#A3E635]/30 underline-offset-2 transition-colors hover:decoration-[#A3E635] hover:text-[#A3E635]/70"
       {...rest}
     >
       {children}
@@ -83,7 +85,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
 function Blockquote(props: ComponentPropsWithoutRef<"blockquote">) {
   return (
     <blockquote
-      className="my-6 border-l-2 border-neutral-300 pl-5 italic text-neutral-500 dark:border-neutral-600 dark:text-neutral-400"
+      className="my-6 border-l-2 border-[#A3E635] pl-5 italic text-[#888888]"
       {...props}
     />
   );
@@ -92,7 +94,7 @@ function Blockquote(props: ComponentPropsWithoutRef<"blockquote">) {
 function UnorderedList(props: ComponentPropsWithoutRef<"ul">) {
   return (
     <ul
-      className="my-5 list-disc space-y-2 pl-6 text-neutral-700 marker:text-neutral-300 dark:text-neutral-300 dark:marker:text-neutral-600"
+      className="my-5 list-disc space-y-2 pl-6 text-[#CCCCCC] marker:text-[#A3E635]"
       {...props}
     />
   );
@@ -101,20 +103,20 @@ function UnorderedList(props: ComponentPropsWithoutRef<"ul">) {
 function OrderedList(props: ComponentPropsWithoutRef<"ol">) {
   return (
     <ol
-      className="my-5 list-decimal space-y-2 pl-6 text-neutral-700 marker:text-neutral-400 dark:text-neutral-300 dark:marker:text-neutral-500"
+      className="my-5 list-decimal space-y-2 pl-6 text-[#CCCCCC] marker:text-[#A3E635]"
       {...props}
     />
   );
 }
 
 function ListItem(props: ComponentPropsWithoutRef<"li">) {
-  return <li className="leading-7" {...props} />;
+  return <li className="leading-[1.8]" {...props} />;
 }
 
 function InlineCode(props: ComponentPropsWithoutRef<"code">) {
   return (
     <code
-      className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[0.875em] text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+      className="rounded bg-[#1A1A1A] border border-[#1F1F1F] px-1.5 py-0.5 font-mono text-[0.875em] text-[#A3E635]/90"
       {...props}
     />
   );
@@ -123,14 +125,14 @@ function InlineCode(props: ComponentPropsWithoutRef<"code">) {
 function Pre(props: ComponentPropsWithoutRef<"pre">) {
   return (
     <pre
-      className="my-6 overflow-x-auto rounded-lg bg-neutral-950 p-4 text-sm leading-relaxed text-neutral-200 dark:bg-neutral-900"
+      className="my-6 overflow-x-auto rounded-xl border border-[#1F1F1F] bg-[#0D0D0D] p-4 text-sm leading-relaxed text-[#EDEDED]"
       {...props}
     />
   );
 }
 
 function HorizontalRule() {
-  return <hr className="my-10 border-neutral-200 dark:border-neutral-800" />;
+  return <hr className="my-10 border-[#1F1F1F]" />;
 }
 
 function MDXImage(props: ComponentPropsWithoutRef<"img">) {

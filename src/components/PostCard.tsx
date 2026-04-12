@@ -11,20 +11,20 @@ export function PostCard({ post }: PostCardProps) {
   const { slug, title, date, description, tags, readingTime } = post;
 
   return (
-    <article className="group">
+    <article className="group rounded-xl border border-[#1F1F1F] p-6 transition-all duration-300 hover:border-[#A3E635]/30 hover:bg-[#111111] hover:shadow-[0_0_20px_rgba(163,230,53,0.06)]">
       <Link href={`/posts/${slug}`} className="block">
-        <h2 className="font-sans text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-neutral-600 dark:group-hover:text-neutral-300">
+        <h2 className="text-xl font-semibold tracking-tight text-[#EDEDED] transition-colors group-hover:text-[#A3E635]">
           {title}
         </h2>
       </Link>
 
-      <div className="mt-2 flex items-center gap-2 text-sm text-neutral-400 dark:text-neutral-500">
-        <time dateTime={date}>{format(parseISO(date), "MMMM d, yyyy")}</time>
-        <span aria-hidden="true">&middot;</span>
+      <div className="mt-3 flex items-center gap-3 font-mono text-xs text-[#888888]">
+        <time dateTime={date}>{format(parseISO(date), "yyyy.MM.dd")}</time>
+        <span className="text-[#333333]">//</span>
         <span>{readingTime}</span>
       </div>
 
-      <p className="mt-3 text-[0.95rem] leading-relaxed text-neutral-600 dark:text-neutral-400">
+      <p className="mt-3 text-sm leading-relaxed text-[#888888]">
         {description}
       </p>
 

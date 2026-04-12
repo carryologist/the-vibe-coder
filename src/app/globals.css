@@ -1,51 +1,96 @@
 @import "tailwindcss";
 
-:root {
+@theme {
+  --color-bg: #0A0A0A;
+  --color-bg-light: #FAFAFA;
+  --color-surface: #111111;
+  --color-surface-light: #FFFFFF;
+  --color-border: #1F1F1F;
+  --color-border-light: #E5E5E5;
+  --color-text: #EDEDED;
+  --color-text-light: #1A1A1A;
+  --color-text-secondary: #888888;
+  --color-accent: #A3E635;
+  --color-accent-dim: #65A30D;
+  --color-glow: rgba(163, 230, 53, 0.08);
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 }
 
+/* Dark-first body */
 body {
   font-family: var(--font-sans);
-  background-color: #fafafa;
-  color: #1a1a1a;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #0a0a0a;
-    color: #ededed;
-  }
+/* Light mode override */
+.light body,
+[data-theme="light"] body {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-light);
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Better code block styling for rehype-pretty-code */
+/* Selection color */
+::selection {
+  background-color: rgba(163, 230, 53, 0.25);
+  color: #EDEDED;
+}
+
+/* Scrollbar styling for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* rehype-pretty-code */
 pre > code {
   display: grid;
 }
 
 [data-rehype-pretty-code-figure] pre {
   overflow-x: auto;
-  padding: 1rem 1.5rem;
-  border-radius: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background-color: #0D0D0D !important;
 }
 
 [data-rehype-pretty-code-figure] code {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   line-height: 1.7;
 }
 
-/* Prose-like content styling */
+/* Prose content */
 .prose {
-  max-width: 65ch;
-  line-height: 1.75;
+  max-width: 720px;
+  line-height: 1.8;
 }
 
 .prose > * + * {
-  margin-top: 1.25em;
+  margin-top: 1.5em;
+}
+
+/* Reading progress bar — terminal style */
+.reading-progress {
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-dim));
+  box-shadow: 0 0 8px rgba(163, 230, 53, 0.4);
+  transition: width 50ms linear;
 }

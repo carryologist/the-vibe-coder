@@ -1,5 +1,6 @@
 import { getAllPosts } from "@/lib/posts";
 import { PostCard } from "@/components/PostCard";
+import { AnimateIn } from "@/components/AnimateIn";
 
 export default async function HomePage() {
   const posts = await getAllPosts();
@@ -7,33 +8,39 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="mb-16">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          Vibes Coder
-        </h1>
-        <p className="mt-4 text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl">
-          Thoughts on software development, AI-assisted coding, and the craft of
-          building things that work.
-        </p>
-      </section>
+      <AnimateIn>
+        <section className="mb-16">
+          <h1 className="font-mono text-4xl font-bold tracking-tight sm:text-5xl">
+            <span className="text-[#EDEDED]">vibescoder</span>
+            <span className="text-[#A3E635]">.dev</span>
+          </h1>
+          <p className="mt-4 text-lg text-[#888888] max-w-2xl">
+            Thoughts on software development, AI-assisted coding, and the craft of
+            building things that work.
+          </p>
+        </section>
+      </AnimateIn>
 
       {/* Posts */}
-      <section>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 mb-8">
-          Latest Posts
+      <AnimateIn delay={0.1}>
+        <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-[#A3E635] mb-8">
+          // Latest Posts
         </h2>
-        {posts.length === 0 ? (
-          <p className="text-neutral-500 dark:text-neutral-400">
-            No posts yet. Check back soon.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-10">
-            {posts.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
-          </div>
-        )}
-      </section>
+      </AnimateIn>
+
+      {posts.length === 0 ? (
+        <p className="font-mono text-sm text-[#888888]">
+          No posts yet. Check back soon.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {posts.map((post, i) => (
+            <AnimateIn key={post.slug} delay={0.15 + i * 0.05}>
+              <PostCard post={post} />
+            </AnimateIn>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

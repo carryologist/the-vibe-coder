@@ -7,7 +7,7 @@ interface TagBadgeProps {
 
 export function TagBadge({ tag, linked = true }: TagBadgeProps) {
   const classes =
-    "inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700";
+    "inline-block rounded-md border border-[#1F1F1F] bg-[#0A0A0A] px-2 py-0.5 font-mono text-[11px] text-[#888888] transition-all hover:border-[#A3E635]/40 hover:text-[#A3E635]";
 
   if (linked) {
     return (
