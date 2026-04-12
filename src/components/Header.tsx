@@ -15,8 +15,8 @@ export function Header() {
     <header className="border-b border-[#1F1F1F]">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <Link href="/" className="font-mono text-base tracking-tight transition-opacity hover:opacity-80">
-          <span className="text-[#EDEDED]">vibescoder</span>
-          <span className="text-[#A3E635]">.dev</span>
+          <span className="text-[#EDEDED]">Vibes</span>{" "}
+          <span className="text-[#A3E635]">Coder</span>
         </Link>
 
         {/* Desktop nav */}

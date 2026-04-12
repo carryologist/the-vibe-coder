@@ -11,8 +11,8 @@ export default async function HomePage() {
       <AnimateIn>
         <section className="mb-16">
           <h1 className="font-mono text-4xl font-bold tracking-tight sm:text-5xl">
-            <span className="text-[#EDEDED]">vibescoder</span>
-            <span className="text-[#A3E635]">.dev</span>
+            <span className="text-[#EDEDED]">Vibes</span>{" "}
+            <span className="text-[#A3E635]">Coder</span>
           </h1>
           <p className="mt-4 text-lg text-[#888888] max-w-2xl">
             Thoughts on software development, AI-assisted coding, and the craft of
