@@ -1,0 +1,151 @@
+---
+title: "Day One: Building vibescoder.dev from Scratch with AI"
+date: "2025-04-11"
+description: "How I built a full-featured personal blog with an AI-powered voice-to-post pipeline in a single session using Claude as my coding partner."
+tags: ["meta", "ai", "coder", "next-js", "building-in-public"]
+published: true
+---
+
+## The Idea
+
+I wanted a personal site — somewhere to publish my thoughts on software development, AI-assisted coding, and building software. Not a corporate blog. Something with taste. Something that felt like *me*.
+
+The twist: I wanted to build the entire thing in one sitting, using AI as my development partner. Every line of code on vibescoder.dev was written by Claude, directed by me, running inside a [Coder](https://coder.com) workspace. Dogfooding at its finest.
+
+Here's everything that happened on Day One.
+
+## What Got Built
+
+### The Blog (Commits 1–4)
+
+Started from zero. Created a private GitHub repo (`the-vibe-coder`), scaffolded a Next.js 16 project with the App Router, and wired up:
+
+- **MDX content layer** — Blog posts are `.mdx` files in a `content/posts/` directory with YAML frontmatter (title, date, description, tags, published flag). No database, no CMS — just files in git.
+- **Tailwind CSS v4** — The initial design was clean but generic. We restyled everything based on a "Medium meets VS Code" aesthetic: dark-first palette (`#0A0A0A` background, `#1F1F1F` borders), cyber lime accent (`#A3E635`), monospace metadata, and subtle glow effects on hover.
+- **rehype-pretty-code + Shiki** — Syntax highlighting for code blocks, because this is a dev blog.
+- **Framer Motion** — Entrance animations. Elements fade in and slide up on page load, staggered across the post feed.
+- **Reading progress bar** — A 2px lime bar at the top of article pages, styled like a terminal loading indicator. Tracks scroll position.
+- **Tag system** — Every post can have tags. There's a `/tags` index page and a `/tags/[tag]` filter page.
+- **Dark mode by default** — Light mode exists via `prefers-color-scheme`, but dark is the soul of the site.
+
+The branding went through a quick evolution: "The Vibe Coder" → "Vibes Coder" (once `vibescoder.dev` was the domain we landed on). Every reference was updated across 8 files in one pass.
+
+### The Admin Dashboard (Commits 5–7)
+
+This is where it gets interesting. The public site is a static blog. But behind `/admin` is a full content management system that only I can access.
+
+**Authentication:**
+- Password-based login at `/admin/login` — no link to it from the public site
+- JWT session cookies signed with `jose`, HTTP-only, 7-day expiry
+- Middleware protects all `/admin/*` and sensitive `/api/*` routes
+- Cookie is checked server-side in page components to conditionally render admin controls
+
+**Voice-to-Blog Pipeline:**
+The headline feature. I can dictate a blog post by talking into my browser, and the system turns it into a published article.
+
+The workflow at `/admin/record`:
+
+1. **Record** — Hit the green button and talk. Uses the Web Speech API for real-time transcription — you see your words appear as you speak. MediaRecorder runs in parallel as an audio backup. The recording is continuous and uninterrupted; Chrome's speech recognition auto-restarts transparently if it pauses.
+
+2. **Review Transcript** — Edit the raw transcript in a textarea. Word count displayed. This is also where you upload **artifacts** — images, PDFs, text files, code files — that Claude should reference when generating the post. Drag-and-drop or click to browse.
+
+3. **Generate Post** — Claude Sonnet takes the transcript + all artifacts and produces a complete MDX blog post with frontmatter. Images are sent as native `ImageBlockParam`, PDFs as `DocumentBlockParam`, text files decoded and sent as plain text documents. The style prompt is configurable (stored in `content/settings.json`).
+
+4. **Publish** — Review the generated MDX, set the slug, and hit "Publish to GitHub." The post is committed to the repo via the GitHub Contents API. Image artifacts are committed to `public/images/[slug]/`. Vercel auto-deploys.
+
+**Inline Editing:**
+When logged in as admin, every page gets superpowers:
+- **Post cards** on the homepage show `edit` and `del` controls
+- **Post detail pages** show an admin bar with edit/delete
+- **`/admin/edit/[slug]`** — A full-screen MDX editor that loads the file from GitHub, lets you edit, and commits changes on save
+- Delete requires confirmation, then removes the file from the repo
+
+## The Tech Stack
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Framework | Next.js 16 (App Router) | Vercel-native, RSC, great DX |
+| Styling | Tailwind CSS v4 | Utility-first, fast iteration |
+| Content | MDX + gray-matter | Git-based, no vendor lock-in |
+| Syntax | rehype-pretty-code + Shiki | Beautiful code blocks |
+| Animation | Framer Motion | Smooth entrance effects |
+| Auth | jose (JWT) | Lightweight, Edge-compatible |
+| AI | Claude Sonnet (Anthropic SDK) | Blog generation from transcripts |
+| Transcription | Web Speech API | Free, real-time, browser-native |
+| Publishing | GitHub Contents API | Commits trigger Vercel deploys |
+| Hosting | Vercel | Auto-deploy on push to main |
+| Dev Environment | Coder | Cloud workspace with full GitHub integration |
+
+## By the Numbers
+
+- **7 commits** from zero to fully functional
+- **43 source files** created
+- **~2,500 lines** of new code
+- **0 lines** written by hand — every line authored by Claude, directed by me
+- **5 environment variables** to configure (`ADMIN_PASSWORD`, `ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, `GITHUB_REPO`, `SESSION_SECRET`)
+
+## File Structure
+
+```
+src/
+  app/
+    page.tsx                    # Homepage — post feed
+    about/page.tsx              # About page
+    posts/[slug]/page.tsx       # Individual blog post
+    tags/page.tsx               # Tag index
+    tags/[tag]/page.tsx         # Posts filtered by tag
+    admin/
+      login/page.tsx            # Admin login
+      page.tsx                  # Admin dashboard
+      record/page.tsx           # Voice-to-blog workflow
+      edit/[slug]/page.tsx      # Post editor
+      layout.tsx                # Admin layout with nav
+    api/
+      auth/login/route.ts       # POST — authenticate
+      auth/logout/route.ts      # POST — clear session
+      auth/status/route.ts      # GET — check auth
+      generate-post/route.ts    # POST — Claude generates MDX
+      posts/route.ts            # CRUD — create, read, update, delete posts
+      settings/route.ts         # GET/PUT — style prompt config
+  components/
+    Header.tsx                  # "Vibes Coder" nav
+    Footer.tsx                  # Copyright + links
+    PostCard.tsx                # Blog post card with admin controls
+    TagBadge.tsx                # Tag pill component
+    AnimateIn.tsx               # Framer Motion entrance wrapper
+    ReadingProgress.tsx         # Scroll progress bar
+    MDXComponents.tsx           # Custom MDX rendering
+    admin/
+      AudioRecorder.tsx         # Mic capture + live transcription
+      TranscriptEditor.tsx      # Editable transcript
+      ArtifactUploader.tsx      # File upload for images/PDFs/text
+      PostPreview.tsx           # Generated post preview + publish
+      AdminNav.tsx              # Admin navigation bar
+      AdminPostControls.tsx     # Edit/delete on post pages
+      AdminCardControls.tsx     # Edit/delete on post cards
+  lib/
+    auth.ts                     # JWT session management
+    claude.ts                   # Anthropic SDK wrapper
+    github.ts                   # GitHub Contents API helpers
+    posts.ts                    # MDX content loading
+    types.ts                    # TypeScript interfaces
+  middleware.ts                 # Route protection
+content/
+  posts/*.mdx                   # Blog posts
+  settings.json                 # Style prompt configuration
+```
+
+## What's Next
+
+This is Day One. The foundation is solid — a git-based blog with an AI-powered authoring pipeline. Future sessions will add:
+
+- Custom style prompt tuning (the current default is generic)
+- Analytics dashboard (Vercel Analytics integration)
+- RSS feed
+- OG image generation
+- Video content support
+- Search
+
+The entire site was built in a Coder workspace with Claude as the coding agent. If you're curious about the source, the repo is at [github.com/carryologist/the-vibe-coder](https://github.com/carryologist/the-vibe-coder).
+
+Welcome to Vibes Coder. Day One is in the books.
