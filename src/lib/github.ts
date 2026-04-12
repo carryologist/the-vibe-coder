@@ -77,3 +77,40 @@ export async function readFile(path: string): Promise<string | null> {
   const data = await res.json();
   return Buffer.from(data.content, "base64").toString("utf-8");
 }
+
+/**
+ * Delete a file from the GitHub repository.
+ * Returns the commit SHA.
+ */
+export async function deleteFile(
+  path: string,
+  message: string
+): Promise<string> {
+  const { token, repo } = getConfig();
+  const url = `${GITHUB_API}/repos/${repo}/contents/${path}`;
+
+  // Need the file's SHA to delete it.
+  const existing = await fetch(url, { headers: headers(token) });
+  if (!existing.ok) {
+    throw new Error(`File not found: ${path}`);
+  }
+  const { sha } = await existing.json();
+
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: headers(token),
+    body: JSON.stringify({
+      message,
+      sha,
+      branch: "main",
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GitHub API error: ${res.status} ${err}`);
+  }
+
+  const data = await res.json();
+  return data.commit.sha;
+}

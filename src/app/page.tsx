@@ -1,8 +1,16 @@
+import { cookies } from "next/headers";
+import { verifySession } from "@/lib/auth";
 import { getAllPosts } from "@/lib/posts";
 import { PostCard } from "@/components/PostCard";
 import { AnimateIn } from "@/components/AnimateIn";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_session")?.value;
+  const isAdmin = token ? await verifySession(token) : false;
+
   const posts = await getAllPosts();
 
   return (
@@ -36,7 +44,7 @@ export default async function HomePage() {
         <div className="flex flex-col gap-6">
           {posts.map((post, i) => (
             <AnimateIn key={post.slug} delay={0.15 + i * 0.05}>
-              <PostCard post={post} />
+              <PostCard post={post} isAdmin={isAdmin} />
             </AnimateIn>
           ))}
         </div>

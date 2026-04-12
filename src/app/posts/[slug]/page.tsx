@@ -1,21 +1,28 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
+import { verifySession } from "@/lib/auth";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { MDXComponents } from "@/components/MDXComponents";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { AnimateIn } from "@/components/AnimateIn";
 import { TagBadge } from "@/components/TagBadge";
+import { AdminPostControls } from "@/components/admin/AdminPostControls";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Pre-generate known post paths at build time.
 export async function generateStaticParams() {
   const posts = await getAllPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
+
+// Allow dynamic requests so the cookie check runs at request time.
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: PostPageProps) {
   const { slug } = await params;
@@ -28,6 +35,18 @@ export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) notFound();
+
+  // Admin check — only resolves for server-rendered requests.
+  // Static/ISR pages will have no cookie and default to false.
+  let isAdmin = false;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("admin_session")?.value;
+    isAdmin = token ? await verifySession(token) : false;
+  } catch {
+    // cookies() throws during static generation; that's fine.
+    isAdmin = false;
+  }
 
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -49,6 +68,13 @@ export default async function PostPage({ params }: PostPageProps) {
             cd ..
           </Link>
         </AnimateIn>
+
+        {/* Admin controls */}
+        {isAdmin && (
+          <AnimateIn delay={0.025}>
+            <AdminPostControls slug={slug} />
+          </AnimateIn>
+        )}
 
         {/* Header */}
         <AnimateIn delay={0.05}>
