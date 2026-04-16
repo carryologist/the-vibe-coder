@@ -13,11 +13,11 @@ export function PostCard({ post, isAdmin }: PostCardProps) {
   const { slug, title, date, description, tags, readingTime } = post;
 
   return (
-    <article className="group rounded-xl border border-[#4c4452]/10 bg-[#1a1c1c] p-6 transition-all duration-500 hover:border-[#dcb8ff]/20 hover:bg-[#282a2a] hover:shadow-[0_0_30px_rgba(188,124,255,0.08)]">
+    <article className="group glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-500 hover:border-primary/20 hover:bg-surface-high">
       <div className="flex items-start justify-between gap-4">
         <Link href={`/posts/${slug}`} className="block min-w-0">
           <h2
-            className="text-xl font-semibold tracking-tight text-[#e2e2e2] transition-colors group-hover:text-[#dcb8ff]"
+            className="text-xl font-semibold tracking-tight text-on-surface transition-colors group-hover:text-primary"
             style={{ fontFamily: "var(--font-headline)" }}
           >
             {title}
@@ -27,15 +27,15 @@ export function PostCard({ post, isAdmin }: PostCardProps) {
       </div>
 
       <div
-        className="mt-3 flex items-center gap-3 text-xs uppercase tracking-widest text-[#cec2d4]/50"
+        className="mt-3 flex items-center gap-3 text-xs uppercase tracking-widest text-on-surface-variant/50"
         style={{ fontFamily: "var(--font-label)" }}
       >
         <time dateTime={date}>{format(parseISO(date), "yyyy.MM.dd")}</time>
-        <span className="text-[#4c4452]">&middot;</span>
+        <span className="text-outline-variant">&middot;</span>
         <span>{readingTime}</span>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-[#cec2d4]">
+      <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
         {description}
       </p>
 

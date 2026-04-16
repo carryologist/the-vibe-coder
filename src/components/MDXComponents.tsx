@@ -3,15 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 
 /* ------------------------------------------------------------------ */
-/*  Neon Brutalist prose — vibes_protocol design system               */
-/*  BG: #121414  Surface: #1a1c1c  Primary: #dcb8ff                  */
-/*  Text: #e2e2e2  Variant: #cec2d4  Outline: #4c4452                */
+/*  Neon Brutalist prose — theme-aware via CSS custom properties       */
 /* ------------------------------------------------------------------ */
 
 function H1(props: ComponentPropsWithoutRef<"h1">) {
   return (
     <h1
-      className="mb-4 mt-10 text-3xl font-bold tracking-tight text-[#e2e2e2] first:mt-0"
+      className="mb-4 mt-10 text-3xl font-bold tracking-tight text-on-surface first:mt-0"
       style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
@@ -21,7 +19,7 @@ function H1(props: ComponentPropsWithoutRef<"h1">) {
 function H2(props: ComponentPropsWithoutRef<"h2">) {
   return (
     <h2
-      className="mb-3 mt-10 text-2xl font-semibold tracking-tight text-[#e2e2e2]"
+      className="mb-3 mt-10 text-2xl font-semibold tracking-tight text-on-surface"
       style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
@@ -31,7 +29,7 @@ function H2(props: ComponentPropsWithoutRef<"h2">) {
 function H3(props: ComponentPropsWithoutRef<"h3">) {
   return (
     <h3
-      className="mb-2 mt-8 text-xl font-semibold text-[#e2e2e2]"
+      className="mb-2 mt-8 text-xl font-semibold text-on-surface"
       style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
@@ -41,7 +39,7 @@ function H3(props: ComponentPropsWithoutRef<"h3">) {
 function H4(props: ComponentPropsWithoutRef<"h4">) {
   return (
     <h4
-      className="mb-2 mt-6 text-lg font-medium text-[#e2e2e2]"
+      className="mb-2 mt-6 text-lg font-medium text-on-surface"
       style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
@@ -51,7 +49,7 @@ function H4(props: ComponentPropsWithoutRef<"h4">) {
 function Paragraph(props: ComponentPropsWithoutRef<"p">) {
   return (
     <p
-      className="my-5 text-base leading-[1.8] text-[#cec2d4]"
+      className="my-5 text-base leading-[1.8] text-on-surface-variant"
       {...props}
     />
   );
@@ -65,7 +63,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
     return (
       <a
         href={href}
-        className="text-[#dcb8ff] underline decoration-[#dcb8ff]/30 underline-offset-2 transition-colors hover:decoration-[#dcb8ff] hover:text-[#dcb8ff]/70"
+        className="text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary hover:text-primary/70"
         target="_blank"
         rel="noopener noreferrer"
         {...rest}
@@ -78,7 +76,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
   return (
     <Link
       href={href}
-      className="text-[#dcb8ff] underline decoration-[#dcb8ff]/30 underline-offset-2 transition-colors hover:decoration-[#dcb8ff] hover:text-[#dcb8ff]/70"
+      className="text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary hover:text-primary/70"
       {...rest}
     >
       {children}
@@ -89,7 +87,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
 function Blockquote(props: ComponentPropsWithoutRef<"blockquote">) {
   return (
     <blockquote
-      className="my-6 border-l-2 border-[#dcb8ff] pl-5 italic text-[#cec2d4]"
+      className="my-6 border-l-2 border-primary pl-5 italic text-on-surface-variant"
       {...props}
     />
   );
@@ -98,7 +96,7 @@ function Blockquote(props: ComponentPropsWithoutRef<"blockquote">) {
 function UnorderedList(props: ComponentPropsWithoutRef<"ul">) {
   return (
     <ul
-      className="my-5 list-disc space-y-2 pl-6 text-[#cec2d4] marker:text-[#dcb8ff]"
+      className="my-5 list-disc space-y-2 pl-6 text-on-surface-variant marker:text-primary"
       {...props}
     />
   );
@@ -107,7 +105,7 @@ function UnorderedList(props: ComponentPropsWithoutRef<"ul">) {
 function OrderedList(props: ComponentPropsWithoutRef<"ol">) {
   return (
     <ol
-      className="my-5 list-decimal space-y-2 pl-6 text-[#cec2d4] marker:text-[#dcb8ff]"
+      className="my-5 list-decimal space-y-2 pl-6 text-on-surface-variant marker:text-primary"
       {...props}
     />
   );
@@ -120,7 +118,7 @@ function ListItem(props: ComponentPropsWithoutRef<"li">) {
 function InlineCode(props: ComponentPropsWithoutRef<"code">) {
   return (
     <code
-      className="rounded bg-[#282a2a] border border-[#4c4452]/20 px-1.5 py-0.5 text-[0.875em] text-[#dcb8ff]"
+      className="rounded bg-surface-high border border-outline-variant/20 px-1.5 py-0.5 text-[0.875em] text-primary"
       style={{ fontFamily: "var(--font-mono)" }}
       {...props}
     />
@@ -128,6 +126,7 @@ function InlineCode(props: ComponentPropsWithoutRef<"code">) {
 }
 
 function Pre(props: ComponentPropsWithoutRef<"pre">) {
+  // Code blocks stay dark in both themes for readability.
   return (
     <pre
       className="my-6 overflow-x-auto rounded-xl border border-[#4c4452]/20 bg-[#0d0f0f] p-4 text-sm leading-relaxed text-[#e2e2e2]"
@@ -137,7 +136,7 @@ function Pre(props: ComponentPropsWithoutRef<"pre">) {
 }
 
 function HorizontalRule() {
-  return <hr className="my-10 border-[#4c4452]" />;
+  return <hr className="my-10 border-outline-variant" />;
 }
 
 function MDXImage(props: ComponentPropsWithoutRef<"img">) {

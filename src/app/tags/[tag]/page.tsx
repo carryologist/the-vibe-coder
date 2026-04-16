@@ -29,7 +29,7 @@ export default async function TagPage({ params }: TagPageProps) {
       <AnimateIn>
         <Link
           href="/tags"
-          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-[#cec2d4]/50 transition-colors hover:text-[#dcb8ff] mb-8"
+          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-on-surface-variant/50 transition-colors hover:text-primary mb-8"
           style={{ fontFamily: "var(--font-label)" }}
         >
           <span aria-hidden="true">&larr;</span>
@@ -37,7 +37,7 @@ export default async function TagPage({ params }: TagPageProps) {
         </Link>
 
         <h1
-          className="text-xs font-semibold uppercase tracking-widest text-[#dcb8ff] mb-8"
+          className="text-xs font-semibold uppercase tracking-widest text-primary mb-8"
           style={{ fontFamily: "var(--font-label)" }}
         >
           // Posts tagged: {tag}
@@ -53,7 +53,7 @@ export default async function TagPage({ params }: TagPageProps) {
 
         {posts.length === 0 && (
           <p
-            className="text-sm text-[#cec2d4]"
+            className="text-sm text-on-surface-variant"
             style={{ fontFamily: "var(--font-label)" }}
           >
             No posts found with this tag.

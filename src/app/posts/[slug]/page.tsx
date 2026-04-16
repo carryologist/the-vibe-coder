@@ -57,7 +57,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <AnimateIn>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-[#cec2d4]/50 transition-colors hover:text-[#dcb8ff] mb-10"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-on-surface-variant/50 transition-colors hover:text-primary mb-10"
             style={{ fontFamily: "var(--font-label)" }}
           >
             <span aria-hidden="true">&larr;</span>
@@ -76,20 +76,20 @@ export default async function PostPage({ params }: PostPageProps) {
         <AnimateIn delay={0.05}>
           <header className="mb-12">
             <h1
-              className="text-3xl font-bold tracking-tight sm:text-4xl text-[#e2e2e2]"
+              className="text-3xl font-bold tracking-tight sm:text-4xl text-on-surface"
               style={{ fontFamily: "var(--font-headline)" }}
             >
               {post.title}
             </h1>
 
             <div
-              className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs uppercase tracking-widest text-[#cec2d4]/50"
+              className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs uppercase tracking-widest text-on-surface-variant/50"
               style={{ fontFamily: "var(--font-label)" }}
             >
               <time dateTime={post.date}>{formattedDate}</time>
               {post.readingTime && (
                 <>
-                  <span className="text-[#4c4452]">&middot;</span>
+                  <span className="text-outline-variant">&middot;</span>
                   <span>{post.readingTime}</span>
                 </>
               )}

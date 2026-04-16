@@ -21,7 +21,7 @@ export default async function TagsPage() {
     <AnimateIn>
       <div>
         <h1
-          className="text-xs font-semibold uppercase tracking-widest text-[#dcb8ff] mb-8"
+          className="text-xs font-semibold uppercase tracking-widest text-primary mb-8"
           style={{ fontFamily: "var(--font-label)" }}
         >
           // Tags
@@ -32,7 +32,7 @@ export default async function TagsPage() {
             <div key={tag} className="flex items-center gap-1.5">
               <TagBadge tag={tag} />
               <span
-                className="text-[11px] text-[#978d9e]"
+                className="text-[11px] text-outline"
                 style={{ fontFamily: "var(--font-label)" }}
               >
                 ({tagCounts[tag]})

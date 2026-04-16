@@ -22,10 +22,10 @@ export default async function HomePage() {
             className="text-4xl font-bold tracking-tighter sm:text-5xl"
             style={{ fontFamily: "var(--font-headline)" }}
           >
-            <span className="text-[#e2e2e2]">Vibes</span>{" "}
-            <span className="bg-gradient-to-r from-[#dcb8ff] to-[#f7acff] bg-clip-text text-transparent">Coder</span>
+            <span className="text-on-surface">Vibes</span>{" "}
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Coder</span>
           </h1>
-          <p className="mt-4 text-lg text-[#cec2d4] max-w-2xl">
+          <p className="mt-4 text-lg text-on-surface-variant max-w-2xl">
             Thoughts on software development, AI-assisted coding, and the craft of
             building things that work.
           </p>
@@ -35,7 +35,7 @@ export default async function HomePage() {
       {/* Posts */}
       <AnimateIn delay={0.1}>
         <h2
-          className="text-xs font-semibold uppercase tracking-widest text-[#dcb8ff] mb-8"
+          className="text-xs font-semibold uppercase tracking-widest text-primary mb-8"
           style={{ fontFamily: "var(--font-label)" }}
         >
           // Latest Posts
@@ -44,7 +44,7 @@ export default async function HomePage() {
 
       {posts.length === 0 ? (
         <p
-          className="text-sm text-[#cec2d4]"
+          className="text-sm text-on-surface-variant"
           style={{ fontFamily: "var(--font-label)" }}
         >
           No posts yet. Check back soon.

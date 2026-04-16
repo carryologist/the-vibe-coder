@@ -44,13 +44,24 @@ export const metadata: Metadata = {
   },
 };
 
+// Inline script to set theme before first paint — prevents flash.
+const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(!t)t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","dark")}})()`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${firaCode.variable}`}>
+    <html
+      lang="en"
+      data-theme="dark"
+      className={`${inter.variable} ${spaceGrotesk.variable} ${firaCode.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Header />
         <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-16">

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Surfaces ── */
+  /* ── Surfaces (dark defaults) ── */
   --color-bg: #121414;
   --color-surface-lowest: #0d0f0f;
   --color-surface-low: #1a1c1c;
@@ -17,6 +17,7 @@
   --color-secondary-container: #781b8b;
   --color-tertiary: #ffb4a5;
   --color-tertiary-container: #f1755d;
+  --color-accent-warm: #FF8067;
 
   /* ── Text ── */
   --color-on-surface: #e2e2e2;
@@ -33,21 +34,53 @@
   --font-mono: "Fira Code", "JetBrains Mono", ui-monospace, monospace;
 }
 
+/* ── Light theme overrides ── */
+[data-theme="light"] {
+  --color-bg: #faf8fc;
+  --color-surface-lowest: #f0edf4;
+  --color-surface-low: #ffffff;
+  --color-surface: #f5f3f8;
+  --color-surface-high: #eceaf0;
+  --color-surface-highest: #e3e0e8;
+  --color-surface-bright: #dad7e0;
+
+  --color-primary: #7c3aed;
+  --color-primary-container: #6d28d9;
+  --color-secondary: #a21caf;
+  --color-secondary-container: #f5d0fe;
+  --color-tertiary: #ea580c;
+  --color-tertiary-container: #c2410c;
+  --color-accent-warm: #ea580c;
+
+  --color-on-surface: #1a1625;
+  --color-on-surface-variant: #5c5468;
+
+  --color-outline: #9990a3;
+  --color-outline-variant: #d8d3de;
+}
+
+/* ── Base ── */
 body {
   font-family: var(--font-body);
   background-color: var(--color-bg);
   color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-::selection {
+/* ── Selection ── */
+[data-theme="dark"] ::selection {
   background-color: rgba(220, 184, 255, 0.25);
   color: #e2e2e2;
+}
+[data-theme="light"] ::selection {
+  background-color: rgba(124, 58, 237, 0.15);
+  color: #1a1625;
 }
 
 /* ── Scrollbar ── */
@@ -55,17 +88,35 @@ html {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #121414;
+  background: var(--color-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333535;
+  background: var(--color-surface-highest);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4c4452;
+  background: var(--color-outline-variant);
 }
 
-/* ── Code blocks (rehype-pretty-code) ── */
+/* ── Theme-aware shadows ── */
+.shadow-header {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+}
+[data-theme="light"] .shadow-header {
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+}
+
+.glow-card {
+  transition: box-shadow 0.5s;
+}
+[data-theme="dark"] .glow-card:hover {
+  box-shadow: 0 0 30px rgba(188, 124, 255, 0.08);
+}
+[data-theme="light"] .glow-card:hover {
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.08);
+}
+
+/* ── Code blocks (rehype-pretty-code) — always dark ── */
 pre > code {
   display: grid;
 }
@@ -84,6 +135,10 @@ pre > code {
   line-height: 1.7;
 }
 
+[data-theme="light"] [data-rehype-pretty-code-figure] pre {
+  border-color: rgba(216, 211, 222, 0.6);
+}
+
 /* ── Prose ── */
 .prose {
   max-width: 720px;
@@ -98,6 +153,13 @@ pre > code {
 .reading-progress {
   height: 2px;
   background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-  box-shadow: 0 0 8px rgba(220, 184, 255, 0.4);
   transition: width 50ms linear;
+}
+
+[data-theme="dark"] .reading-progress {
+  box-shadow: 0 0 8px rgba(220, 184, 255, 0.4);
+}
+
+[data-theme="light"] .reading-progress {
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.3);
 }
