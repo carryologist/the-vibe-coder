@@ -17,7 +17,6 @@ type EditorState =
 export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   const [state, setState] = useState<EditorState>({ phase: "loading" });
   const [content, setContent] = useState("");
-  const [summary, setSummary] = useState("");
   const originalContent = useRef("");
 
   const fetchContent = useCallback(async () => {
@@ -44,16 +43,15 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   }, [fetchContent]);
 
   const hasChanges = content !== originalContent.current;
-  const canSave = hasChanges && summary.trim().length > 0;
 
   async function handleSave() {
-    if (!canSave) return;
+    if (!hasChanges) return;
     setState({ phase: "saving" });
     try {
       const res = await fetch("/api/posts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, content, summary: summary.trim() }),
+        body: JSON.stringify({ slug, content, autoSummary: true }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -126,30 +124,26 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
         className="w-full min-h-[50vh] resize-y rounded-lg border border-outline-variant bg-bg px-4 py-3 font-mono text-xs leading-relaxed text-on-surface outline-none transition-colors focus:border-primary/50"
       />
 
-      <input
-        type="text"
-        value={summary}
-        onChange={(e) => setSummary(e.target.value)}
-        disabled={isSaving}
-        placeholder="What changed? (required for changelog)"
-        className="mt-3 w-full rounded-lg border border-outline-variant bg-bg px-3 py-2 font-mono text-sm text-on-surface outline-none transition-colors focus:border-primary/50 placeholder-outline"
-      />
-
-      <div className="mt-3 flex justify-end gap-2">
-        <button
-          onClick={onClose}
-          disabled={isSaving}
-          className="rounded-lg border border-outline-variant px-4 py-2 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={!canSave || isSaving}
-          className="rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? "Saving..." : "Save"}
-        </button>
+      <div className="mt-3 flex items-center justify-between">
+        <p className="font-mono text-[11px] text-on-surface-variant">
+          {hasChanges ? "Changelog summary will be auto-generated." : "No changes yet."}
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            disabled={isSaving}
+            className="rounded-lg border border-outline-variant px-4 py-2 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            className="rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+        </div>
       </div>
     </div>
   );

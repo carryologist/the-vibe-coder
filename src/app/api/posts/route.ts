@@ -58,13 +58,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Generate a short changelog summary by diffing old and new content.
+function generateDiffSummary(oldContent: string, newContent: string): string {
+  const oldLines = oldContent.split("\n");
+  const newLines = newContent.split("\n");
+  const maxLen = Math.max(oldLines.length, newLines.length);
+
+  let changed = 0;
+  for (let i = 0; i < maxLen; i++) {
+    if (oldLines[i] !== newLines[i]) changed++;
+  }
+
+  if (changed === 0) return "No changes";
+  if (changed <= 3) return "Minor text edits";
+  if (changed <= 10) return `Edited ${changed} lines`;
+  return `Revised post content (${changed} lines changed)`;
+}
+
 // Update an existing post.
 export async function PUT(request: NextRequest) {
   try {
-    const { slug, content, summary } = await request.json() as {
+    const { slug, content, summary, autoSummary } = await request.json() as {
       slug: string;
       content: string;
       summary?: string;
+      autoSummary?: boolean;
     };
 
     if (!slug || !content) {
@@ -77,18 +95,28 @@ export async function PUT(request: NextRequest) {
     const safeSlug = sanitizeSlug(slug);
     const path = `content/posts/${safeSlug}.mdx`;
 
+    // Resolve the changelog summary: use explicit summary, auto-generate
+    // from a diff, or skip the changelog entirely.
+    let effectiveSummary = summary;
+    if (!effectiveSummary && autoSummary) {
+      const existing = await readFile(path);
+      effectiveSummary = existing
+        ? generateDiffSummary(existing, content)
+        : "Initial content";
+    }
+
     let finalContent = content;
 
-    // When a summary is provided, add a changelog entry to the
-    // frontmatter before committing.
-    if (summary) {
+    // When we have a summary, add a changelog entry to the frontmatter
+    // before committing.
+    if (effectiveSummary) {
       const parsed = matter(content);
       const changelog = Array.isArray(parsed.data.changelog)
         ? parsed.data.changelog
         : [];
       changelog.unshift({
         date: new Date().toISOString().split("T")[0],
-        summary,
+        summary: effectiveSummary,
       });
       parsed.data.changelog = changelog;
       finalContent = matter.stringify(parsed.content, parsed.data);
