@@ -14,11 +14,19 @@ I wanted something with more intentionality. A real design system, not just a co
 
 Enter Google Stitch.
 
+## Prompting Stitch (and the Brand Guidelines Trick)
+
+My first pass was generic — I asked Stitch to design a site based on a typical CEO thought leadership blog, Medium-style layouts and functionality. The result featured some rather aggressive neon styling that wasn't what I had in mind.
+
+But Stitch can do something more interesting than interpret vague prompts. Instead of manually tweaking colors and fonts, I pointed it at [Koto's brand guidelines](https://koto.com/brand) and let the AI extract what it needed — color palettes, typography choices, overall visual styling. It essentially created an offshoot of my company's brand identity without me specifying a single hex value or font name. The AI understood the brand context and applied it consistently across the entire site design.
+
+That's the real unlock: if you have existing brand assets anywhere on the web, feed them to Stitch instead of describing a vibe in words.
+
 ## What Google Stitch Actually Gives You
 
-[Google Stitch](https://stitch.withgoogle.com/) is a design-to-code tool. You describe what you want, and it generates full-page HTML mockups with embedded Tailwind CSS — complete with a color system, typography scale, and component patterns. It also outputs a `DESIGN.md` file that documents the creative direction, naming it with a "Creative North Star" label.
+[Google Stitch](https://stitch.withgoogle.com/) is a design-to-code tool. You describe what you want (or point it at brand guidelines), and it generates full-page HTML mockups with embedded Tailwind CSS — complete with a color system, typography scale, and component patterns. It also outputs a `DESIGN.md` file that documents the creative direction, naming it with a "Creative North Star" label.
 
-I fed it a description of the blog and asked for a visual redesign. It generated a zip file containing:
+From the brand-informed prompt, it generated a zip file containing:
 
 - **4 page types** — home feed, article view, manifesto/about page, connect/contact page
 - **3 variants per page** — each with slightly different layouts and interaction patterns
@@ -128,6 +136,17 @@ The fix is an inline `<script>` in `<head>` that runs before the browser paints:
 ```
 
 No React, no hydration — just a synchronous DOM attribute set before the first frame. The theme toggle component then picks up the same state on mount.
+
+## The Mobile Workflow
+
+The entire process — from design to deployed site — happened from my phone in a hotel room. The pipeline looks like this:
+
+1. **Design in Google Stitch** — create and refine the site design in the browser
+2. **Export to mobile** — download the zip file to iPhone Files
+3. **Upload to GitHub** — use GitHub's web interface to push the zip to the repo
+4. **Agent processing** — Coder agents detect the new file, extract it, and apply the design
+
+It works, but the iOS Files → GitHub upload step is friction. You're downloading a zip to a local filesystem, opening another app, navigating to the repo, uploading. The ideal would be direct integration between design tools and deployment platforms, cutting out the file management in between. These are the kinds of workflow seams worth smoothing out.
 
 ## What I Learned
 
