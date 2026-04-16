@@ -22,7 +22,8 @@ function getClient() {
 export async function generateBlogPost(
   transcript: string,
   stylePrompt: string,
-  artifacts: Artifact[] = []
+  artifacts: Artifact[] = [],
+  existingContent?: string
 ): Promise<string> {
   const client = getClient();
   const today = new Date().toISOString().split("T")[0];
@@ -81,14 +82,29 @@ The following artifacts have been provided as additional context. Reference and 
 ${names}`;
   }
 
+  // When editing, include the existing post so Claude can update it
+  // rather than writing from scratch.
+  let editNote = "";
+  if (existingContent) {
+    editNote = `
+
+You are UPDATING an existing blog post. Here is the current content:
+
+===EXISTING POST===
+${existingContent}
+===END EXISTING POST===
+
+Incorporate the new transcript into the existing post. Preserve the original title, slug-friendly structure, and any content that is still relevant. Merge the new material naturally — add new sections, extend existing ones, or revise as appropriate. Keep the original date in the frontmatter.`;
+  }
+
   // Add the main prompt text.
   content.push({
     type: "text",
     text: `${stylePrompt}
 
-Today's date is ${today}.${artifactNote}
+Today's date is ${today}.${artifactNote}${editNote}
 
-Here is the transcript to transform into a blog post:
+Here is the transcript to ${existingContent ? "incorporate into the existing post" : "transform into a blog post"}:
 
 ---
 ${transcript}
@@ -96,7 +112,7 @@ ${transcript}
 
 Return the complete MDX file including frontmatter. The frontmatter must include:
 - title (string)
-- date (${today})
+- date (${existingContent ? "keep the original date" : today})
 - description (a one-sentence summary for SEO/previews)
 - tags (array of 2-5 relevant lowercase tags)
 - published (set to true)

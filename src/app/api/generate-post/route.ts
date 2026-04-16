@@ -17,10 +17,12 @@ export async function POST(request: NextRequest) {
       transcript,
       stylePrompt: overridePrompt,
       artifacts = [],
+      existingContent,
     } = (await request.json()) as {
       transcript?: string;
       stylePrompt?: string;
       artifacts?: ArtifactPayload[];
+      existingContent?: string;
     };
 
     if (!transcript) {
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
         "Transform this transcript into a well-structured blog post with MDX frontmatter.";
     }
 
-    const mdx = await generateBlogPost(transcript, stylePrompt, artifacts);
+    const mdx = await generateBlogPost(transcript, stylePrompt, artifacts, existingContent);
 
     return NextResponse.json({ mdx });
   } catch (error) {

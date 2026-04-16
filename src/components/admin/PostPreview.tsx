@@ -7,6 +7,7 @@ interface PostPreviewProps {
   onMdxChange: (value: string) => void;
   onPublish: (slug: string) => void;
   publishing: boolean;
+  editSlug?: string;
 }
 
 export function PostPreview({
@@ -14,8 +15,10 @@ export function PostPreview({
   onMdxChange,
   onPublish,
   publishing,
+  editSlug,
 }: PostPreviewProps) {
   const [slug, setSlug] = useState(() => {
+    if (editSlug) return editSlug;
     const titleMatch = mdx.match(/title:\s*"([^"]+)"/);
     if (titleMatch) {
       return titleMatch[1]
@@ -26,10 +29,12 @@ export function PostPreview({
     return `post-${Date.now()}`;
   });
 
+  const isEditing = Boolean(editSlug);
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="font-mono text-xs uppercase tracking-widest text-primary">
-        // Generated Post
+        // {isEditing ? "Updated Post" : "Generated Post"}
       </h2>
 
       <textarea
@@ -46,7 +51,8 @@ export function PostPreview({
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            className="rounded-lg border border-outline-variant bg-bg px-3 py-2 font-mono text-sm text-on-surface outline-none transition-colors focus:border-primary/50"
+            disabled={isEditing}
+            className="rounded-lg border border-outline-variant bg-bg px-3 py-2 font-mono text-sm text-on-surface outline-none transition-colors focus:border-primary/50 disabled:opacity-60"
           />
         </div>
 
@@ -55,7 +61,13 @@ export function PostPreview({
           disabled={publishing || !mdx.trim() || !slug.trim()}
           className="rounded-lg bg-primary px-6 py-2.5 font-mono text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {publishing ? "Publishing..." : "Publish to GitHub"}
+          {publishing
+            ? isEditing
+              ? "Updating..."
+              : "Publishing..."
+            : isEditing
+              ? "Update on GitHub"
+              : "Publish to GitHub"}
         </button>
       </div>
     </div>
