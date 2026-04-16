@@ -12,11 +12,15 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-[#1F1F1F]">
+    <header className="sticky top-0 z-50 bg-[#121414]/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-        <Link href="/" className="font-mono text-base tracking-tight transition-opacity hover:opacity-80">
-          <span className="text-[#EDEDED]">Vibes</span>{" "}
-          <span className="text-[#A3E635]">Coder</span>
+        <Link
+          href="/"
+          className="text-xl font-bold tracking-tighter transition-opacity hover:opacity-80"
+          style={{ fontFamily: "var(--font-headline)" }}
+        >
+          <span className="text-[#e2e2e2]">Vibes</span>{" "}
+          <span className="text-[#BC7CFF]">Coder</span>
         </Link>
 
         {/* Desktop nav */}
@@ -25,7 +29,8 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="font-mono text-sm text-[#888888] transition-colors hover:text-[#A3E635]"
+              className="text-xs uppercase tracking-widest text-[#cec2d4]/60 transition-colors hover:text-[#dcb8ff]"
+              style={{ fontFamily: "var(--font-label)" }}
             >
               {link.label}
             </Link>
@@ -36,7 +41,7 @@ export function Header() {
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
-          className="inline-flex items-center justify-center rounded-md p-2 text-[#888888] transition-colors hover:text-[#A3E635] sm:hidden"
+          className="inline-flex items-center justify-center rounded-md p-2 text-[#cec2d4] transition-colors hover:text-[#dcb8ff] sm:hidden"
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
         >
@@ -52,13 +57,14 @@ export function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <nav className="border-t border-[#1F1F1F] px-6 pb-4 sm:hidden">
+        <nav className="bg-[#1a1c1c] px-6 pb-4 sm:hidden">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="block py-2.5 font-mono text-sm text-[#888888] transition-colors hover:text-[#A3E635]"
+              className="block py-2.5 text-xs uppercase tracking-widest text-[#cec2d4]/60 transition-colors hover:text-[#dcb8ff]"
+              style={{ fontFamily: "var(--font-label)" }}
             >
               {link.label}
             </Link>

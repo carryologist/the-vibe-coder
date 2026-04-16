@@ -15,13 +15,11 @@ interface PostPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Pre-generate known post paths at build time.
 export async function generateStaticParams() {
   const posts = await getAllPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
 
-// Allow dynamic requests so the cookie check runs at request time.
 export const dynamicParams = true;
 
 export async function generateMetadata({ params }: PostPageProps) {
@@ -36,15 +34,12 @@ export default async function PostPage({ params }: PostPageProps) {
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  // Admin check — only resolves for server-rendered requests.
-  // Static/ISR pages will have no cookie and default to false.
   let isAdmin = false;
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("admin_session")?.value;
     isAdmin = token ? await verifySession(token) : false;
   } catch {
-    // cookies() throws during static generation; that's fine.
     isAdmin = false;
   }
 
@@ -62,7 +57,8 @@ export default async function PostPage({ params }: PostPageProps) {
         <AnimateIn>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 font-mono text-xs text-[#888888] transition-colors hover:text-[#A3E635] mb-10"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-[#cec2d4]/50 transition-colors hover:text-[#dcb8ff] mb-10"
+            style={{ fontFamily: "var(--font-label)" }}
           >
             <span aria-hidden="true">&larr;</span>
             cd ..
@@ -79,15 +75,21 @@ export default async function PostPage({ params }: PostPageProps) {
         {/* Header */}
         <AnimateIn delay={0.05}>
           <header className="mb-12">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-[#EDEDED]">
+            <h1
+              className="text-3xl font-bold tracking-tight sm:text-4xl text-[#e2e2e2]"
+              style={{ fontFamily: "var(--font-headline)" }}
+            >
               {post.title}
             </h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs text-[#888888]">
+            <div
+              className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs uppercase tracking-widest text-[#cec2d4]/50"
+              style={{ fontFamily: "var(--font-label)" }}
+            >
               <time dateTime={post.date}>{formattedDate}</time>
               {post.readingTime && (
                 <>
-                  <span className="text-[#333333]">//</span>
+                  <span className="text-[#4c4452]">&middot;</span>
                   <span>{post.readingTime}</span>
                 </>
               )}

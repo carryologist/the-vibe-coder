@@ -1,64 +1,71 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0A0A0A;
-  --color-bg-light: #FAFAFA;
-  --color-surface: #111111;
-  --color-surface-light: #FFFFFF;
-  --color-border: #1F1F1F;
-  --color-border-light: #E5E5E5;
-  --color-text: #EDEDED;
-  --color-text-light: #1A1A1A;
-  --color-text-secondary: #888888;
-  --color-accent: #A3E635;
-  --color-accent-dim: #65A30D;
-  --color-glow: rgba(163, 230, 53, 0.08);
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  /* ── Surfaces ── */
+  --color-bg: #121414;
+  --color-surface-lowest: #0d0f0f;
+  --color-surface-low: #1a1c1c;
+  --color-surface: #1e2020;
+  --color-surface-high: #282a2a;
+  --color-surface-highest: #333535;
+  --color-surface-bright: #383939;
+
+  /* ── Accents ── */
+  --color-primary: #dcb8ff;
+  --color-primary-container: #bc7cff;
+  --color-secondary: #f7acff;
+  --color-secondary-container: #781b8b;
+  --color-tertiary: #ffb4a5;
+  --color-tertiary-container: #f1755d;
+
+  /* ── Text ── */
+  --color-on-surface: #e2e2e2;
+  --color-on-surface-variant: #cec2d4;
+
+  /* ── Borders ── */
+  --color-outline: #978d9e;
+  --color-outline-variant: #4c4452;
+
+  /* ── Fonts ── */
+  --font-headline: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-label: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "Fira Code", "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* Dark-first body */
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   background-color: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Light mode override */
-.light body,
-[data-theme="light"] body {
-  background-color: var(--color-bg-light);
-  color: var(--color-text-light);
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Selection color */
 ::selection {
-  background-color: rgba(163, 230, 53, 0.25);
-  color: #EDEDED;
+  background-color: rgba(220, 184, 255, 0.25);
+  color: #e2e2e2;
 }
 
-/* Scrollbar styling for dark mode */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0A0A0A;
+  background: #121414;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: #333535;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #4c4452;
 }
 
-/* rehype-pretty-code */
+/* ── Code blocks (rehype-pretty-code) ── */
 pre > code {
   display: grid;
 }
@@ -67,8 +74,8 @@ pre > code {
   overflow-x: auto;
   padding: 1.25rem 1.5rem;
   border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  background-color: #0D0D0D !important;
+  border: 1px solid rgba(76, 68, 82, 0.2);
+  background-color: #0d0f0f !important;
 }
 
 [data-rehype-pretty-code-figure] code {
@@ -77,7 +84,7 @@ pre > code {
   line-height: 1.7;
 }
 
-/* Prose content */
+/* ── Prose ── */
 .prose {
   max-width: 720px;
   line-height: 1.8;
@@ -87,10 +94,10 @@ pre > code {
   margin-top: 1.5em;
 }
 
-/* Reading progress bar — terminal style */
+/* ── Reading progress bar ── */
 .reading-progress {
   height: 2px;
-  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-dim));
-  box-shadow: 0 0 8px rgba(163, 230, 53, 0.4);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  box-shadow: 0 0 8px rgba(220, 184, 255, 0.4);
   transition: width 50ms linear;
 }

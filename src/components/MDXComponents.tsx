@@ -3,15 +3,16 @@ import Image from "next/image";
 import Link from "next/link";
 
 /* ------------------------------------------------------------------ */
-/*  Dark-first prose styles — "Medium meets VS Code"                  */
-/*  BG: #0A0A0A  Surface: #111111  Border: #1F1F1F                   */
-/*  Text: #EDEDED  Secondary: #888888  Accent: #A3E635               */
+/*  Neon Brutalist prose — vibes_protocol design system               */
+/*  BG: #121414  Surface: #1a1c1c  Primary: #dcb8ff                  */
+/*  Text: #e2e2e2  Variant: #cec2d4  Outline: #4c4452                */
 /* ------------------------------------------------------------------ */
 
 function H1(props: ComponentPropsWithoutRef<"h1">) {
   return (
     <h1
-      className="mb-4 mt-10 text-3xl font-bold tracking-tight text-[#EDEDED] first:mt-0"
+      className="mb-4 mt-10 text-3xl font-bold tracking-tight text-[#e2e2e2] first:mt-0"
+      style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
   );
@@ -20,7 +21,8 @@ function H1(props: ComponentPropsWithoutRef<"h1">) {
 function H2(props: ComponentPropsWithoutRef<"h2">) {
   return (
     <h2
-      className="mb-3 mt-10 text-2xl font-semibold tracking-tight text-[#EDEDED]"
+      className="mb-3 mt-10 text-2xl font-semibold tracking-tight text-[#e2e2e2]"
+      style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
   );
@@ -29,7 +31,8 @@ function H2(props: ComponentPropsWithoutRef<"h2">) {
 function H3(props: ComponentPropsWithoutRef<"h3">) {
   return (
     <h3
-      className="mb-2 mt-8 text-xl font-semibold text-[#EDEDED]"
+      className="mb-2 mt-8 text-xl font-semibold text-[#e2e2e2]"
+      style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
   );
@@ -38,7 +41,8 @@ function H3(props: ComponentPropsWithoutRef<"h3">) {
 function H4(props: ComponentPropsWithoutRef<"h4">) {
   return (
     <h4
-      className="mb-2 mt-6 text-lg font-medium text-[#EDEDED]"
+      className="mb-2 mt-6 text-lg font-medium text-[#e2e2e2]"
+      style={{ fontFamily: "var(--font-headline)" }}
       {...props}
     />
   );
@@ -47,7 +51,7 @@ function H4(props: ComponentPropsWithoutRef<"h4">) {
 function Paragraph(props: ComponentPropsWithoutRef<"p">) {
   return (
     <p
-      className="my-5 text-base leading-[1.8] text-[#CCCCCC]"
+      className="my-5 text-base leading-[1.8] text-[#cec2d4]"
       {...props}
     />
   );
@@ -61,7 +65,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
     return (
       <a
         href={href}
-        className="text-[#A3E635] underline decoration-[#A3E635]/30 underline-offset-2 transition-colors hover:decoration-[#A3E635] hover:text-[#A3E635]/70"
+        className="text-[#dcb8ff] underline decoration-[#dcb8ff]/30 underline-offset-2 transition-colors hover:decoration-[#dcb8ff] hover:text-[#dcb8ff]/70"
         target="_blank"
         rel="noopener noreferrer"
         {...rest}
@@ -74,7 +78,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
   return (
     <Link
       href={href}
-      className="text-[#A3E635] underline decoration-[#A3E635]/30 underline-offset-2 transition-colors hover:decoration-[#A3E635] hover:text-[#A3E635]/70"
+      className="text-[#dcb8ff] underline decoration-[#dcb8ff]/30 underline-offset-2 transition-colors hover:decoration-[#dcb8ff] hover:text-[#dcb8ff]/70"
       {...rest}
     >
       {children}
@@ -85,7 +89,7 @@ function Anchor(props: ComponentPropsWithoutRef<"a">) {
 function Blockquote(props: ComponentPropsWithoutRef<"blockquote">) {
   return (
     <blockquote
-      className="my-6 border-l-2 border-[#A3E635] pl-5 italic text-[#888888]"
+      className="my-6 border-l-2 border-[#dcb8ff] pl-5 italic text-[#cec2d4]"
       {...props}
     />
   );
@@ -94,7 +98,7 @@ function Blockquote(props: ComponentPropsWithoutRef<"blockquote">) {
 function UnorderedList(props: ComponentPropsWithoutRef<"ul">) {
   return (
     <ul
-      className="my-5 list-disc space-y-2 pl-6 text-[#CCCCCC] marker:text-[#A3E635]"
+      className="my-5 list-disc space-y-2 pl-6 text-[#cec2d4] marker:text-[#dcb8ff]"
       {...props}
     />
   );
@@ -103,7 +107,7 @@ function UnorderedList(props: ComponentPropsWithoutRef<"ul">) {
 function OrderedList(props: ComponentPropsWithoutRef<"ol">) {
   return (
     <ol
-      className="my-5 list-decimal space-y-2 pl-6 text-[#CCCCCC] marker:text-[#A3E635]"
+      className="my-5 list-decimal space-y-2 pl-6 text-[#cec2d4] marker:text-[#dcb8ff]"
       {...props}
     />
   );
@@ -116,7 +120,8 @@ function ListItem(props: ComponentPropsWithoutRef<"li">) {
 function InlineCode(props: ComponentPropsWithoutRef<"code">) {
   return (
     <code
-      className="rounded bg-[#1A1A1A] border border-[#1F1F1F] px-1.5 py-0.5 font-mono text-[0.875em] text-[#A3E635]/90"
+      className="rounded bg-[#282a2a] border border-[#4c4452]/20 px-1.5 py-0.5 text-[0.875em] text-[#dcb8ff]"
+      style={{ fontFamily: "var(--font-mono)" }}
       {...props}
     />
   );
@@ -125,14 +130,14 @@ function InlineCode(props: ComponentPropsWithoutRef<"code">) {
 function Pre(props: ComponentPropsWithoutRef<"pre">) {
   return (
     <pre
-      className="my-6 overflow-x-auto rounded-xl border border-[#1F1F1F] bg-[#0D0D0D] p-4 text-sm leading-relaxed text-[#EDEDED]"
+      className="my-6 overflow-x-auto rounded-xl border border-[#4c4452]/20 bg-[#0d0f0f] p-4 text-sm leading-relaxed text-[#e2e2e2]"
       {...props}
     />
   );
 }
 
 function HorizontalRule() {
-  return <hr className="my-10 border-[#1F1F1F]" />;
+  return <hr className="my-10 border-[#4c4452]" />;
 }
 
 function MDXImage(props: ComponentPropsWithoutRef<"img">) {
@@ -140,8 +145,6 @@ function MDXImage(props: ComponentPropsWithoutRef<"img">) {
 
   if (!src) return null;
 
-  // Use Next.js Image when explicit dimensions are provided via
-  // markdown attributes; fall back to a plain <img> otherwise.
   if (typeof src === "string" && width && height) {
     return (
       <Image

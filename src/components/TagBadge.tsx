@@ -7,15 +7,23 @@ interface TagBadgeProps {
 
 export function TagBadge({ tag, linked = true }: TagBadgeProps) {
   const classes =
-    "inline-block rounded-md border border-[#1F1F1F] bg-[#0A0A0A] px-2 py-0.5 font-mono text-[11px] text-[#888888] transition-all hover:border-[#A3E635]/40 hover:text-[#A3E635]";
+    "inline-block rounded-lg bg-[#282a2a] px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-[#cec2d4] transition-colors hover:text-[#dcb8ff]";
 
   if (linked) {
     return (
-      <Link href={`/tags/${tag}`} className={classes}>
+      <Link
+        href={`/tags/${tag}`}
+        className={classes}
+        style={{ fontFamily: "var(--font-label)" }}
+      >
         {tag}
       </Link>
     );
   }
 
-  return <span className={classes}>{tag}</span>;
+  return (
+    <span className={classes} style={{ fontFamily: "var(--font-label)" }}>
+      {tag}
+    </span>
+  );
 }

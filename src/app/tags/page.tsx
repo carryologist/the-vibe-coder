@@ -12,7 +12,6 @@ export default async function TagsPage() {
   const posts = await getAllPosts();
   const tags = await getAllTags();
 
-  // Count posts per tag.
   const tagCounts: Record<string, number> = {};
   for (const tag of tags) {
     tagCounts[tag] = posts.filter((p) => p.tags.includes(tag)).length;
@@ -21,7 +20,10 @@ export default async function TagsPage() {
   return (
     <AnimateIn>
       <div>
-        <h1 className="font-mono text-xs font-semibold uppercase tracking-widest text-[#A3E635] mb-8">
+        <h1
+          className="text-xs font-semibold uppercase tracking-widest text-[#dcb8ff] mb-8"
+          style={{ fontFamily: "var(--font-label)" }}
+        >
           // Tags
         </h1>
 
@@ -29,7 +31,10 @@ export default async function TagsPage() {
           {tags.map((tag) => (
             <div key={tag} className="flex items-center gap-1.5">
               <TagBadge tag={tag} />
-              <span className="font-mono text-[11px] text-[#555555]">
+              <span
+                className="text-[11px] text-[#978d9e]"
+                style={{ fontFamily: "var(--font-label)" }}
+              >
                 ({tagCounts[tag]})
               </span>
             </div>

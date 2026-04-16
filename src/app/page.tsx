@@ -18,11 +18,14 @@ export default async function HomePage() {
       {/* Hero */}
       <AnimateIn>
         <section className="mb-16">
-          <h1 className="font-mono text-4xl font-bold tracking-tight sm:text-5xl">
-            <span className="text-[#EDEDED]">Vibes</span>{" "}
-            <span className="text-[#A3E635]">Coder</span>
+          <h1
+            className="text-4xl font-bold tracking-tighter sm:text-5xl"
+            style={{ fontFamily: "var(--font-headline)" }}
+          >
+            <span className="text-[#e2e2e2]">Vibes</span>{" "}
+            <span className="bg-gradient-to-r from-[#dcb8ff] to-[#f7acff] bg-clip-text text-transparent">Coder</span>
           </h1>
-          <p className="mt-4 text-lg text-[#888888] max-w-2xl">
+          <p className="mt-4 text-lg text-[#cec2d4] max-w-2xl">
             Thoughts on software development, AI-assisted coding, and the craft of
             building things that work.
           </p>
@@ -31,13 +34,19 @@ export default async function HomePage() {
 
       {/* Posts */}
       <AnimateIn delay={0.1}>
-        <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-[#A3E635] mb-8">
+        <h2
+          className="text-xs font-semibold uppercase tracking-widest text-[#dcb8ff] mb-8"
+          style={{ fontFamily: "var(--font-label)" }}
+        >
           // Latest Posts
         </h2>
       </AnimateIn>
 
       {posts.length === 0 ? (
-        <p className="font-mono text-sm text-[#888888]">
+        <p
+          className="text-sm text-[#cec2d4]"
+          style={{ fontFamily: "var(--font-label)" }}
+        >
           No posts yet. Check back soon.
         </p>
       ) : (
