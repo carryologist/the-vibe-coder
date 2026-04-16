@@ -146,7 +146,9 @@ The entire process — from design to deployed site — happened from my phone i
 3. **Upload to GitHub** — use GitHub's web interface to push the zip to the repo
 4. **Agent processing** — Coder agents detect the new file, extract it, and apply the design
 
-It works, but the iOS Files → GitHub upload step is friction. You're downloading a zip to a local filesystem, opening another app, navigating to the repo, uploading. The ideal would be direct integration between design tools and deployment platforms, cutting out the file management in between. These are the kinds of workflow seams worth smoothing out.
+In practice: Stitch exports a zip, which downloads straight to the iPhone Files app. From there I opened GitHub's web UI in Safari, navigated to the repo, and uploaded the zip to a branch. Once it landed in the repo, Coder Agents had access to the file — they extracted the zip, read the HTML and `DESIGN.md` files inside, and applied the design system to the codebase.
+
+It works, but the iOS Files → GitHub upload step is friction. You're bouncing between apps, navigating folder structures on a phone keyboard. The ideal would be direct integration between design tools and deployment platforms, cutting out the file management in between. These are the kinds of workflow seams worth smoothing out.
 
 ## What I Learned
 
