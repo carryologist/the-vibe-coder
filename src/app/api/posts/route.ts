@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import matter from "gray-matter";
 import { commitFile, commitFileRaw, deleteFile, readFile } from "@/lib/github";
 
 function sanitizeSlug(slug: string): string {
@@ -60,7 +61,11 @@ export async function POST(request: NextRequest) {
 // Update an existing post.
 export async function PUT(request: NextRequest) {
   try {
-    const { slug, content } = await request.json();
+    const { slug, content, summary } = await request.json() as {
+      slug: string;
+      content: string;
+      summary?: string;
+    };
 
     if (!slug || !content) {
       return NextResponse.json(
@@ -71,7 +76,25 @@ export async function PUT(request: NextRequest) {
 
     const safeSlug = sanitizeSlug(slug);
     const path = `content/posts/${safeSlug}.mdx`;
-    const sha = await commitFile(path, content, `post: update "${safeSlug}"`);
+
+    let finalContent = content;
+
+    // When a summary is provided, add a changelog entry to the
+    // frontmatter before committing.
+    if (summary) {
+      const parsed = matter(content);
+      const changelog = Array.isArray(parsed.data.changelog)
+        ? parsed.data.changelog
+        : [];
+      changelog.unshift({
+        date: new Date().toISOString().split("T")[0],
+        summary,
+      });
+      parsed.data.changelog = changelog;
+      finalContent = matter.stringify(parsed.content, parsed.data);
+    }
+
+    const sha = await commitFile(path, finalContent, `post: update "${safeSlug}"`);
 
     return NextResponse.json({ success: true, sha, path });
   } catch (error) {

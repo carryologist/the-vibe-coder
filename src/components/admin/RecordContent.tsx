@@ -95,7 +95,7 @@ export function RecordContent() {
       // Use PUT when editing an existing post, POST for new posts.
       const method = editSlug ? "PUT" : "POST";
       const body = editSlug
-        ? { slug, content: mdx }
+        ? { slug, content: mdx, summary: "Updated via voice recording" }
         : { slug, content: mdx, images };
 
       const res = await fetch("/api/posts", {

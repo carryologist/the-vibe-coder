@@ -10,6 +10,7 @@ import { ReadingProgress } from "@/components/ReadingProgress";
 import { AnimateIn } from "@/components/AnimateIn";
 import { TagBadge } from "@/components/TagBadge";
 import { AdminPostControls } from "@/components/admin/AdminPostControls";
+import Changelog from "@/components/Changelog";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -104,6 +105,13 @@ export default async function PostPage({ params }: PostPageProps) {
             )}
           </header>
         </AnimateIn>
+
+        {/* Changelog */}
+        {post.changelog && post.changelog.length > 0 && (
+          <AnimateIn delay={0.075}>
+            <Changelog entries={post.changelog} />
+          </AnimateIn>
+        )}
 
         {/* Content */}
         <AnimateIn delay={0.1}>
