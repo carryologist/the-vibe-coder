@@ -29,6 +29,13 @@ export function Footer() {
           >
             GitHub
           </Link>
+          <Link
+            href="/admin"
+            className="text-xs uppercase tracking-widest text-outline-variant/40 transition-colors hover:text-primary"
+            style={{ fontFamily: "var(--font-label)" }}
+          >
+            Admin
+          </Link>
         </nav>
       </div>
     </footer>

@@ -40,9 +40,15 @@ export default function AdminLoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-xl border border-outline-variant/20 bg-surface-low p-8"
       >
-        <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-6">
+        <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-3">
           // Admin Access
         </h1>
+        <p className="text-xs text-on-surface-variant/60 mb-6">
+          This area is for the site owner.{" "}
+          <a href="/" className="text-primary/70 underline underline-offset-2 hover:text-primary">
+            Back to the blog &rarr;
+          </a>
+        </p>
 
         <input
           type="password"
