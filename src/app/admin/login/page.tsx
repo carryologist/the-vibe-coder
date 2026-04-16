@@ -37,9 +37,9 @@ export default function AdminLoginPage() {
     <div className="flex min-h-[60vh] items-center justify-center">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-xl border border-[#1F1F1F] bg-[#111111] p-8"
+        className="w-full max-w-sm rounded-xl border border-outline-variant/20 bg-surface-low p-8"
       >
-        <h1 className="font-mono text-xs uppercase tracking-widest text-[#A3E635] mb-6">
+        <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-6">
           // Admin Access
         </h1>
 
@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="w-full rounded-lg border border-[#1F1F1F] bg-[#0A0A0A] px-4 py-3 font-mono text-sm text-[#EDEDED] placeholder-[#555555] outline-none transition-colors focus:border-[#A3E635]/50"
+          className="w-full rounded-lg border border-outline-variant bg-bg px-4 py-3 font-mono text-sm text-on-surface placeholder-outline outline-none transition-colors focus:border-primary/50"
           autoFocus
         />
 
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-4 w-full rounded-lg bg-[#A3E635] px-4 py-3 font-mono text-sm font-medium text-[#0A0A0A] transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-primary px-4 py-3 font-mono text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {loading ? "..." : "Enter"}
         </button>

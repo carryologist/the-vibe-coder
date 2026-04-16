@@ -39,14 +39,14 @@ export function AdminCardControls({ slug }: AdminCardControlsProps) {
     >
       <Link
         href={`/admin/record?edit=${slug}`}
-        className="rounded border border-[#1F1F1F] px-2 py-1 font-mono text-xs text-[#888888] transition-colors hover:border-[#A3E635]/30 hover:text-[#A3E635]"
+        className="rounded border border-outline-variant px-2 py-1 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
       >
         Edit
       </Link>
       <button
         onClick={handleDelete}
         disabled={deleting}
-        className="rounded border border-[#1F1F1F] px-2 py-1 font-mono text-xs text-[#888888] transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
+        className="rounded border border-outline-variant px-2 py-1 font-mono text-xs text-on-surface-variant transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
       >
         {deleting ? "…" : "Delete"}
       </button>

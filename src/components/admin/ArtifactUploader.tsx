@@ -40,7 +40,6 @@ function readFileAsBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Strip the data URL prefix to get raw base64.
       const base64 = result.split(",")[1] || result;
       resolve(base64);
     };
@@ -83,7 +82,6 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
       let preview: string | undefined;
 
       if (type === "image") {
-        // Use the full data URL as preview.
         preview = `data:${file.type};base64,${base64}`;
       }
 
@@ -123,10 +121,10 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-mono text-xs uppercase tracking-widest text-[#A3E635]">
+        <h3 className="font-mono text-xs uppercase tracking-widest text-primary">
           // Artifacts
         </h3>
-        <span className="font-mono text-[11px] text-[#555555]">
+        <span className="font-mono text-[11px] text-outline">
           {artifacts.length} file{artifacts.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -139,14 +137,14 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
         onClick={() => inputRef.current?.click()}
         className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 transition-colors ${
           dragOver
-            ? "border-[#A3E635]/50 bg-[#A3E635]/5"
-            : "border-[#1F1F1F] hover:border-[#888888]/30"
+            ? "border-primary/50 bg-primary/5"
+            : "border-outline-variant hover:border-on-surface-variant/30"
         }`}
       >
-        <p className="font-mono text-xs text-[#888888]">
+        <p className="font-mono text-xs text-on-surface-variant">
           Drop files here or click to browse
         </p>
-        <p className="font-mono text-[11px] text-[#555555]">
+        <p className="font-mono text-[11px] text-outline">
           Images, PDFs, text files — up to 10MB each
         </p>
         <input
@@ -170,7 +168,7 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
           {artifacts.map((artifact) => (
             <div
               key={artifact.id}
-              className="flex items-center gap-3 rounded-lg border border-[#1F1F1F] bg-[#0A0A0A] px-3 py-2"
+              className="flex items-center gap-3 rounded-lg border border-outline-variant bg-bg px-3 py-2"
             >
               {/* Thumbnail/icon */}
               {artifact.type === "image" && artifact.preview ? (
@@ -180,18 +178,18 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
                   className="h-10 w-10 rounded object-cover"
                 />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded bg-[#1F1F1F] font-mono text-[11px] text-[#888888]">
+                <div className="flex h-10 w-10 items-center justify-center rounded bg-outline-variant font-mono text-[11px] text-on-surface-variant">
                   {artifact.type === "pdf" ? "PDF" : "TXT"}
                 </div>
               )}
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="truncate font-mono text-xs text-[#EDEDED]">
+                <p className="truncate font-mono text-xs text-on-surface">
                   {artifact.name}
                 </p>
                 {artifact.type === "text" && artifact.preview && (
-                  <p className="truncate font-mono text-[11px] text-[#555555]">
+                  <p className="truncate font-mono text-[11px] text-outline">
                     {artifact.preview}
                   </p>
                 )}
@@ -200,7 +198,7 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
               {/* Remove */}
               <button
                 onClick={() => handleRemove(artifact.id)}
-                className="font-mono text-xs text-[#555555] transition-colors hover:text-red-400"
+                className="font-mono text-xs text-outline transition-colors hover:text-red-400"
               >
                 ✕
               </button>

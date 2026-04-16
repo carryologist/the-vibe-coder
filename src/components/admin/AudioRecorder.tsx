@@ -69,11 +69,9 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
       finalTextRef.current = "";
       isRecordingRef.current = true;
 
-      // Start microphone stream for MediaRecorder backup.
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // MediaRecorder for audio backup.
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
@@ -87,7 +85,6 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
       };
       recorder.start(30000);
 
-      // SpeechRecognition for real-time transcription.
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
@@ -112,8 +109,6 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
         setInterimText(interim);
       };
 
-      // Auto-restart if recognition stops while we're still recording.
-      // This handles Chrome's tendency to stop after silence or ~60s.
       recognition.onend = () => {
         if (isRecordingRef.current) {
           try {
@@ -125,7 +120,6 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
       };
 
       recognition.onerror = (event: Event & { error: string }) => {
-        // "no-speech" and "aborted" are normal during auto-restarts.
         if (event.error !== "no-speech" && event.error !== "aborted") {
           console.error("Speech recognition error:", event.error);
         }
@@ -134,7 +128,6 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
       recognition.start();
       setStatus("recording");
 
-      // Elapsed timer.
       const start = Date.now();
       timerRef.current = setInterval(() => {
         setElapsed(Math.floor((Date.now() - start) / 1000));
@@ -150,29 +143,24 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
     isRecordingRef.current = false;
     setStatus("processing");
 
-    // Stop recognition.
     if (recognitionRef.current) {
-      recognitionRef.current.onend = null; // Prevent auto-restart.
+      recognitionRef.current.onend = null;
       recognitionRef.current.stop();
     }
 
-    // Stop timer.
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
 
-    // Stop MediaRecorder.
     if (recorderRef.current && recorderRef.current.state === "recording") {
       recorderRef.current.stop();
     }
 
-    // Release microphone.
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
     }
 
-    // Small delay to let final recognition results settle.
     setTimeout(() => {
       const transcript = finalTextRef.current.trim();
       if (transcript) {
@@ -187,11 +175,11 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
 
   if (!supported) {
     return (
-      <div className="rounded-xl border border-[#1F1F1F] bg-[#111111] p-6 text-center">
+      <div className="rounded-xl border border-outline-variant bg-surface-low p-6 text-center">
         <p className="font-mono text-sm text-red-400">
           Speech recognition is not supported in this browser.
         </p>
-        <p className="mt-2 font-mono text-xs text-[#888888]">
+        <p className="mt-2 font-mono text-xs text-on-surface-variant">
           Please use Chrome, Edge, or Safari.
         </p>
       </div>
@@ -208,16 +196,16 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
           status === "recording"
             ? "border-red-500 bg-red-500/10 hover:bg-red-500/20"
             : status === "processing"
-              ? "border-[#1F1F1F] bg-[#111111] opacity-50 cursor-not-allowed"
-              : "border-[#A3E635] bg-[#A3E635]/10 hover:bg-[#A3E635]/20"
+              ? "border-outline-variant bg-surface-low opacity-50 cursor-not-allowed"
+              : "border-primary bg-primary/10 hover:bg-primary/20"
         }`}
       >
         {status === "recording" ? (
           <div className="h-6 w-6 rounded-sm bg-red-500" />
         ) : status === "processing" ? (
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#888888] border-t-[#A3E635]" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-on-surface-variant border-t-primary" />
         ) : (
-          <div className="h-6 w-6 rounded-full bg-[#A3E635]" />
+          <div className="h-6 w-6 rounded-full bg-primary" />
         )}
 
         {status === "recording" && (
@@ -226,12 +214,12 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
       </button>
 
       {/* Timer */}
-      <div className="font-mono text-2xl tabular-nums text-[#EDEDED]">
+      <div className="font-mono text-2xl tabular-nums text-on-surface">
         {formatTime(elapsed)}
       </div>
 
       {/* Status */}
-      <p className="font-mono text-xs text-[#888888]">
+      <p className="font-mono text-xs text-on-surface-variant">
         {status === "idle" && "Ready to record"}
         {status === "recording" && "Recording... click to stop"}
         {status === "processing" && "Finalizing transcript..."}
@@ -239,15 +227,15 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
 
       {/* Live transcript preview */}
       {(status === "recording" || finalText) && (
-        <div className="w-full max-w-2xl rounded-xl border border-[#1F1F1F] bg-[#0A0A0A] p-4">
-          <p className="font-mono text-[11px] text-[#555555] mb-2">// live transcript</p>
-          <p className="text-sm leading-relaxed text-[#CCCCCC]">
+        <div className="w-full max-w-2xl rounded-xl border border-outline-variant bg-bg p-4">
+          <p className="font-mono text-[11px] text-outline mb-2">// live transcript</p>
+          <p className="text-sm leading-relaxed text-on-surface-variant">
             {finalText}
             {interimText && (
-              <span className="text-[#888888] italic"> {interimText}</span>
+              <span className="text-on-surface-variant/50 italic"> {interimText}</span>
             )}
             {status === "recording" && (
-              <span className="inline-block w-1.5 h-4 bg-[#A3E635] ml-0.5 animate-pulse align-middle" />
+              <span className="inline-block w-1.5 h-4 bg-primary ml-0.5 animate-pulse align-middle" />
             )}
           </p>
         </div>
@@ -259,7 +247,7 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
           <p className="font-mono text-xs text-red-400">{error}</p>
           <button
             onClick={() => setError("")}
-            className="mt-1 font-mono text-xs text-[#888888] underline hover:text-[#EDEDED]"
+            className="mt-1 font-mono text-xs text-on-surface-variant underline hover:text-on-surface"
           >
             Dismiss
           </button>

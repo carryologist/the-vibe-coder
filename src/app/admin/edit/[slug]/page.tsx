@@ -55,7 +55,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center pt-20">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#888888] border-t-[#A3E635]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-on-surface-variant border-t-primary" />
       </div>
     );
   }
@@ -66,25 +66,25 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         <div className="flex items-center gap-4">
           <Link
             href={`/posts/${slug}`}
-            className="font-mono text-xs text-[#888888] transition-colors hover:text-[#A3E635]"
+            className="font-mono text-xs text-on-surface-variant transition-colors hover:text-primary"
           >
             ← back to post
           </Link>
-          <h1 className="font-mono text-xs uppercase tracking-widest text-[#A3E635]">
+          <h1 className="font-mono text-xs uppercase tracking-widest text-primary">
             // editing: {slug}
           </h1>
         </div>
 
         <div className="flex items-center gap-3">
           {saved && (
-            <span className="font-mono text-[11px] text-[#A3E635]">
+            <span className="font-mono text-[11px] text-primary">
               ✓ Saved — deploying...
             </span>
           )}
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-[#A3E635] px-4 py-2 font-mono text-xs font-medium text-[#0A0A0A] transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save & Deploy"}
           </button>
@@ -100,7 +100,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="min-h-[70vh] w-full resize-y rounded-xl border border-[#1F1F1F] bg-[#0A0A0A] px-4 py-3 font-mono text-xs leading-relaxed text-[#EDEDED] outline-none transition-colors focus:border-[#A3E635]/50"
+        className="min-h-[70vh] w-full resize-y rounded-xl border border-outline-variant bg-bg px-4 py-3 font-mono text-xs leading-relaxed text-on-surface outline-none transition-colors focus:border-primary/50"
       />
     </div>
   );

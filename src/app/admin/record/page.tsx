@@ -32,7 +32,6 @@ export default function RecordPage() {
     setError("");
 
     try {
-      // Prepare artifacts payload (strip preview and id for the API).
       const artifactPayload = artifacts.map(({ name, type, mimeType, base64 }) => ({
         name,
         type,
@@ -63,7 +62,6 @@ export default function RecordPage() {
     setError("");
 
     try {
-      // Collect image artifacts to commit alongside the post.
       const images = artifacts
         .filter((a) => a.type === "image")
         .map(({ name, base64 }) => ({ name, base64 }));
@@ -102,9 +100,9 @@ export default function RecordPage() {
         {(["record", "transcript", "preview", "published"] as const).map(
           (s, i) => (
             <span key={s} className="flex items-center gap-3">
-              {i > 0 && <span className="text-[#333333]">→</span>}
+              {i > 0 && <span className="text-outline-variant">→</span>}
               <span
-                className={step === s ? "text-[#A3E635]" : "text-[#555555]"}
+                className={step === s ? "text-primary" : "text-outline"}
               >
                 {s}
               </span>
@@ -123,7 +121,7 @@ export default function RecordPage() {
       {/* Step content */}
       {step === "record" && (
         <div className="flex flex-col items-center pt-12">
-          <h1 className="mb-8 font-mono text-xs uppercase tracking-widest text-[#A3E635]">
+          <h1 className="mb-8 font-mono text-xs uppercase tracking-widest text-primary">
             // Record Your Thoughts
           </h1>
           <AudioRecorder onTranscriptReady={handleTranscriptReady} />
@@ -157,19 +155,19 @@ export default function RecordPage() {
       {step === "published" && publishResult && (
         <div className="flex flex-col items-center gap-4 pt-12">
           <div className="text-4xl">✓</div>
-          <h2 className="font-mono text-sm text-[#A3E635]">Published!</h2>
-          <p className="font-mono text-xs text-[#888888]">
+          <h2 className="font-mono text-sm text-primary">Published!</h2>
+          <p className="font-mono text-xs text-on-surface-variant">
             Committed to {publishResult.path}
           </p>
-          <p className="font-mono text-[11px] text-[#555555]">
+          <p className="font-mono text-[11px] text-outline">
             SHA: {publishResult.sha.slice(0, 8)}
           </p>
-          <p className="font-mono text-xs text-[#888888]">
+          <p className="font-mono text-xs text-on-surface-variant">
             Vercel will auto-deploy in a few seconds.
           </p>
           <button
             onClick={handleReset}
-            className="mt-4 rounded-lg border border-[#1F1F1F] px-6 py-2.5 font-mono text-sm text-[#EDEDED] transition-colors hover:border-[#A3E635]/30"
+            className="mt-4 rounded-lg border border-outline-variant px-6 py-2.5 font-mono text-sm text-on-surface transition-colors hover:border-primary/30"
           >
             Record Another
           </button>
