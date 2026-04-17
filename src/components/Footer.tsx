@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="mt-auto bg-surface-lowest">
       <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
         <p
-          className="text-xs uppercase tracking-widest text-outline-variant"
+          className="text-xs uppercase tracking-widest text-on-surface-variant"
           style={{ fontFamily: "var(--font-label)" }}
         >
           © 2025 Vibes Coder
@@ -13,7 +13,7 @@ export function Footer() {
         <nav className="flex gap-6">
           <Link
             href="#"
-            className="text-xs uppercase tracking-widest text-outline-variant transition-colors hover:text-accent-warm"
+            className="text-xs uppercase tracking-widest text-on-surface-variant transition-colors hover:text-accent-warm"
             style={{ fontFamily: "var(--font-label)" }}
             target="_blank"
             rel="noopener noreferrer"
@@ -22,7 +22,7 @@ export function Footer() {
           </Link>
           <Link
             href="#"
-            className="text-xs uppercase tracking-widest text-outline-variant transition-colors hover:text-accent-warm"
+            className="text-xs uppercase tracking-widest text-on-surface-variant transition-colors hover:text-accent-warm"
             style={{ fontFamily: "var(--font-label)" }}
             target="_blank"
             rel="noopener noreferrer"
@@ -31,7 +31,7 @@ export function Footer() {
           </Link>
           <Link
             href="/feed.xml"
-            className="text-xs uppercase tracking-widest text-outline-variant transition-colors hover:text-accent-warm"
+            className="text-xs uppercase tracking-widest text-on-surface-variant transition-colors hover:text-accent-warm"
             style={{ fontFamily: "var(--font-label)" }}
           >
             RSS
