@@ -10,6 +10,28 @@ function sanitizeSlug(slug: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * Fix frontmatter dates with the wrong year. If the date's year is
+ * more than one year behind the current server year, replace it with
+ * the current year. Catches the common AI-authored "2025" mistake.
+ */
+function fixDateYear(content: string): string {
+  const parsed = matter(content);
+  if (!parsed.data.date) return content;
+
+  const postDate = new Date(parsed.data.date);
+  const now = new Date();
+  if (now.getFullYear() - postDate.getFullYear() >= 1) {
+    const corrected = parsed.data.date.replace(
+      /^\d{4}/,
+      String(now.getFullYear())
+    );
+    parsed.data.date = corrected;
+    return matter.stringify(parsed.content, parsed.data);
+  }
+  return content;
+}
+
 // Create a new post, optionally with images.
 export async function POST(request: NextRequest) {
   try {
@@ -46,7 +68,8 @@ export async function POST(request: NextRequest) {
 
     // Commit the post MDX file.
     const path = `content/posts/${safeSlug}.mdx`;
-    const sha = await commitFile(path, content, `post: add "${safeSlug}"`);
+    const fixedContent = fixDateYear(content);
+    const sha = await commitFile(path, fixedContent, `post: add "${safeSlug}"`);
 
     return NextResponse.json({ success: true, sha, path });
   } catch (error) {
@@ -106,6 +129,9 @@ export async function PUT(request: NextRequest) {
     }
 
     let finalContent = content;
+
+    // Auto-correct stale year in frontmatter dates.
+    finalContent = fixDateYear(finalContent);
 
     // When we have a summary, add a changelog entry to the frontmatter
     // before committing.
