@@ -13,6 +13,8 @@ tags:
 published: true
 changelog:
   - date: '2026-04-17'
+    summary: 'Added post-session update: QoL fixes, image upload, date bug'
+  - date: '2026-04-17'
     summary: Revised post content (41 lines changed)
 ---
 
@@ -55,7 +57,7 @@ Vercel offers built-in web analytics on the free Hobby plan. Setup is two lines:
 
 So we built our own. A `PageViewTracker` component fires a POST on every page load. An API route increments counters in Upstash Redis. An admin endpoint returns the last 30 days of data.
 
-**Why Redis?** We're incrementing simple counters — `views:2025-04-17:total` — thousands of times a day. Redis is purpose-built for this: in-memory key-value store, atomic increments in microseconds. Postgres would be overkill for counting page views. Upstash's free tier (10K commands/day) is more than enough for a personal blog.
+**Why Redis?** We're incrementing simple counters — `views:2026-04-17:total` — thousands of times a day. Redis is purpose-built for this: in-memory key-value store, atomic increments in microseconds. Postgres would be overkill for counting page views. Upstash's free tier (10K commands/day) is more than enough for a personal blog.
 
 <PhoneScreenshots caption="Choosing Upstash Redis from Vercel's storage marketplace">
   <PhoneScreenshotItem src="/images/day-four/upstash-storage-picker.png" alt="Vercel storage picker with Upstash for Redis selected" />
@@ -101,7 +103,7 @@ After researching alternatives — Dev.to, Hashnode, Hackernoon, DZone — Dev.t
 
 <PhoneScreenshot src="/images/day-four/devto-api-key.png" alt="Dev.to API key generation page" caption="Dev.to gives you an API key in 10 seconds — no approval process, no OAuth dance" />
 
-[Note: Want proof this is authentic? I kept the Google Home notification in my screenshot. That’s my cameras picking up my cat, Snickers, back home. Don’t forget, this is all from Cabo so far. If Snickers isn’t zoombombing my meetings at home, he’s notificationbombing my vibe coding. Cats gonna cat, amirite?]
+[Note: Want proof this is authentic? I kept the Google Home notification in my screenshot. That's my cameras picking up my cat, Snickers, back home. Don't forget, this is all from Cabo so far. If Snickers isn't zoombombing my meetings at home, he's notificationbombing my vibe coding. Cats gonna cat, amirite?]
 
 The code swap took 15 minutes. Same architecture, different endpoint. The Dev.to API accepts `{ article: { title, body_markdown, canonical_url, tags, published } }` with an `api-key` header. One env var instead of two.
 
@@ -151,12 +153,50 @@ The Loom-as-recording-source integration is queued for a future session. Today w
 
 **Loom changes what "writing a blog post" means.** When your blog can start from a video recording, the barrier to publishing drops. You don't need to sit down and type — you can record your screen while debugging, narrate your thought process, and let the AI turn it into a written post with the video embedded. The blog becomes a byproduct of work you're already doing.
 
+---
+
+## Post-Session Update
+
+After publishing and actually using everything above, a few things came up that were worth fixing in the same session. This is the building-in-public part — you ship, you use it, you find the friction.
+
+### The 2025 Bug: When AI Gets the Year Wrong
+
+Every blog post on this site had the wrong year. Day 1 through Day 4 — all dated 2025 instead of 2026. The footer copyright said 2025 too.
+
+The root cause: AI models have a training data bias toward 2025. The original Day 1 and Day 2 posts were authored with 2025 dates, and the agent writing Days 3 and 4 perpetuated it by following the existing convention rather than checking the server clock. Nobody caught it until a reader pointed it out.
+
+The manual fix was easy — update four frontmatter dates and a footer string. The systemic fix was more interesting: we added a `fixDateYear()` function to the post API that runs on every create and update. If the frontmatter date's year is more than a year behind the server clock, it auto-corrects the year before committing. So even when an AI writes `date: '2025-04-17'`, it lands in GitHub as `2026-04-17`.
+
+The voice recording → Claude generation pipeline was already safe — it uses `new Date()` from the server. This closes the gap for direct authoring and inline edits. If you're building with AI, validate your dates. The model's sense of "now" may not match yours.
+
+### Image Upload in the Inline Editor
+
+Adding screenshots to the Day 4 post required uploading images to GitHub via the web UI — a workflow that pulled me out of the editing flow entirely. That friction was enough to warrant building proper image upload directly into the inline editor.
+
+Now when you're editing a post, there's an "Add Image" button in the toolbar. Tap it, pick a photo from your camera roll, and it uploads to `public/images/{slug}/` via the GitHub API and inserts the markdown reference at your cursor position. No context switching, no GitHub web UI.
+
+### Clickable Post Cards
+
+A reader told me she was tapping the post description on the homepage and nothing happened — only the title was linked. We made the entire card clickable using an absolute-positioned link layer behind the content, with tags and admin controls remaining independently clickable via z-index.
+
+### Save Confirmation
+
+The inline editor's save button worked but gave no visual feedback — you'd hit Save, see nothing, and wonder if it went through. Added a prominent confirmation banner: "✓ Saved — Committed to GitHub — Vercel will redeploy in a few seconds." It shows for 3.5 seconds before the page reloads with fresh content.
+
+### Footer Contrast
+
+The footer links were nearly invisible — too light against the background. Bumped from `text-outline-variant` to `text-on-surface-variant` for all links except Admin, which stays intentionally dim.
+
 ## By the Numbers
 
 - **1 RSS feed** generated from existing post data
 - **2 analytics layers** (Vercel dashboard + custom Redis chart)
 - **2 syndication platforms** explored, 1 locked (Medium), 1 shipped (Dev.to)
 - **1 video embed** component (Loom, hero placement)
-- **1 tag sanitization bug** caught and fixed in production
-- **1 admin bar layout bug** fixed for mobile wrapping
+- **1 image upload** feature added to the inline editor
+- **1 PhoneScreenshot** MDX component for mobile screenshots
+- **1 date auto-correction** guard in the post API
+- **9 screenshots** embedded with purpose-built layout components
+- **5 QoL fixes** (tags, admin bar, save confirmation, clickable cards, footer contrast)
+- **4 wrong dates** caught and corrected across all posts
 - **0 paid services** — everything runs on free tiers
