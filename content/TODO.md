@@ -6,10 +6,9 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 
 ## Up Next
 
+- [ ] **Blog comments** — Add a commenting system to blog posts (evaluate options: Giscus/GitHub Discussions, Disqus, custom with Upstash, etc.)
+- [ ] **coder.com blog authorship filtering** — Open a PR on coder/coder to add author filtering to coder.com/blog so "Company Blog" footer link can point directly to Rob's posts
 - [ ] **Loom as recording source** — Add option to paste a Loom URL on the admin record page as an alternative to voice recording. Fetch transcript from Loom, feed to Claude alongside the Loom URL so it generates a blog post with the video embedded as hero. Requires Loom Developer API access for transcript retrieval.
-- [ ] **Medium env setup** — Create Medium account, generate integration token, get user ID, add env vars to Vercel. Then test syndication flow end-to-end.
-- [ ] **Upstash Redis setup** — Create Redis database in Vercel Storage, add KV_REST_API_URL and KV_REST_API_TOKEN env vars. Then verify analytics chart populates.
-- [ ] **Vercel Web Analytics enable** — Toggle on in Vercel project dashboard → Analytics.
 
 ## Ideas / Backlog
 
@@ -23,23 +22,37 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 
 ## Done
 
-- [x] Stitch design import (Theme B — Neon Brutalist)
-- [x] Light/dark theme toggle with FOUC prevention
-- [x] Day 2 blog post (Stitch workflow, brand guidelines, mobile pipeline)
-- [x] Admin pages reskinned to match design system
-- [x] Admin login fix (soft nav → hard nav)
-- [x] Footer admin link + login page visitor message
-- [x] Blog post consolidation (third post merged into Day 2)
-- [x] Edit flow fix (record page now updates instead of creating)
-- [x] Admin dashboard overhaul (Record New Post + Edit Existing Post picker)
-- [x] Inline text editing on blog posts
-- [x] Public changelog with auto-generated summaries
-- [x] Changelog visibility fix for light mode
+### Day 4
 - [x] RSS feed at /feed.xml with autodiscovery
 - [x] Vercel Web Analytics integration
 - [x] Custom view counter with Upstash Redis
 - [x] Admin analytics chart (30-day bar chart + top pages)
-- [x] Medium syndication API (draft mode + admin button)
+- [x] Dev.to syndication (pivoted from Medium — API locked since Jan 2025)
 - [x] Loom video hero embed component
-- [x] Day 3 blog post
+- [x] PhoneScreenshot MDX components (single + paired)
+- [x] Image upload in inline editor (commits to GitHub)
+- [x] Admin bar mobile wrapping fix
+- [x] Save confirmation banner in inline editor
+- [x] Clickable post cards on homepage
+- [x] Homepage subhero text update
+- [x] Footer contrast fix + copyright year correction
+- [x] Date auto-correction for AI year bias (2025 → 2026)
+- [x] Footer update — LinkedIn, GitHub, Company Blog links (replaced Twitter)
 - [x] Day 4 blog post
+
+### Day 3
+- [x] Admin dashboard overhaul (Record New Post + Edit Existing Post picker)
+- [x] Inline text editing on blog posts
+- [x] Public changelog with auto-generated summaries
+- [x] Changelog visibility fix for light mode
+- [x] Edit flow fix (record page now updates instead of creating)
+- [x] Day 3 blog post
+
+### Day 2
+- [x] Stitch design import (Theme B — Neon Brutalist)
+- [x] Light/dark theme toggle with FOUC prevention
+- [x] Admin pages reskinned to match design system
+- [x] Admin login fix (soft nav → hard nav)
+- [x] Footer admin link + login page visitor message
+- [x] Blog post consolidation (third post merged into Day 2)
+- [x] Day 2 blog post
