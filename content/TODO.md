@@ -9,6 +9,7 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 - [ ] **Blog comments** — Add a commenting system to blog posts (evaluate options: Giscus/GitHub Discussions, Disqus, custom with Upstash, etc.)
 - [ ] **coder.com blog authorship filtering** — Open a PR on coder/coder to add author filtering to coder.com/blog so "Company Blog" footer link can point directly to Rob's posts
 - [ ] **Update About section + add photo** — Refresh the About page content and add a personal photo
+- [ ] **Explore Whisper integration** — Evaluate OpenAI Whisper for transcription in the recording pipeline as an alternative or upgrade to current approach
 - [ ] **Loom as recording source** — Add option to paste a Loom URL on the admin record page as an alternative to voice recording. Fetch transcript from Loom, feed to Claude alongside the Loom URL so it generates a blog post with the video embedded as hero. Requires Loom Developer API access for transcript retrieval.
 
 ## Ideas / Backlog
