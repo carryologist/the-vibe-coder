@@ -11,10 +11,14 @@ interface AdminPostControlsProps {
 export function AdminPostControls({ slug }: AdminPostControlsProps) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [syndicating, setSyndicating] = useState(false);
+  const [syndicateResult, setSyndicateResult] = useState<{
+    url?: string;
+    error?: string;
+  } | null>(null);
 
   async function handleDelete() {
     if (!confirm("Delete this post? This cannot be undone.")) return;
-
     setDeleting(true);
     try {
       const res = await fetch("/api/posts", {
@@ -27,6 +31,29 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
     } catch (err) {
       console.error("Delete error:", err);
       setDeleting(false);
+    }
+  }
+
+  async function handleSyndicateMedium() {
+    setSyndicating(true);
+    setSyndicateResult(null);
+    try {
+      const res = await fetch("/api/syndicate/medium", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSyndicateResult({ error: data.error || "Syndication failed" });
+      } else {
+        setSyndicateResult({ url: data.mediumUrl });
+      }
+    } catch (err) {
+      console.error("Syndicate error:", err);
+      setSyndicateResult({ error: "Syndication failed" });
+    } finally {
+      setSyndicating(false);
     }
   }
 
@@ -51,6 +78,13 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
           Record Edits
         </Link>
         <button
+          onClick={handleSyndicateMedium}
+          disabled={syndicating}
+          className="rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50"
+        >
+          {syndicating ? "Syndicating…" : "Medium"}
+        </button>
+        <button
           onClick={handleDelete}
           disabled={deleting}
           className="ml-auto rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
@@ -58,6 +92,32 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
           {deleting ? "Deleting…" : "Delete Post"}
         </button>
       </div>
+
+      {syndicateResult && (
+        <div
+          className={`mt-2 rounded-lg border px-4 py-2 font-mono text-xs ${
+            syndicateResult.error
+              ? "border-red-400/30 text-red-400"
+              : "border-primary/30 text-primary"
+          }`}
+        >
+          {syndicateResult.error
+            ? syndicateResult.error
+            : (
+                <span>
+                  Published to Medium:{" "}
+                  <a
+                    href={syndicateResult.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:no-underline"
+                  >
+                    {syndicateResult.url}
+                  </a>
+                </span>
+              )}
+        </div>
+      )}
 
       {editing && (
         <InlineEditor slug={slug} onClose={() => setEditing(false)} />

@@ -11,7 +11,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow login page and auth API routes through.
-  if (pathname === "/admin/login" || pathname.startsWith("/api/auth/")) {
+  if (
+    pathname === "/admin/login" ||
+    pathname.startsWith("/api/auth/") ||
+    pathname === "/api/analytics/track"
+  ) {
     return NextResponse.next();
   }
 

@@ -8,7 +8,7 @@ export function Footer() {
           className="text-xs uppercase tracking-widest text-outline-variant"
           style={{ fontFamily: "var(--font-label)" }}
         >
-          &copy; 2025 Vibes Coder
+          © 2025 Vibes Coder
         </p>
         <nav className="flex gap-6">
           <Link
@@ -28,6 +28,13 @@ export function Footer() {
             rel="noopener noreferrer"
           >
             GitHub
+          </Link>
+          <Link
+            href="/feed.xml"
+            className="text-xs uppercase tracking-widest text-outline-variant transition-colors hover:text-accent-warm"
+            style={{ fontFamily: "var(--font-label)" }}
+          >
+            RSS
           </Link>
           <Link
             href="/admin"

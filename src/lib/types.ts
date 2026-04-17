@@ -12,6 +12,8 @@ export interface PostMeta {
   tags: string[];
   published: boolean;
   changelog?: ChangelogEntry[];
+  loomUrl?: string;
+  mediumUrl?: string;
 }
 
 /** Fully resolved post used by pages and components. */
@@ -24,4 +26,6 @@ export interface Post {
   readingTime: string;
   content: string;
   changelog?: ChangelogEntry[];
+  loomUrl?: string;
+  mediumUrl?: string;
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/posts";
 import EditPostPicker from "@/components/admin/EditPostPicker";
+import { AnalyticsChart } from "@/components/admin/AnalyticsChart";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -22,6 +23,10 @@ export default function AdminDashboardPage() {
       <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-8">
         // Dashboard
       </h1>
+
+      <div className="mb-8">
+        <AnalyticsChart />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link

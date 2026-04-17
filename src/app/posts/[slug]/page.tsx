@@ -11,6 +11,7 @@ import { AnimateIn } from "@/components/AnimateIn";
 import { TagBadge } from "@/components/TagBadge";
 import { AdminPostControls } from "@/components/admin/AdminPostControls";
 import Changelog from "@/components/Changelog";
+import { LoomEmbed } from "@/components/LoomEmbed";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -105,6 +106,13 @@ export default async function PostPage({ params }: PostPageProps) {
             )}
           </header>
         </AnimateIn>
+
+        {/* Loom Video (hero) */}
+        {post.loomUrl && (
+          <AnimateIn delay={0.06}>
+            <LoomEmbed url={post.loomUrl} />
+          </AnimateIn>
+        )}
 
         {/* Changelog */}
         {post.changelog && post.changelog.length > 0 && (

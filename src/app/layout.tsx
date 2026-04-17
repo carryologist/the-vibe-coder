@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Fira_Code } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
@@ -44,7 +46,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Inline script to set theme before first paint — prevents flash.
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(!t)t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","dark")}})()`;
 
 export default function RootLayout({
@@ -61,6 +62,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <link rel="alternate" type="application/rss+xml" title="Vibes Coder RSS Feed" href="/feed.xml" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Header />
@@ -68,6 +70,8 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <Analytics />
+        <PageViewTracker />
       </body>
     </html>
   );
