@@ -19,6 +19,10 @@ Days 1 through 3 built a blog I could write on. Day 4 is about making sure anyon
 
 A personal blog with no RSS feed, no analytics, and no presence on any platform is a journal, not a publication. This session adds the plumbing that turns content into reach: a way for readers to subscribe, a way for me to see who's reading, a way to cross-post to larger platforms, and a new content format that leads with video.
 
+The scope for today: RSS feed, analytics with an in-admin chart, syndication to a developer platform, and a Loom video embed component. Four features, one session, all from my phone — with the AI agent spawning parallel workers to build independent features simultaneously.
+
+<PhoneScreenshot src="/images/day-four/coder-agents-spawning.png" alt="Coder agent spawning parallel workers for RSS, Loom, and analytics features" caption="Four features built in parallel — the agent splits independent work across sub-agents" />
+
 ## RSS Feed
 
 The simplest feature with the longest history. RSS is 25 years old and still the best way to let readers follow a blog without handing over an email address.
@@ -40,6 +44,8 @@ I wanted analytics I could see without leaving my admin dashboard. That turned o
 
 Vercel offers built-in web analytics on the free Hobby plan. Setup is two lines: install `@vercel/analytics`, add `<Analytics />` to the root layout. Privacy-friendly — no cookies, just a hashed identifier that resets daily.
 
+<PhoneScreenshot src="/images/day-four/vercel-analytics-setup.png" alt="Vercel Analytics setup page showing install steps" caption="Vercel walks you through it — but both steps were already done by the agent" />
+
 **The catch:** Vercel Web Analytics has no REST API. There's no way to query the data programmatically. You can see it in the Vercel dashboard, but you can't pull it into your own UI.
 
 ### Layer 2: Custom View Counter with Upstash Redis
@@ -48,13 +54,18 @@ So we built our own. A `PageViewTracker` component fires a POST on every page lo
 
 **Why Redis?** We're incrementing simple counters — `views:2025-04-17:total` — thousands of times a day. Redis is purpose-built for this: in-memory key-value store, atomic increments in microseconds. Postgres would be overkill for counting page views. Upstash's free tier (10K commands/day) is more than enough for a personal blog.
 
-The admin dashboard renders this as a CSS-only bar chart — no charting library, just calculated heights and the site's design tokens.
+<PhoneScreenshots caption="Choosing Upstash Redis from Vercel's storage marketplace">
+  <PhoneScreenshotItem src="/images/day-four/upstash-storage-picker.png" alt="Vercel storage picker with Upstash for Redis selected" />
+  <PhoneScreenshotItem src="/images/day-four/upstash-config.png" alt="Upstash Redis configuration — region, plan, eviction settings" />
+</PhoneScreenshots>
 
-### Setup Required
+One detail worth noting: when connecting the database to your project, Vercel suggests a "Custom Prefix" for the environment variables. The default was `STORAGE`, which would have created `STORAGE_URL` and `STORAGE_TOKEN`. Our code expects `KV_REST_API_URL` and `KV_REST_API_TOKEN` — so the prefix needed to be changed to `KV_REST_API` before connecting.
 
-1. **Vercel Web Analytics:** Project dashboard → Analytics → Enable
-2. **Upstash Redis:** Vercel dashboard → Storage → Create Redis database (Upstash) → env vars auto-inject
-3. **Verify env vars:** `KV_REST_API_URL` and `KV_REST_API_TOKEN` should appear in project settings
+<PhoneScreenshot src="/images/day-four/upstash-project-connect.png" alt="Connecting Upstash to the Vercel project with environment prefix settings" caption="The env var prefix matters — it has to match what the code reads" />
+
+The admin dashboard renders the analytics data as a CSS-only bar chart — no charting library, just calculated heights and the site's design tokens.
+
+<PhoneScreenshot src="/images/day-four/analytics-dashboard.png" alt="Admin dashboard showing analytics chart with 14 views over 30 days and top pages" caption="The analytics chart, live with real data — 14 views and counting" />
 
 ## The Syndication Saga: Medium → Dev.to
 
@@ -66,9 +77,13 @@ The original plan was Medium. It has the largest general audience for developer 
 
 ### The Discovery: Medium Locked the Door
 
-When I went to generate an integration token in Medium's settings, the option wasn't there. After some research: **Medium stopped issuing new integration tokens as of January 2025.** Existing tokens still work, but new accounts can't get one. The API docs repo was archived in March 2023. Medium wants content *in* but doesn't want developers building *on* their platform anymore.
+When I went to generate an integration token in Medium's settings, the option wasn't there.
 
-We built the syndication, then discovered the platform locked the door. Classic.
+<PhoneScreenshot src="/images/day-four/medium-no-token.png" alt="Medium settings page showing no integration tokens option" caption="Medium's Security and apps settings — no integration tokens anywhere" />
+
+After some research: **Medium stopped issuing new integration tokens as of January 2025.** Existing tokens still work, but new accounts can't get one. The API docs repo was archived in March 2023. Medium wants content *in* but doesn't want developers building *on* their platform anymore.
+
+We built the syndication, then discovered the platform locked the door.
 
 ### The Pivot: Dev.to
 
@@ -77,13 +92,17 @@ After researching alternatives — Dev.to, Hashnode, Hackernoon, DZone — Dev.t
 - **Open API** with free API keys (generated in settings, takes 10 seconds)
 - **Markdown-native** with syntax highlighting — perfect for a technical blog
 - **Canonical URL support** — SEO credit stays with the original
-- **Large developer community** — one author reports articles reaching 100K views with minimal marketing
+- **Large developer community** — articles can reach tens of thousands of readers
 - **No paywall** — readers see your content without friction
 - **Draft mode** — review before publishing
+
+<PhoneScreenshot src="/images/day-four/devto-api-key.png" alt="Dev.to API key generation page" caption="Dev.to gives you an API key in 10 seconds — no approval process, no OAuth dance" />
 
 The code swap took 15 minutes. Same architecture, different endpoint. The Dev.to API accepts `{ article: { title, body_markdown, canonical_url, tags, published } }` with an `api-key` header. One env var instead of two.
 
 One gotcha: Dev.to tags can't contain hyphens. Our tags like `next-js` and `building-in-public` had to be sanitized — stripped to `nextjs` and `buildinginpublic`. A `.replace(/[^a-z0-9]/gi, "")` in the API route handles it.
+
+<PhoneScreenshot src="/images/day-four/devto-syndication-success.png" alt="Admin bar showing successful DEV.to syndication with draft URL" caption="One click, one draft — canonical URL pointing back to vibescoder.dev" />
 
 ### Why Not Substack?
 
@@ -115,14 +134,17 @@ The real power isn't just embedding videos — it's using them as a content sour
 
 This makes the blog a dual-format publication. Some topics are better explained by showing your screen. Having both formats, generated from a single recording, is the kind of workflow that makes maintaining a blog sustainable.
 
-## Setup Checklist
+The Loom-as-recording-source integration is queued for a future session. Today we laid the display foundation.
 
-For anyone following along:
+## What I Learned
 
-- [x] **Vercel Web Analytics:** Project dashboard → Analytics → Enable
-- [x] **Upstash Redis:** Vercel dashboard → Storage → Create Redis database → env vars auto-injected
-- [x] **Dev.to API key:** dev.to/settings/extensions → Generate API Key → add `DEVTO_API_KEY` to Vercel env vars
-- [ ] **Loom integration** — display layer ready, recording source pipeline coming next session
+**Vercel Analytics is great until you want your own dashboard.** The product is polished, free, and privacy-friendly. But the lack of a query API means you can't build on top of it. For anything beyond "go look at the Vercel dashboard," you need your own tracking. The two-layer approach — Vercel for the full dashboard, custom Redis for the in-app chart — gives you both without paying for either.
+
+**Platform APIs reflect platform priorities.** Medium wants content in; they locked the API. Dev.to wants developers building on their platform; they give you a key in 10 seconds. RSS remains the universal fallback because it doesn't depend on any platform's willingness to cooperate.
+
+**Build the syndication, then test the integration.** We built a complete Medium integration before discovering the API was locked. The good news: the architecture was clean enough that swapping to Dev.to took 15 minutes. The lesson: validate platform access before writing code. Or at least, architect so the platform is a swappable detail.
+
+**Loom changes what "writing a blog post" means.** When your blog can start from a video recording, the barrier to publishing drops. You don't need to sit down and type — you can record your screen while debugging, narrate your thought process, and let the AI turn it into a written post with the video embedded. The blog becomes a byproduct of work you're already doing.
 
 ## By the Numbers
 
