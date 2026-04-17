@@ -12,22 +12,31 @@ export function Footer() {
         </p>
         <nav className="flex gap-6">
           <Link
-            href="#"
+            href="https://www.linkedin.com/in/rwhiteley"
             className="text-xs uppercase tracking-widest text-on-surface-variant transition-colors hover:text-accent-warm"
             style={{ fontFamily: "var(--font-label)" }}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Twitter / X
+            LinkedIn
           </Link>
           <Link
-            href="#"
+            href="https://github.com/carryologist"
             className="text-xs uppercase tracking-widest text-on-surface-variant transition-colors hover:text-accent-warm"
             style={{ fontFamily: "var(--font-label)" }}
             target="_blank"
             rel="noopener noreferrer"
           >
             GitHub
+          </Link>
+          <Link
+            href="https://coder.com/blog"
+            className="text-xs uppercase tracking-widest text-on-surface-variant transition-colors hover:text-accent-warm"
+            style={{ fontFamily: "var(--font-label)" }}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Company Blog
           </Link>
           <Link
             href="/feed.xml"
