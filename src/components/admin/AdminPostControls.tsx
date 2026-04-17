@@ -59,7 +59,7 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-3 rounded-lg border border-outline-variant bg-bg px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-bg px-4 py-3">
         <span className="font-mono text-xs text-outline">// admin</span>
         <button
           onClick={() => setEditing(!editing)}
