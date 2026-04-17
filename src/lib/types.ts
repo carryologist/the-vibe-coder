@@ -13,7 +13,7 @@ export interface PostMeta {
   published: boolean;
   changelog?: ChangelogEntry[];
   loomUrl?: string;
-  mediumUrl?: string;
+  devtoUrl?: string;
 }
 
 /** Fully resolved post used by pages and components. */
@@ -27,5 +27,5 @@ export interface Post {
   content: string;
   changelog?: ChangelogEntry[];
   loomUrl?: string;
-  mediumUrl?: string;
+  devtoUrl?: string;
 }

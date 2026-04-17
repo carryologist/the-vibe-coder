@@ -34,11 +34,11 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
     }
   }
 
-  async function handleSyndicateMedium() {
+  async function handleSyndicateDevto() {
     setSyndicating(true);
     setSyndicateResult(null);
     try {
-      const res = await fetch("/api/syndicate/medium", {
+      const res = await fetch("/api/syndicate/devto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug }),
@@ -47,7 +47,7 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
       if (!res.ok) {
         setSyndicateResult({ error: data.error || "Syndication failed" });
       } else {
-        setSyndicateResult({ url: data.mediumUrl });
+        setSyndicateResult({ url: data.devtoUrl });
       }
     } catch (err) {
       console.error("Syndicate error:", err);
@@ -78,11 +78,11 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
           Record Edits
         </Link>
         <button
-          onClick={handleSyndicateMedium}
+          onClick={handleSyndicateDevto}
           disabled={syndicating}
           className="rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50"
         >
-          {syndicating ? "Syndicating…" : "Medium"}
+          {syndicating ? "Syndicating…" : "DEV.to"}
         </button>
         <button
           onClick={handleDelete}
@@ -105,7 +105,7 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
             ? syndicateResult.error
             : (
                 <span>
-                  Published to Medium:{" "}
+                  Drafted on DEV.to:{" "}
                   <a
                     href={syndicateResult.url}
                     target="_blank"
