@@ -1,0 +1,135 @@
+---
+title: 'Day 4: RSS, Analytics, Syndication, and the Loom Pipeline'
+date: '2025-04-17'
+description: >-
+  Adding an RSS feed, wiring up analytics with an in-admin chart, discovering
+  Medium locked their API, pivoting to Dev.to, and laying the groundwork for
+  Loom-powered blog generation.
+tags:
+  - meta
+  - ai
+  - coder
+  - building-in-public
+published: true
+---
+
+## The Distribution Problem
+
+Days 1 through 3 built a blog I could write on. Day 4 is about making sure anyone can actually find it.
+
+A personal blog with no RSS feed, no analytics, and no presence on any platform is a journal, not a publication. This session adds the plumbing that turns content into reach: a way for readers to subscribe, a way for me to see who's reading, a way to cross-post to larger platforms, and a new content format that leads with video.
+
+## RSS Feed
+
+The simplest feature with the longest history. RSS is 25 years old and still the best way to let readers follow a blog without handing over an email address.
+
+The implementation is a single Next.js route handler at `/feed.xml`. It reads all published posts via the same `getAllPosts()` function that powers the homepage, then templates them into RSS 2.0 XML with proper RFC 822 dates, GUID links, and category tags.
+
+Three additions total:
+1. **`src/app/feed.xml/route.ts`** — the route handler
+2. **RSS autodiscovery link** in `<head>` — so feed readers find it automatically
+3. **RSS link in the footer** — so humans find it too
+
+No dependencies. RSS XML is simple enough to template as a string.
+
+## Analytics: Two Layers
+
+I wanted analytics I could see without leaving my admin dashboard. That turned out to require two separate systems.
+
+### Layer 1: Vercel Web Analytics
+
+Vercel offers built-in web analytics on the free Hobby plan. Setup is two lines: install `@vercel/analytics`, add `<Analytics />` to the root layout. Privacy-friendly — no cookies, just a hashed identifier that resets daily.
+
+**The catch:** Vercel Web Analytics has no REST API. There's no way to query the data programmatically. You can see it in the Vercel dashboard, but you can't pull it into your own UI.
+
+### Layer 2: Custom View Counter with Upstash Redis
+
+So we built our own. A `PageViewTracker` component fires a POST on every page load. An API route increments counters in Upstash Redis. An admin endpoint returns the last 30 days of data.
+
+**Why Redis?** We're incrementing simple counters — `views:2025-04-17:total` — thousands of times a day. Redis is purpose-built for this: in-memory key-value store, atomic increments in microseconds. Postgres would be overkill for counting page views. Upstash's free tier (10K commands/day) is more than enough for a personal blog.
+
+The admin dashboard renders this as a CSS-only bar chart — no charting library, just calculated heights and the site's design tokens.
+
+### Setup Required
+
+1. **Vercel Web Analytics:** Project dashboard → Analytics → Enable
+2. **Upstash Redis:** Vercel dashboard → Storage → Create Redis database (Upstash) → env vars auto-inject
+3. **Verify env vars:** `KV_REST_API_URL` and `KV_REST_API_TOKEN` should appear in project settings
+
+## The Syndication Saga: Medium → Dev.to
+
+This is the story I didn't expect to be writing.
+
+### The Plan: Medium
+
+The original plan was Medium. It has the largest general audience for developer content, supports markdown via API, and lets you set a `canonicalUrl` pointing back to your own site for SEO credit. We built the full integration: an API route that reads a post, strips frontmatter, and publishes to Medium as a draft. One-click syndication from the admin bar.
+
+### The Discovery: Medium Locked the Door
+
+When I went to generate an integration token in Medium's settings, the option wasn't there. After some research: **Medium stopped issuing new integration tokens as of January 2025.** Existing tokens still work, but new accounts can't get one. The API docs repo was archived in March 2023. Medium wants content *in* but doesn't want developers building *on* their platform anymore.
+
+We built the syndication, then discovered the platform locked the door. Classic.
+
+### The Pivot: Dev.to
+
+After researching alternatives — Dev.to, Hashnode, Hackernoon, DZone — Dev.to was the clear winner:
+
+- **Open API** with free API keys (generated in settings, takes 10 seconds)
+- **Markdown-native** with syntax highlighting — perfect for a technical blog
+- **Canonical URL support** — SEO credit stays with the original
+- **Large developer community** — one author reports articles reaching 100K views with minimal marketing
+- **No paywall** — readers see your content without friction
+- **Draft mode** — review before publishing
+
+The code swap took 15 minutes. Same architecture, different endpoint. The Dev.to API accepts `{ article: { title, body_markdown, canonical_url, tags, published } }` with an `api-key` header. One env var instead of two.
+
+One gotcha: Dev.to tags can't contain hyphens. Our tags like `next-js` and `building-in-public` had to be sanitized — stripped to `nextjs` and `buildinginpublic`. A `.replace(/[^a-z0-9]/gi, "")` in the API route handles it.
+
+### Why Not Substack?
+
+Substack has no official public API for publishing. Unofficial libraries exist but rely on scraping session cookies — fragile and arguably violates their terms of service. Substack does support importing via RSS feed (which we now have), but that's a one-time bulk import, not ongoing syndication.
+
+### The Distribution Strategy
+
+For maximum reach, the play is:
+1. **Dev.to** — automated via API, one-click from admin bar
+2. **Medium** — manual "Import a Story" from your post URL (still works, adds canonical automatically)
+3. **Hackernoon** — manual submission for your best pieces (editorial review, but great Google ranking)
+
+Your personal site is always the source of truth. Everything else is syndication with canonical links pointing home.
+
+## Loom Video Embed
+
+The immediate implementation is simple: add an optional `loomUrl` field to post frontmatter, and when present, render a responsive Loom video player as the hero element at the very top of the post.
+
+```yaml
+---
+title: "My Post"
+loomUrl: "https://www.loom.com/share/abc123def456"
+---
+```
+
+### The Bigger Vision
+
+The real power isn't just embedding videos — it's using them as a content source. Record a Loom video — screen share, talking head, whatever. Loom generates a transcript. Claude reads the transcript and generates a blog post with the video embedded at the top. The video is the hero content — readers can watch or read, their choice.
+
+This makes the blog a dual-format publication. Some topics are better explained by showing your screen. Having both formats, generated from a single recording, is the kind of workflow that makes maintaining a blog sustainable.
+
+## Setup Checklist
+
+For anyone following along:
+
+- [x] **Vercel Web Analytics:** Project dashboard → Analytics → Enable
+- [x] **Upstash Redis:** Vercel dashboard → Storage → Create Redis database → env vars auto-injected
+- [x] **Dev.to API key:** dev.to/settings/extensions → Generate API Key → add `DEVTO_API_KEY` to Vercel env vars
+- [ ] **Loom integration** — display layer ready, recording source pipeline coming next session
+
+## By the Numbers
+
+- **1 RSS feed** generated from existing post data
+- **2 analytics layers** (Vercel dashboard + custom Redis chart)
+- **2 syndication platforms** explored, 1 locked (Medium), 1 shipped (Dev.to)
+- **1 video embed** component (Loom, hero placement)
+- **1 tag sanitization bug** caught and fixed in production
+- **1 admin bar layout bug** fixed for mobile wrapping
+- **0 paid services** — everything runs on free tiers
