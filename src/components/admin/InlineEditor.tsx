@@ -17,7 +17,10 @@ type EditorState =
 export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   const [state, setState] = useState<EditorState>({ phase: "loading" });
   const [content, setContent] = useState("");
+  const [uploading, setUploading] = useState(false);
   const originalContent = useRef("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchContent = useCallback(async () => {
     setState({ phase: "loading" });
@@ -66,6 +69,46 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
         phase: "error",
         message: err instanceof Error ? err.message : "Save failed",
       });
+    }
+  }
+
+  async function handleImageUpload(file: File) {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("slug", slug);
+      formData.append("image", file);
+
+      const res = await fetch("/api/images", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? `Upload failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      const markdown: string = data.markdown;
+
+      // Insert markdown at the current cursor position.
+      const textarea = textareaRef.current;
+      const cursor = textarea?.selectionStart ?? content.length;
+      const before = content.slice(0, cursor);
+      const after = content.slice(cursor);
+      setContent(before + markdown + after);
+    } catch (err) {
+      setState({
+        phase: "error",
+        message: err instanceof Error ? err.message : "Image upload failed",
+      });
+    } finally {
+      setUploading(false);
+      // Reset file input so the same file can be re-selected.
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   }
 
@@ -121,10 +164,22 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   return (
     <div className="mt-4 rounded-xl border border-outline-variant/20 bg-surface-low p-4">
       <textarea
+        ref={textareaRef}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={isSaving}
         className="w-full min-h-[50vh] resize-y rounded-lg border border-outline-variant bg-bg px-4 py-3 font-mono text-xs leading-relaxed text-on-surface outline-none transition-colors focus:border-primary/50"
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleImageUpload(file);
+        }}
       />
 
       <div className="mt-3 flex items-center justify-between">
@@ -132,6 +187,13 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
           {hasChanges ? "Changelog summary will be auto-generated." : "No changes yet."}
         </p>
         <div className="flex gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || isSaving}
+            className="rounded-lg border border-outline-variant px-4 py-2 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {uploading ? "Uploading..." : "Add Image"}
+          </button>
           <button
             onClick={onClose}
             disabled={isSaving}
