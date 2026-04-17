@@ -60,7 +60,7 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
         );
       }
       setState({ phase: "saved" });
-      setTimeout(() => window.location.reload(), 2000);
+      setTimeout(() => window.location.reload(), 3500);
     } catch (err) {
       setState({
         phase: "error",
@@ -104,9 +104,12 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   // Post-save confirmation.
   if (state.phase === "saved") {
     return (
-      <div className="mt-4 rounded-xl border border-outline-variant/20 bg-surface-low p-4">
-        <p className="font-mono text-sm text-primary">
-          ✓ Saved — deploying...
+      <div className="mt-4 rounded-xl border border-primary/30 bg-primary/10 p-5 text-center">
+        <p className="font-mono text-base font-medium text-primary">
+          ✓ Saved
+        </p>
+        <p className="mt-1 font-mono text-xs text-on-surface-variant">
+          Committed to GitHub — Vercel will redeploy in a few seconds.
         </p>
       </div>
     );
