@@ -6,7 +6,10 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 
 ## Up Next
 
-- [ ] **Loom video embed on posts** — Add an optional `loomUrl` field to post frontmatter. When present, render an embedded Loom player (responsive iframe) above or below the post content. Consider placement options: below the header as a "watch instead of read" alternative, or inline within the MDX body via a custom `<Loom url="..." />` component. Both approaches have merit — frontmatter is simpler for one-per-post, MDX component allows multiple embeds positioned anywhere.
+- [ ] **Loom as recording source** — Add option to paste a Loom URL on the admin record page as an alternative to voice recording. Fetch transcript from Loom, feed to Claude alongside the Loom URL so it generates a blog post with the video embedded as hero. Requires Loom Developer API access for transcript retrieval.
+- [ ] **Medium env setup** — Create Medium account, generate integration token, get user ID, add env vars to Vercel. Then test syndication flow end-to-end.
+- [ ] **Upstash Redis setup** — Create Redis database in Vercel Storage, add KV_REST_API_URL and KV_REST_API_TOKEN env vars. Then verify analytics chart populates.
+- [ ] **Vercel Web Analytics enable** — Toggle on in Vercel project dashboard → Analytics.
 
 ## Ideas / Backlog
 
@@ -16,7 +19,7 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 - [ ] Image management in admin — preview/delete images associated with posts
 - [ ] Draft mode — `published: false` posts visible in admin but not on the public site (partially works already, needs admin UI)
 - [ ] Search across posts (public-facing)
-- [ ] RSS feed generation
+- [ ] Substack import via RSS — one-time bulk import of existing posts at substack.com/signup/import
 
 ## Done
 
@@ -32,3 +35,11 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 - [x] Inline text editing on blog posts
 - [x] Public changelog with auto-generated summaries
 - [x] Changelog visibility fix for light mode
+- [x] RSS feed at /feed.xml with autodiscovery
+- [x] Vercel Web Analytics integration
+- [x] Custom view counter with Upstash Redis
+- [x] Admin analytics chart (30-day bar chart + top pages)
+- [x] Medium syndication API (draft mode + admin button)
+- [x] Loom video hero embed component
+- [x] Day 3 blog post
+- [x] Day 4 blog post
