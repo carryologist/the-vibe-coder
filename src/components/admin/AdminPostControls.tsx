@@ -87,7 +87,7 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="ml-auto rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
+          className="rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
         >
           {deleting ? "Deleting…" : "Delete Post"}
         </button>

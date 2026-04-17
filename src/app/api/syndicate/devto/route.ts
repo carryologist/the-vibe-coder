@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
           title: meta.title,
           body_markdown: content,
           canonical_url: `https://vibescoder.dev/posts/${slug}`,
-          tags: (meta.tags || []).slice(0, 4), // Dev.to allows max 4 tags
+          // Dev.to tags: max 4, alphanumeric only, no hyphens.
+          tags: (meta.tags || [])
+            .slice(0, 4)
+            .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
           published: false, // Draft mode
           description: meta.description || "",
         },
