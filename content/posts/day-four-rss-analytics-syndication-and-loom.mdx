@@ -11,6 +11,9 @@ tags:
   - coder
   - building-in-public
 published: true
+changelog:
+  - date: '2026-04-17'
+    summary: Revised post content (41 lines changed)
 ---
 
 ## The Distribution Problem
@@ -97,6 +100,8 @@ After researching alternatives — Dev.to, Hashnode, Hackernoon, DZone — Dev.t
 - **Draft mode** — review before publishing
 
 <PhoneScreenshot src="/images/day-four/devto-api-key.png" alt="Dev.to API key generation page" caption="Dev.to gives you an API key in 10 seconds — no approval process, no OAuth dance" />
+
+[Note: Want proof this is authentic? I kept the Google Home notification in my screenshot. That’s my cameras picking up my cat, Snickers, back home. Don’t forget, this is all from Cabo so far. If Snickers isn’t zoombombing my meetings at home, he’s notificationbombing my vibe coding. Cats gonna cat, amirite?]
 
 The code swap took 15 minutes. Same architecture, different endpoint. The Dev.to API accepts `{ article: { title, body_markdown, canonical_url, tags, published } }` with an `api-key` header. One env var instead of two.
 
