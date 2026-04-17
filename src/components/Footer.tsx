@@ -8,7 +8,7 @@ export function Footer() {
           className="text-xs uppercase tracking-widest text-on-surface-variant"
           style={{ fontFamily: "var(--font-label)" }}
         >
-          © 2025 Vibes Coder
+          © 2026 Vibes Coder
         </p>
         <nav className="flex gap-6">
           <Link
