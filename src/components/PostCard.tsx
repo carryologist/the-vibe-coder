@@ -21,18 +21,18 @@ export function PostCard({ post, isAdmin }: PostCardProps) {
         aria-label={title}
       />
 
-      <div className="relative z-10 flex items-start justify-between gap-4">
+      <div className="relative z-10 flex items-start justify-between gap-4 pointer-events-none">
         <h2
           className="text-xl font-semibold tracking-tight text-on-surface transition-colors group-hover:text-primary"
           style={{ fontFamily: "var(--font-headline)" }}
         >
           {title}
         </h2>
-        {isAdmin && <AdminCardControls slug={slug} />}
+        {isAdmin && <span className="pointer-events-auto"><AdminCardControls slug={slug} /></span>}
       </div>
 
       <div
-        className="relative z-10 mt-3 flex items-center gap-3 text-xs uppercase tracking-widest text-on-surface-variant/50"
+        className="relative z-10 mt-3 flex items-center gap-3 text-xs uppercase tracking-widest text-on-surface-variant/50 pointer-events-none"
         style={{ fontFamily: "var(--font-label)" }}
       >
         <time dateTime={date}>{format(parseISO(date), "yyyy.MM.dd")}</time>
@@ -40,12 +40,12 @@ export function PostCard({ post, isAdmin }: PostCardProps) {
         <span>{readingTime}</span>
       </div>
 
-      <p className="relative z-10 mt-3 text-sm leading-relaxed text-on-surface-variant">
+      <p className="relative z-10 mt-3 text-sm leading-relaxed text-on-surface-variant pointer-events-none">
         {description}
       </p>
 
       {tags.length > 0 && (
-        <div className="relative z-10 mt-4 flex flex-wrap gap-2">
+        <div className="relative z-10 mt-4 flex flex-wrap gap-2 pointer-events-auto">
           {tags.map((tag) => (
             <TagBadge key={tag} tag={tag} />
           ))}

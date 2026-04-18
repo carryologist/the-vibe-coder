@@ -12,6 +12,7 @@ import { TagBadge } from "@/components/TagBadge";
 import { AdminPostControls } from "@/components/admin/AdminPostControls";
 import Changelog from "@/components/Changelog";
 import { LoomEmbed } from "@/components/LoomEmbed";
+import { GiscusComments } from "@/components/GiscusComments";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -136,6 +137,11 @@ export default async function PostPage({ params }: PostPageProps) {
               }}
             />
           </div>
+        </AnimateIn>
+
+        {/* Comments */}
+        <AnimateIn delay={0.15}>
+          <GiscusComments />
         </AnimateIn>
       </article>
     </>

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
+    "@giscus/react": "^3.1.0",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.1",
     "date-fns": "^4.1.0",

@@ -6,11 +6,7 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 
 ## Up Next
 
-- [ ] **Blog comments** — Add a commenting system to blog posts (evaluate options: Giscus/GitHub Discussions, Disqus, custom with Upstash, etc.)
-- [ ] **coder.com blog authorship filtering** — Open a PR on coder/coder to add author filtering to coder.com/blog so "Company Blog" footer link can point directly to Rob's posts
-- [ ] **Update About section + add photo** — Refresh the About page content and add a personal photo
-- [ ] **Explore Whisper integration** — Evaluate OpenAI Whisper for transcription in the recording pipeline as an alternative or upgrade to current approach
-- [ ] **Loom as recording source** — Add option to paste a Loom URL on the admin record page as an alternative to voice recording. Fetch transcript from Loom, feed to Claude alongside the Loom URL so it generates a blog post with the video embedded as hero. Requires Loom Developer API access for transcript retrieval.
+All caught up! Check the backlog for future ideas.
 
 ## Ideas / Backlog
 
@@ -23,6 +19,13 @@ A running scratchpad for site enhancements, fixes, and ideas. Pick up wherever y
 - [ ] Substack import via RSS — one-time bulk import of existing posts at substack.com/signup/import
 
 ## Done
+
+### Day 5
+- [x] Blog comments — Added Giscus (GitHub Discussions) component with theme-aware light/dark support, wired into all blog post pages. Discussions enabled on repo. Pending: install Giscus GitHub App + get category ID from giscus.app.
+- [x] coder.com blog authorship filtering — Researched coder/coder.com codebase. Author data exists in DatoCMS but no filtering is implemented. Filed [issue #719](https://github.com/coder/coder.com/issues/719) with implementation plan mirroring existing category filter pattern.
+- [x] Updated About page — Rewrote intro with photo, bio (CEO of Coder), and reframed the site description around the live AI-assisted development experiment. Kept "The Setup" section as-is.
+- [x] Whisper/Wispr research — Investigated OpenAI Whisper (open-source speech recognition model, $0.006/min API) and discovered it's unrelated to Wispr Flow (wisprflow.ai), the AI dictation app popular with execs. TIL: completely different products despite similar names. Wispr Flow is a system-level voice keyboard that already works with any text field — no site integration needed. Dismissed from punchlist.
+- [x] Loom as recording source — completed in prior session
 
 ### Day 4
 - [x] RSS feed at /feed.xml with autodiscovery

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { AnimateIn } from "@/components/AnimateIn";
 
 export const metadata: Metadata = {
@@ -17,24 +18,46 @@ export default function AboutPage() {
           About
         </h1>
 
-        <p className="mt-6 text-on-surface-variant leading-relaxed">
-          This is a place for unfiltered thoughts on software development, system
-          design, and the evolving craft of building software in the age of AI. No
-          corporate polish — just honest perspectives on the tools, patterns, and
-          ideas that shape how we write code today.
+        <div className="mt-8 flex flex-col sm:flex-row gap-8 items-start">
+          <Image
+            src="/images/IMG_9133.jpeg"
+            alt="Rob Whiteley"
+            width={180}
+            height={180}
+            className="rounded-xl border border-outline-variant/20 flex-shrink-0"
+          />
+          <div>
+            <p className="text-on-surface-variant leading-relaxed mt-0">
+              I&apos;m Rob Whiteley, CEO of{" "}
+              <a
+                href="https://coder.com"
+                className="text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Coder
+              </a>
+              . By day I run a company that builds cloud development environments.
+              By night — and occasionally from a cabana — I build things with the
+              same tools our customers use.
+            </p>
+          </div>
+        </div>
+
+        <p className="text-on-surface-variant leading-relaxed">
+          This site is a live experiment in AI-assisted development. Every page,
+          every feature, every deploy has been built through conversation — me
+          talking, AI writing code, Coder running it. No local IDE. No manual
+          git. Just voice memos, Claude, and a cloud workspace I can reach from
+          my phone.
         </p>
 
         <p className="text-on-surface-variant leading-relaxed">
-          The writing here explores what it means to work alongside AI — using
-          large language models not as a crutch, but as a thinking partner. From
-          architecture decisions to debugging sessions, from shipping fast to
-          building things that last.
-        </p>
-
-        <p className="text-on-surface-variant leading-relaxed">
-          All content on this blog is AI-assisted. Posts are drafted with Claude
-          and Gemini, then reviewed and shaped for clarity. The ideas are human;
-          the drafting is a collaboration.
+          The blog documents the build itself: what shipped each session, what
+          broke, what surprised me, and what I learned about working with AI as
+          a genuine development partner rather than a fancy autocomplete. If
+          you&apos;re curious what &quot;vibe coding&quot; actually looks like
+          when you push it past a weekend toy project, this is the journal.
         </p>
 
         <h2
