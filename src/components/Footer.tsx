@@ -36,7 +36,7 @@ export function Footer() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Company Blog
+            Blog
           </Link>
           <Link
             href="/feed.xml"
