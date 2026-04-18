@@ -36,8 +36,8 @@ export function GiscusComments() {
       <Giscus
         repo="carryologist/the-vibe-coder"
         repoId="R_kgDOSANU3Q"
-        category="General"
-        categoryId=""
+        category="Announcements"
+        categoryId="DIC_kwDOSANU3c4C7Gsu"
         mapping="pathname"
         strict="0"
         reactionsEnabled="1"
