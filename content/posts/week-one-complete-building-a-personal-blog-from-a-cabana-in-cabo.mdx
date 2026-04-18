@@ -1,23 +1,26 @@
 ---
-title: "Day 5: Comments, Open Source, and the Whisper Mix-Up"
+title: 'Day 5: Week 1 Challenge Complete!'
 date: '2026-04-18'
 description: >-
   Adding a commenting system with Giscus, cleaning up the repo for public
-  release, researching Whisper vs Wispr, and closing out week one — all from
-  a cabana in Cabo.
+  release, researching Whisper vs Wispr, and closing out week one — all from a
+  cabana in Cabo.
 tags:
   - meta
   - ai
   - coder
   - building-in-public
 published: true
+changelog:
+  - date: '2026-04-18'
+    summary: Revised post content (50 lines changed)
 ---
 
 ## Week One: That's a Wrap
 
 And that's a wrap on week one.
 
-I set myself a challenge: could I build a working personal blog in five days, spending 60–90 minutes each day, using nothing but my iPhone, all while lounging in a cabana in Cabo?
+I set myself a challenge: could I build a working personal website in five days, spending 60–90 minutes each day, using nothing but my iPhone, all while lounging in a cabana in Cabo?
 
 **The answer? Absolutely.**
 
@@ -53,7 +56,7 @@ There was a catch: Giscus requires a **public** repository. Ours was private. Th
 
 ## Opening the Repo: Security First
 
-Making a repo public when you're the CEO of a software development company isn't something you do casually. If there's a hardcoded API key or a GPS-tagged photo buried in the history, you've got a problem. So before flipping the switch, I had the agent run a full security assessment.
+Making a repo public isn't something you do casually. If there's a hardcoded API key or a GPS-tagged photo buried in the history, you've got a problem. So before flipping the switch, I had the agent run a full security assessment.
 
 **What it checked:**
 - Every source file for hardcoded secrets, API keys, tokens, and passwords
@@ -70,7 +73,9 @@ But "secure" isn't the same as "presentable."
 
 ## The Cleanup Pass
 
-I'm the CEO of Coder. Software engineers are going to look at this repo. It needed to be something a developer would respect — well-organized, no dead code, no leftover boilerplate from `create-next-app`.
+I want a site my software engineers respect. Ok, maybe that’s too high a bar. How about: They don’t dismiss a slop. 
+
+It needed to be well-organized, no dead code, no leftover boilerplate from `create-next-app`.
 
 The agent audited every file in the project. Here's what we found and cleaned up:
 
@@ -117,9 +122,9 @@ Then I realized: my friends aren't talking about OpenAI Whisper. They're talking
 
 **Wispr Flow**: A $700M-valued AI dictation app that works as a system-level voice keyboard across Mac, Windows, iOS, and Android. You activate it with a key press, speak naturally, and it inserts formatted text wherever your cursor is.
 
-They just happen to have almost identical names.
+They just happen to have almost identical names. So, side note: Ask people to spell tech when discussing it at a networking event.
 
-And here's the punchline: **there's nothing to integrate.** Wispr Flow already works with any text field on any website — including our admin pages. If I install the app, I can use it to dictate into the blog's transcript editor right now. No code changes needed.
+Here's the punchline: **there's nothing to integrate.** Wispr Flow already works with any text field on any website — including our admin pages. If I install the app, I can use it to dictate into the blog's transcript editor right now. No code changes needed.
 
 The "Whisper integration" to-do item was based on a naming confusion. Researched, understood, dismissed. But it makes for a good story about the importance of actually understanding what you're evaluating before you build it.
 
@@ -145,9 +150,7 @@ A few quality-of-life improvements rounded out the session:
 
 ## This Is Just the Beginning
 
-The blog is live and functional. It has voice recording, AI generation, inline editing, analytics, RSS, syndication, and comments. It's deployed on Vercel, developed in Coder, and the source is open for anyone to see.
-
-But this was always just the foundation. I've got my eyes on a bigger project — one that uses everything I've learned about AI-assisted development, mobile-first workflows, and building in public. Stay tuned.
+The blog is live and functional. But this was always just the foundation. I've got my eyes on a bigger project — one that uses everything I've learned about AI-native development, governed cloud agents, and vibe coding on the go. Next up? Self-hosting the entire stack. Stay tuned.
 
 For now, I'm going to enjoy the fact that I shipped a working blog while sipping drinks in paradise. Sometimes the best coding sessions happen in the most unexpected places.
 
