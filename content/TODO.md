@@ -24,6 +24,12 @@ All caught up! Check the backlog for future ideas.
 - [x] CollapsibleCode MDX component — Added `<CollapsibleCode>` for expandable code snippets in blog posts. Shows a clickable label with chevron that unfurls to reveal full content. Registered in MDXComponents map. Matches existing cyberpunk design system.
 - [x] Local LLM setup script — Built and ran `setup-local-llm.sh` on AI workstation (RTX 5090 / Ubuntu 24.04). Installed Ollama v0.21.0, pulled 5 models (qwen3.5:35b-a3b, deepseek-r1:14b, codestral:22b, nomic-embed-text). OpenAI-compatible API verified at localhost:11434.
 - [x] Blog fodder captured — Session notes for local LLM blog post pushed to `blog-drafts/local-llm-setup-notes.md`.
+- [x] GitHub External Auth for Coder — Configured built-in GitHub OAuth provider on self-hosted Coder server. Discovered `CODER_EXTERNAL_AUTH_GITHUB_DEFAULT_PROVIDER_ENABLE` was already active — no custom OAuth App needed. Authenticated via `/external-auth/github`.
+- [x] Workspace template: GitHub integration — Updated Docker template `main.tf` with `coder_external_auth` data source, injected `GITHUB_TOKEN` into agent env vars, added git credential helper and `gh` CLI installation to startup script.
+- [x] Workspace template: Vibe coding toolchain — Added Node.js + npm, Vercel CLI, uv (Python package manager), zip/unzip/sqlite3 to startup script. All installs idempotent (skip if already present).
+- [x] Agent System Instructions — Wrote and deployed system instructions for all users (Agents → Settings → Behavior). Covers: GitHub is pre-configured, always commit and push, bias toward action, install tools without asking, do the full build→test→commit→push loop.
+- [x] Multi-user setup — Documented workflow for adding wife as second Coder user: `coder users create`, login, create workspace, one-time GitHub auth at `/external-auth/github`. Template handles everything else automatically.
+- [x] Blog fodder captured — Session notes for Coder Agents home lab setup pushed to `blog-drafts/blog-fodder-coder-agents-home-lab-setup.mdx`.
 
 ### Day 5
 - [x] Blog comments — Added Giscus (GitHub Discussions) component with theme-aware light/dark support, wired into all blog post pages. Discussions enabled on repo. Pending: install Giscus GitHub App + get category ID from giscus.app.
