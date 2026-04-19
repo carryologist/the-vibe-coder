@@ -20,6 +20,11 @@ All caught up! Check the backlog for future ideas.
 
 ## Done
 
+### April 19, 2026
+- [x] CollapsibleCode MDX component — Added `<CollapsibleCode>` for expandable code snippets in blog posts. Shows a clickable label with chevron that unfurls to reveal full content. Registered in MDXComponents map. Matches existing cyberpunk design system.
+- [x] Local LLM setup script — Built and ran `setup-local-llm.sh` on AI workstation (RTX 5090 / Ubuntu 24.04). Installed Ollama v0.21.0, pulled 5 models (qwen3.5:35b-a3b, deepseek-r1:14b, codestral:22b, nomic-embed-text). OpenAI-compatible API verified at localhost:11434.
+- [x] Blog fodder captured — Session notes for local LLM blog post pushed to `blog-drafts/local-llm-setup-notes.md`.
+
 ### Day 5
 - [x] Blog comments — Added Giscus (GitHub Discussions) component with theme-aware light/dark support, wired into all blog post pages. Discussions enabled on repo. Pending: install Giscus GitHub App + get category ID from giscus.app.
 - [x] coder.com blog authorship filtering — Researched coder/coder.com codebase. Author data exists in DatoCMS but no filtering is implemented. Filed [issue #719](https://github.com/coder/coder.com/issues/719) with implementation plan mirroring existing category filter pattern.
