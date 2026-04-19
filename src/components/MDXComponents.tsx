@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PhoneScreenshot, PhoneScreenshots, PhoneScreenshotItem } from "@/components/PhoneScreenshot";
+import CollapsibleCode from "@/components/CollapsibleCode";
 
 /* ------------------------------------------------------------------ */
 /*  Neon Brutalist prose — theme-aware via CSS custom properties       */
@@ -191,4 +192,5 @@ export const MDXComponents = {
   PhoneScreenshot,
   PhoneScreenshots,
   PhoneScreenshotItem,
+  CollapsibleCode,
 };
