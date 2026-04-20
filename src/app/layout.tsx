@@ -30,11 +30,11 @@ export const metadata: Metadata = {
     template: "%s | Vibes Coder",
   },
   description:
-    "Thoughts on software development, AI-assisted coding, and the craft of building software.",
+    "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
   metadataBase: new URL("https://vibescoder.dev"),
   openGraph: {
     title: "Vibes Coder",
-    description: "Thoughts on software development, AI-assisted coding, and the craft of building software.",
+    description: "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
     url: "https://vibescoder.dev",
     siteName: "Vibes Coder",
     type: "website",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Vibes Coder",
-    description: "Thoughts on software development, AI-assisted coding, and the craft of building software.",
+    description: "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
   },
 };
 

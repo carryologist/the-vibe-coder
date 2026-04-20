@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="56" fill="#0A0A0F"/>
+
+  <!-- Subtle border -->
+  <rect width="508" height="508" x="2" y="2" rx="54" fill="none" stroke="#00E5FF" stroke-width="3" opacity="0.25"/>
+
+  <!-- Corner brackets — techy detail -->
+  <path d="M 44 88 L 44 44 L 88 44" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
+  <path d="M 424 44 L 468 44 L 468 88" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
+  <path d="M 44 424 L 44 468 L 88 468" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
+  <path d="M 424 468 L 468 468 L 468 424" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
+
+  <!-- V — bold geometric strokes -->
+  <g filter="url(#glow)">
+    <polygon points="76,128 168,384 204,384 132,128" fill="#00E5FF"/>
+    <polygon points="256,128 168,384 204,384 276,128" fill="#00E5FF"/>
+  </g>
+
+  <!-- C — open rectangle (monospace style, no right wall) -->
+  <g filter="url(#glow)">
+    <!-- Top bar -->
+    <rect x="292" y="128" width="148" height="36" fill="#00E5FF"/>
+    <!-- Left wall -->
+    <rect x="292" y="128" width="36" height="256" fill="#00E5FF"/>
+    <!-- Bottom bar -->
+    <rect x="292" y="348" width="148" height="36" fill="#00E5FF"/>
+  </g>
+
+  <!-- Scan line -->
+  <line x1="60" y1="256" x2="452" y2="256" stroke="#00E5FF" stroke-width="1.5" opacity="0.12"/>
+</svg>
