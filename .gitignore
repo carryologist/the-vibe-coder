@@ -50,3 +50,10 @@ next-env.d.ts
 
 # plans
 PLAN.md
+
+# Content (fetched from private repo at build time)
+content/posts/
+content/settings.json
+content/TODO.md
+blog-drafts/
+public/images/
