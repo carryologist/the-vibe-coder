@@ -28,7 +28,7 @@ This session documented the full journey of going from a bare Coder server runni
 **The journey:**
 - Started by exploring three options: Personal Access Tokens, SSH keys, and Coder External Auth (OAuth)
 - Chose External Auth (Option 3) — configure once on the server, every user authenticates through the browser with their own GitHub account
-- Created a GitHub OAuth App with the Coder tunnel URL (`https://1i30nrq33h93k.pit-1.try.coder.app`) as the homepage and callback URL
+- Created a GitHub OAuth App with the Coder tunnel URL (`https://<your-coder-tunnel>.pit-1.try.coder.app`) as the homepage and callback URL
 - Skipped "Enable Device Flow" — not needed for browser-based auth
 
 **The server configuration struggle:**
@@ -132,7 +132,7 @@ Ubuntu AI Workstation (home lab)
 │       ├── Python 3.12 + uv
 │       └── code-server (VS Code in browser)
 ├── Docker (runs workspace containers)
-└── Coder tunnel (*.pit-1.try.coder.app)
+└── Coder tunnel (*.<your-coder-tunnel>.try.coder.app)
 ```
 
 ---
