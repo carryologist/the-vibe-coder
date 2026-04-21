@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getAllPosts } from "@/lib/posts";
+import { getAllPostsAdmin } from "@/lib/posts";
 import EditPostPicker from "@/components/admin/EditPostPicker";
 import { AnalyticsChart } from "@/components/admin/AnalyticsChart";
 
@@ -12,10 +12,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default function AdminDashboardPage() {
-  const posts = getAllPosts().map(({ slug, title, date }) => ({
+  const posts = getAllPostsAdmin().map(({ slug, title, date, published }) => ({
     slug,
     title,
     date,
+    published,
   }));
 
   return (

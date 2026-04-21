@@ -198,7 +198,7 @@ export function RecordContent() {
         <div className="flex flex-col items-center gap-4 pt-12">
           <div className="text-4xl">✓</div>
           <h2 className="font-mono text-sm text-primary">
-            {editSlug ? "Updated!" : "Published!"}
+            {editSlug ? "Updated!" : "Draft Saved!"}
           </h2>
           <p className="font-mono text-xs text-on-surface-variant">
             Committed to {publishResult.path}
@@ -206,15 +206,31 @@ export function RecordContent() {
           <p className="font-mono text-[11px] text-outline">
             SHA: {publishResult.sha.slice(0, 8)}
           </p>
-          <p className="font-mono text-xs text-on-surface-variant">
-            Vercel will auto-deploy in a few seconds.
-          </p>
-          <button
-            onClick={handleReset}
-            className="mt-4 rounded-lg border border-outline-variant px-6 py-2.5 font-mono text-sm text-on-surface transition-colors hover:border-primary/30"
-          >
-            Record Another
-          </button>
+          {editSlug ? (
+            <p className="font-mono text-xs text-on-surface-variant">
+              Vercel will auto-deploy in a few seconds.
+            </p>
+          ) : (
+            <p className="font-mono text-xs text-on-surface-variant">
+              Review and publish from the edit page.
+            </p>
+          )}
+          <div className="flex gap-3">
+            {!editSlug && publishResult.path && (
+              <a
+                href={`/admin/edit/${publishResult.path.replace("content/posts/", "").replace(".mdx", "")}`}
+                className="rounded-lg bg-primary px-6 py-2.5 font-mono text-sm font-medium text-bg transition-opacity hover:opacity-90"
+              >
+                Review Draft
+              </a>
+            )}
+            <button
+              onClick={handleReset}
+              className="rounded-lg border border-outline-variant px-6 py-2.5 font-mono text-sm text-on-surface transition-colors hover:border-primary/30"
+            >
+              Record Another
+            </button>
+          </div>
         </div>
       )}
     </div>

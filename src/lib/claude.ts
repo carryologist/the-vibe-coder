@@ -115,7 +115,7 @@ Return the complete MDX file including frontmatter. The frontmatter must include
 - date (${existingContent ? "keep the original date" : today})
 - description (a one-sentence summary for SEO/previews)
 - tags (array of 2-5 relevant lowercase tags)
-- published (set to true)
+- published (set to false — drafts are reviewed before publishing)
 
 Start the response with --- (the frontmatter opening delimiter) and include nothing before it.`,
   });

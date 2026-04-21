@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface EditPostPickerProps {
-  posts: { slug: string; title: string; date: string }[];
+  posts: { slug: string; title: string; date: string; published: boolean }[];
 }
 
 export default function EditPostPicker({ posts }: EditPostPickerProps) {
@@ -61,8 +61,13 @@ export default function EditPostPicker({ posts }: EditPostPickerProps) {
                   onPointerDown={() => handleSelect(post.slug)}
                   className="block w-full cursor-pointer px-3 py-2 text-left transition-colors hover:bg-surface-high"
                 >
-                  <span className="block text-sm text-on-surface">
+                  <span className="flex items-center gap-2 text-sm text-on-surface">
                     {post.title}
+                    {!post.published && (
+                      <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                        draft
+                      </span>
+                    )}
                   </span>
                   <span className="block text-[11px] text-on-surface-variant">
                     {formatDate(post.date)}

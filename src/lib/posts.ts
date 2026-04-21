@@ -39,6 +39,35 @@ export function getAllPosts(): Post[] {
   );
 }
 
+export function getAllPostsAdmin(): (Post & { published: boolean })[] {
+  if (!fs.existsSync(POSTS_DIR)) {
+    return [];
+  }
+
+  const files = fs.readdirSync(POSTS_DIR).filter((f) => f.endsWith(".mdx"));
+
+  const posts = files
+    .map((filename) => {
+      const slug = filename.replace(/\.mdx$/, "");
+      const filePath = path.join(POSTS_DIR, filename);
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const { data, content } = matter(raw);
+      const meta = data as PostMeta;
+
+      return {
+        slug,
+        content,
+        readingTime: readingTime(content).text,
+        published: meta.published !== false,
+        ...meta,
+      };
+    });
+
+  return posts.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+}
+
 export function getPostBySlug(slug: string): Post | null {
   const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
 

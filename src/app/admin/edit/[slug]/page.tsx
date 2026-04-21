@@ -12,8 +12,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [isDraft, setIsDraft] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -22,6 +24,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         if (!res.ok) throw new Error("Failed to load post");
         const data = await res.json();
         setContent(data.content);
+        setIsDraft(/^published:\s*false\s*$/m.test(data.content));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load post");
       } finally {
@@ -30,6 +33,11 @@ export default function EditPostPage({ params }: EditPostPageProps) {
     }
     load();
   }, [slug]);
+
+  // Keep draft state in sync as the user edits.
+  useEffect(() => {
+    setIsDraft(/^published:\s*false\s*$/m.test(content));
+  }, [content]);
 
   async function handleSave() {
     setSaving(true);
@@ -49,6 +57,36 @@ export default function EditPostPage({ params }: EditPostPageProps) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handlePublish() {
+    setPublishing(true);
+    setError("");
+
+    try {
+      const published = content.replace(
+        /^published:\s*false\s*$/m,
+        "published: true",
+      );
+      const res = await fetch("/api/posts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          content: published,
+          summary: "Published draft",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to publish");
+      setContent(published);
+      setIsDraft(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to publish");
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -73,6 +111,11 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           <h1 className="font-mono text-xs uppercase tracking-widest text-primary">
             // editing: {slug}
           </h1>
+          {isDraft && (
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+              draft
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -81,9 +124,18 @@ export default function EditPostPage({ params }: EditPostPageProps) {
               ✓ Saved — deploying...
             </span>
           )}
+          {isDraft && (
+            <button
+              onClick={handlePublish}
+              disabled={publishing || saving}
+              className="rounded-lg border border-primary bg-primary/10 px-4 py-2 font-mono text-xs font-medium text-primary transition-opacity hover:bg-primary/20 disabled:opacity-50"
+            >
+              {publishing ? "Publishing..." : "Publish"}
+            </button>
+          )}
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || publishing}
             className="rounded-lg bg-primary px-4 py-2 font-mono text-xs font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save & Deploy"}
