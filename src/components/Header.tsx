@@ -23,9 +23,9 @@ export function Header() {
           <Image
             src="/images/branding/vibescoder-logo.svg"
             alt="Vibes Coder"
-            width={160}
-            height={40}
-            className="h-8 w-auto"
+            width={320}
+            height={80}
+            className="h-12 w-auto sm:h-14"
             priority
           />
         </Link>
