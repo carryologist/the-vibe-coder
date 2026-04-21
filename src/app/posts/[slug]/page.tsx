@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
+import remarkGfm from "remark-gfm";
 import { verifySession } from "@/lib/auth";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { MDXComponents } from "@/components/MDXComponents";
@@ -130,6 +131,7 @@ export default async function PostPage({ params }: PostPageProps) {
               components={MDXComponents}
               options={{
                 mdxOptions: {
+                  remarkPlugins: [remarkGfm],
                   rehypePlugins: [
                     [rehypePrettyCode, { theme: "github-dark" }],
                   ],
