@@ -137,6 +137,58 @@ function Pre(props: ComponentPropsWithoutRef<"pre">) {
   );
 }
 
+function Table(props: ComponentPropsWithoutRef<"table">) {
+  return (
+    <div className="my-6 overflow-x-auto rounded-xl border border-outline-variant/20">
+      <table
+        className="w-full border-collapse text-sm text-on-surface-variant"
+        {...props}
+      />
+    </div>
+  );
+}
+
+function TableHead(props: ComponentPropsWithoutRef<"thead">) {
+  return (
+    <thead
+      className="border-b border-outline-variant/30 bg-surface-high text-left text-xs uppercase tracking-wider text-on-surface"
+      style={{ fontFamily: "var(--font-label)" }}
+      {...props}
+    />
+  );
+}
+
+function TableBody(props: ComponentPropsWithoutRef<"tbody">) {
+  return <tbody className="divide-y divide-outline-variant/10" {...props} />;
+}
+
+function TableRow(props: ComponentPropsWithoutRef<"tr">) {
+  return (
+    <tr
+      className="transition-colors hover:bg-surface-high/50"
+      {...props}
+    />
+  );
+}
+
+function TableHeader(props: ComponentPropsWithoutRef<"th">) {
+  return (
+    <th
+      className="px-4 py-3 font-semibold text-on-surface"
+      {...props}
+    />
+  );
+}
+
+function TableCell(props: ComponentPropsWithoutRef<"td">) {
+  return (
+    <td
+      className="px-4 py-3 leading-[1.6]"
+      {...props}
+    />
+  );
+}
+
 function HorizontalRule() {
   return <hr className="my-10 border-outline-variant" />;
 }
@@ -189,6 +241,12 @@ export const MDXComponents = {
   pre: Pre,
   hr: HorizontalRule,
   img: MDXImage,
+  table: Table,
+  thead: TableHead,
+  tbody: TableBody,
+  tr: TableRow,
+  th: TableHeader,
+  td: TableCell,
   PhoneScreenshot,
   PhoneScreenshots,
   PhoneScreenshotItem,
