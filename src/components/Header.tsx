@@ -2,13 +2,55 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
   { href: "/", label: "Blog" },
   { href: "/about", label: "About" },
 ];
+
+/**
+ * Inline waveform mark. Uses the theme's primary color with varying
+ * opacities so it adapts to dark and light modes automatically.
+ */
+function WaveformMark() {
+  // Bar heights create the same audio waveform contour as the favicon.
+  const bars = [
+    { height: 14, opacity: 0.4 },
+    { height: 24, opacity: 0.65 },
+    { height: 32, opacity: 0.85 },
+    { height: 38, opacity: 1 },
+    { height: 36, opacity: 0.9 },
+    { height: 21, opacity: 0.6 },
+    { height: 27, opacity: 0.75 },
+    { height: 17, opacity: 0.45 },
+  ];
+  const barWidth = 4;
+  const gap = 3;
+  const maxHeight = 38;
+  const svgWidth = bars.length * (barWidth + gap) - gap;
+
+  return (
+    <svg
+      viewBox={`0 0 ${svgWidth} ${maxHeight}`}
+      className="h-7 w-auto sm:h-8"
+      aria-hidden="true"
+    >
+      {bars.map((bar, i) => (
+        <rect
+          key={i}
+          x={i * (barWidth + gap)}
+          y={maxHeight - bar.height}
+          width={barWidth}
+          height={bar.height}
+          rx={barWidth / 2}
+          className="fill-primary"
+          opacity={bar.opacity}
+        />
+      ))}
+    </svg>
+  );
+}
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,16 +60,16 @@ export function Header() {
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <Link
           href="/"
-          className="transition-opacity hover:opacity-80"
+          className="flex items-center gap-3 transition-opacity hover:opacity-80"
         >
-          <Image
-            src="/images/branding/vibescoder-logo.svg"
-            alt="Vibes Coder"
-            width={320}
-            height={80}
-            className="h-12 w-auto sm:h-14"
-            priority
-          />
+          <WaveformMark />
+          <span
+            className="text-xl font-semibold tracking-tight sm:text-2xl"
+            style={{ fontFamily: "var(--font-headline)" }}
+          >
+            <span className="text-on-surface">vibes</span>
+            <span className="text-primary">coder</span>
+          </span>
         </Link>
 
         <div className="flex items-center gap-4">
