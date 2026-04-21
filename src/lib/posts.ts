@@ -58,8 +58,8 @@ export function getAllPostsAdmin(): (Post & { published: boolean })[] {
         slug,
         content,
         readingTime: readingTime(content).text,
-        published: meta.published !== false,
         ...meta,
+        published: meta.published !== false,
       };
     });
 
