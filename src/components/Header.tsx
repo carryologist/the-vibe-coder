@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
@@ -17,11 +18,16 @@ export function Header() {
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <Link
           href="/"
-          className="text-xl font-bold tracking-tighter transition-opacity hover:opacity-80"
-          style={{ fontFamily: "var(--font-headline)" }}
+          className="transition-opacity hover:opacity-80"
         >
-          <span className="text-on-surface">Vibes</span>{" "}
-          <span className="text-primary-container">Coder</span>
+          <Image
+            src="/images/branding/vibescoder-logo.svg"
+            alt="Vibes Coder"
+            width={160}
+            height={40}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
 
         <div className="flex items-center gap-4">

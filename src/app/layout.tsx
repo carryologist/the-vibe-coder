@@ -44,6 +44,13 @@ export const metadata: Metadata = {
     title: "Vibes Coder",
     description: "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
   },
+  icons: {
+    icon: [
+      { url: "/images/branding/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/branding/favicon-64x64.png", sizes: "64x64", type: "image/png" },
+    ],
+    apple: "/images/branding/favicon-180x180.png",
+  },
 };
 
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(!t)t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","dark")}})()`;

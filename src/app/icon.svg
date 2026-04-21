@@ -1,42 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="5" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
-  <!-- Background -->
-  <rect width="512" height="512" rx="56" fill="#0A0A0F"/>
-
-  <!-- Subtle border -->
-  <rect width="508" height="508" x="2" y="2" rx="54" fill="none" stroke="#00E5FF" stroke-width="3" opacity="0.25"/>
-
-  <!-- Corner brackets — techy detail -->
-  <path d="M 44 88 L 44 44 L 88 44" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
-  <path d="M 424 44 L 468 44 L 468 88" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
-  <path d="M 44 424 L 44 468 L 88 468" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
-  <path d="M 424 468 L 468 468 L 468 424" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.4" stroke-linecap="square"/>
-
-  <!-- V — bold geometric strokes -->
-  <g filter="url(#glow)">
-    <polygon points="76,128 168,384 204,384 132,128" fill="#00E5FF"/>
-    <polygon points="256,128 168,384 204,384 276,128" fill="#00E5FF"/>
-  </g>
-
-  <!-- C — open rectangle (monospace style, no right wall) -->
-  <g filter="url(#glow)">
-    <!-- Top bar -->
-    <rect x="292" y="128" width="148" height="36" fill="#00E5FF"/>
-    <!-- Left wall -->
-    <rect x="292" y="128" width="36" height="256" fill="#00E5FF"/>
-    <!-- Bottom bar -->
-    <rect x="292" y="348" width="148" height="36" fill="#00E5FF"/>
-  </g>
-
-  <!-- Scan line -->
-  <line x1="60" y1="256" x2="452" y2="256" stroke="#00E5FF" stroke-width="1.5" opacity="0.12"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect width="80" height="80" rx="12" fill="#0F1117"/>
+  <!-- bar 1 --> <rect x="11"  y="48" width="6" height="14" rx="3" fill="#5DCAA5" opacity="0.40"/>
+  <!-- bar 2 --> <rect x="19"  y="38" width="6" height="24" rx="3" fill="#5DCAA5" opacity="0.65"/>
+  <!-- bar 3 --> <rect x="27"  y="30" width="6" height="32" rx="3" fill="#5DCAA5" opacity="0.85"/>
+  <!-- bar 4 --> <rect x="35"  y="24" width="6" height="38" rx="3" fill="#5DCAA5"/>
+  <!-- bar 5 PURPLE --> <rect x="43"  y="26" width="6" height="36" rx="3" fill="#AFA9EC"/>
+  <!-- bar 6 dip --> <rect x="51"  y="41" width="6" height="21" rx="3" fill="#5DCAA5" opacity="0.60"/>
+  <!-- bar 7 rise --> <rect x="59"  y="35" width="6" height="27" rx="3" fill="#5DCAA5" opacity="0.75"/>
+  <!-- bar 8 --> <rect x="67"  y="45" width="6" height="17" rx="3" fill="#5DCAA5" opacity="0.45"/>
 </svg>
