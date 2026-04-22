@@ -37,7 +37,10 @@ export default function AboutPage() {
               >
                 Coder
               </a>
-              . By day I run a company that builds cloud development environments.
+              .
+            </p>
+            <p className="text-on-surface-variant leading-relaxed">
+              By day I run a company that builds cloud development environments.
               By night — and occasionally from a cabana — I build things with the
               same tools our customers use.
             </p>
