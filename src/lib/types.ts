@@ -28,4 +28,5 @@ export interface Post {
   changelog?: ChangelogEntry[];
   loomUrl?: string;
   devtoUrl?: string;
+  commentCount?: number;
 }

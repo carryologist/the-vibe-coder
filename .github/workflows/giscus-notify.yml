@@ -1,0 +1,94 @@
+name: Giscus Comment Slack Notification
+
+on:
+  discussion_comment:
+    types: [created]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    # Only notify for comments in the Announcements category,
+    # and skip comments from the repo owner to avoid
+    # self-notifications.
+    if: >-
+      github.event.discussion.category.name == 'Announcements' &&
+      github.event.comment.user.login != 'carryologist'
+    steps:
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          # Extract fields from the event payload.
+          COMMENTER="${{ github.event.comment.user.login }}"
+          AVATAR_URL="${{ github.event.comment.user.avatar_url }}"
+          COMMENT_URL="${{ github.event.comment.html_url }}"
+          DISCUSSION_TITLE="${{ github.event.discussion.title }}"
+
+          # Read the comment body from the event JSON file so that
+          # special characters and newlines are handled safely.
+          COMMENT_BODY="$(jq -r '.comment.body' "$GITHUB_EVENT_PATH")"
+
+          # Truncate the comment body to 500 characters.
+          if [ "${#COMMENT_BODY}" -gt 500 ]; then
+            COMMENT_BODY="${COMMENT_BODY:0:500}..."
+          fi
+
+          # Escape characters that would break the JSON payload.
+          COMMENT_BODY="$(echo "$COMMENT_BODY" | jq -Rs .)"
+
+          # Build the blog URL from the discussion title. With Giscus
+          # pathname mapping the title is already a path like
+          # /posts/some-slug, so we just append it to the domain.
+          BLOG_URL="https://vibescoder.dev${DISCUSSION_TITLE}"
+
+          # Post to Slack using Block Kit.
+          curl -sf -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d @- <<EOF
+          {
+            "blocks": [
+              {
+                "type": "context",
+                "elements": [
+                  {
+                    "type": "image",
+                    "image_url": "${AVATAR_URL}",
+                    "alt_text": "${COMMENTER}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*${COMMENTER}* commented on <${COMMENT_URL}|${DISCUSSION_TITLE}>"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": ${COMMENT_BODY}
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Reply on GitHub"
+                    },
+                    "url": "${COMMENT_URL}"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View on Blog"
+                    },
+                    "url": "${BLOG_URL}"
+                  }
+                ]
+              }
+            ]
+          }
+          EOF

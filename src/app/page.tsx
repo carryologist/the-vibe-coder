@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth";
 import { getAllPosts } from "@/lib/posts";
+import { getCommentCounts } from "@/lib/discussions";
 import { PostCard } from "@/components/PostCard";
 import { AnimateIn } from "@/components/AnimateIn";
 
@@ -11,7 +12,15 @@ export default async function HomePage() {
   const token = cookieStore.get("admin_session")?.value;
   const isAdmin = token ? await verifySession(token) : false;
 
-  const posts = await getAllPosts();
+  const [posts, commentCounts] = await Promise.all([
+    getAllPosts(),
+    getCommentCounts(),
+  ]);
+
+  const postsWithComments = posts.map((post) => ({
+    ...post,
+    commentCount: commentCounts[post.slug] ?? 0,
+  }));
 
   return (
     <div>
@@ -50,7 +59,7 @@ export default async function HomePage() {
         </p>
       ) : (
         <div className="flex flex-col gap-6">
-          {posts.map((post, i) => (
+          {postsWithComments.map((post, i) => (
             <AnimateIn key={post.slug} delay={0.15 + i * 0.05}>
               <PostCard post={post} isAdmin={isAdmin} />
             </AnimateIn>

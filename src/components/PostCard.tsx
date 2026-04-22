@@ -10,7 +10,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, isAdmin }: PostCardProps) {
-  const { slug, title, date, description, tags, readingTime } = post;
+  const { slug, title, date, description, tags, readingTime, commentCount } = post;
 
   return (
     <article className="group glow-card relative rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-500 hover:border-primary/20 hover:bg-surface-high">
@@ -38,6 +38,22 @@ export function PostCard({ post, isAdmin }: PostCardProps) {
         <time dateTime={date}>{format(parseISO(date), "yyyy.MM.dd")}</time>
         <span className="text-outline-variant">&middot;</span>
         <span>{readingTime}</span>
+        {commentCount != null && commentCount > 0 && (
+          <>
+            <span className="text-outline-variant">&middot;</span>
+            <span className="inline-flex items-center gap-1">
+              <svg
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className="h-3 w-3"
+                aria-hidden="true"
+              >
+                <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v5A1.5 1.5 0 0 0 2.5 11h1v2.5L7 11h4.5A1.5 1.5 0 0 0 13 9.5v-5A1.5 1.5 0 0 0 11.5 3h-9Z" />
+              </svg>
+              {commentCount}
+            </span>
+          </>
+        )}
       </div>
 
       <p className="relative z-10 mt-3 text-sm leading-relaxed text-on-surface-variant pointer-events-none">
