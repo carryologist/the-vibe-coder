@@ -26,23 +26,23 @@ const firaCode = Fira_Code({
 
 export const metadata: Metadata = {
   title: {
-    default: "Vibes Coder",
-    template: "%s | Vibes Coder",
+    default: "vibescoder",
+    template: "%s | vibescoder",
   },
   description:
-    "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
+    "Building in public with AI agents. CEO of Coder.",
   metadataBase: new URL("https://vibescoder.dev"),
   openGraph: {
-    title: "Vibes Coder",
-    description: "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
+    title: "vibescoder",
+    description: "Building in public with AI agents. CEO of Coder.",
     url: "https://vibescoder.dev",
-    siteName: "Vibes Coder",
+    siteName: "vibescoder",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vibes Coder",
-    description: "Vibe coder. Dangerous coder. CEO of Coder. Thoughts are my own. Err… mine and my agent's.",
+    title: "vibescoder",
+    description: "Building in public with AI agents. CEO of Coder.",
   },
   icons: {
     icon: [
@@ -69,7 +69,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <link rel="alternate" type="application/rss+xml" title="Vibes Coder RSS Feed" href="/feed.xml" />
+        <link rel="alternate" type="application/rss+xml" title="vibescoder RSS Feed" href="/feed.xml" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Header />

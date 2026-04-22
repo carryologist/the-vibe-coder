@@ -30,7 +30,22 @@ export async function generateMetadata({ params }: PostPageProps) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return { title: "Post Not Found" };
-  return { title: post.title, description: post.description };
+  return {
+    title: post.title,
+    description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      url: `https://vibescoder.dev/posts/${slug}`,
+      type: "article",
+      publishedTime: post.date,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+    },
+  };
 }
 
 export default async function PostPage({ params }: PostPageProps) {
