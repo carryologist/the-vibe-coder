@@ -18,14 +18,16 @@ export default function AboutPage() {
           About
         </h1>
 
-        <div className="mt-8 flex flex-col sm:flex-row gap-8 items-start">
-          <Image
-            src="/images/IMG_9133.jpeg"
-            alt="Rob Whiteley"
-            width={160}
-            height={160}
-            className="rounded-xl border border-outline-variant/20 flex-shrink-0"
-          />
+        <div className="mt-8 flex flex-col sm:flex-row gap-8 sm:items-stretch items-start">
+          <div className="flex-shrink-0">
+            <Image
+              src="/images/IMG_9133.jpeg"
+              alt="Rob Whiteley"
+              width={400}
+              height={400}
+              className="rounded-xl border border-outline-variant/20 w-40 h-40 sm:w-auto sm:h-full object-cover"
+            />
+          </div>
           <div className="space-y-4">
             <p className="text-on-surface-variant leading-relaxed mt-0">
               I&apos;m Rob Whiteley, CEO of{" "}
