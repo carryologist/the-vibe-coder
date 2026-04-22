@@ -14,7 +14,8 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === "/admin/login" ||
     pathname.startsWith("/api/auth/") ||
-    pathname === "/api/analytics/track"
+    pathname === "/api/analytics/track" ||
+    pathname.startsWith("/api/slack/")
   ) {
     return NextResponse.next();
   }
