@@ -36,7 +36,7 @@ async function verifySlackSignature(req: NextRequest, body: string): Promise<boo
 // GitHub helpers
 // ----------------------------------------------------------------
 
-const GITHUB_TOKEN = process.env.GITHUB_PAT_CONTENT ?? "";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? "";
 const REPO_OWNER = "carryologist";
 const REPO_NAME = "the-vibe-coder-content";
 const FILE_PATH = "content/TODO.md";
