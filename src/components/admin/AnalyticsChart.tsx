@@ -30,7 +30,8 @@ export function AnalyticsChart() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/analytics/summary")
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    fetch(`/api/analytics/summary?tz=${encodeURIComponent(tz)}`)
       .then((r) => r.json())
       .then(setData)
       .catch(() =>

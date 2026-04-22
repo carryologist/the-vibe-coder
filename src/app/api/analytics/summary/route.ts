@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 
 function getRedis() {
@@ -8,7 +8,20 @@ function getRedis() {
   return new Redis({ url, token });
 }
 
-export async function GET() {
+/**
+ * Compute today's date string (YYYY-MM-DD) in the given IANA timezone.
+ */
+function todayInTz(tz: string): string {
+  try {
+    // "en-CA" locale gives YYYY-MM-DD format
+    return new Date().toLocaleDateString("en-CA", { timeZone: tz });
+  } catch {
+    // Invalid timezone — fall back to UTC
+    return new Date().toISOString().split("T")[0];
+  }
+}
+
+export async function GET(request: NextRequest) {
   try {
     const redis = getRedis();
     if (!redis) {
@@ -19,15 +32,22 @@ export async function GET() {
       });
     }
 
+    // Accept an optional `tz` query param (IANA timezone string).
+    // Use it to determine "today" in the viewer's local timezone so we
+    // never show a date that hasn't arrived yet for the viewer.
+    const tz = request.nextUrl.searchParams.get("tz") || "UTC";
+    const todayStr = todayInTz(tz);
+
     // Get last 30 days of data.
     const days: { date: string; views: number }[] = [];
-    const now = new Date();
     const pipeline = redis.pipeline();
     const dates: string[] = [];
 
+    // Build 30-day range ending at local "today"
+    const todayDate = new Date(todayStr + "T12:00:00Z"); // noon UTC avoids DST edge cases
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
+      const d = new Date(todayDate);
+      d.setUTCDate(d.getUTCDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       dates.push(dateStr);
       pipeline.get(`views:${dateStr}:total`);
@@ -44,7 +64,7 @@ export async function GET() {
 
     // Get top pages (all known paths with today's counts).
     const allPaths = (await redis.smembers("views:paths")) as string[];
-    const today = now.toISOString().split("T")[0];
+    const today = todayStr;
 
     let topPages: { path: string; views: number }[] = [];
     if (allPaths.length > 0) {
