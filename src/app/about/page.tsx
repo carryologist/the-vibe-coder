@@ -22,11 +22,11 @@ export default function AboutPage() {
           <Image
             src="/images/IMG_9133.jpeg"
             alt="Rob Whiteley"
-            width={180}
-            height={180}
+            width={160}
+            height={160}
             className="rounded-xl border border-outline-variant/20 flex-shrink-0"
           />
-          <div>
+          <div className="space-y-4">
             <p className="text-on-surface-variant leading-relaxed mt-0">
               I&apos;m Rob Whiteley, CEO of{" "}
               <a
