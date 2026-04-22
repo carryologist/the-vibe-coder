@@ -129,9 +129,10 @@ function InlineCode(props: ComponentPropsWithoutRef<"code">) {
 
 function Pre(props: ComponentPropsWithoutRef<"pre">) {
   // Code blocks stay dark in both themes for readability.
+  // Reset child <code> to remove InlineCode styles that cause clipping.
   return (
     <pre
-      className="my-6 overflow-x-auto rounded-xl border border-[#4c4452]/20 bg-[#0d0f0f] p-4 text-sm leading-relaxed text-[#e2e2e2]"
+      className="my-6 overflow-x-auto rounded-xl border border-[#4c4452]/20 bg-[#0d0f0f] p-4 text-sm leading-relaxed text-[#e2e2e2] [&>code]:bg-transparent [&>code]:border-0 [&>code]:p-0 [&>code]:rounded-none [&>code]:text-[1em] [&>code]:text-inherit"
       {...props}
     />
   );
