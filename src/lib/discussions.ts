@@ -35,9 +35,9 @@ export async function getCommentCounts(): Promise<Record<string, number>> {
     const counts: Record<string, number> = {};
     for (const d of discussions) {
       if (d.category.name !== CATEGORY_NAME) continue;
-      if (!d.title.startsWith("/posts/")) continue;
+      if (!d.title.startsWith("/posts/") && !d.title.startsWith("posts/")) continue;
 
-      const slug = d.title.replace(/^\/posts\//, "");
+      const slug = d.title.replace(/^\/?posts\//, "");
       if (slug) {
         counts[slug] = d.comments;
       }
