@@ -119,7 +119,7 @@ function insertTodoItem(
 
   // Find the last non-empty line in the section to insert after it.
   const sectionContent = markdown.slice(afterHeader, insertPos);
-  const lastItemMatch = sectionContent.match(/.*\S/s);
+  const lastItemMatch = sectionContent.match(/[\s\S]*\S/);
   const insertAt = lastItemMatch
     ? afterHeader + (lastItemMatch.index ?? 0) + lastItemMatch[0].length
     : afterHeader;
