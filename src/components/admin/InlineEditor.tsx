@@ -14,12 +14,19 @@ type EditorState =
   | { phase: "saving" }
   | { phase: "saved" };
 
+interface CursorPosition {
+  line: number;
+  col: number;
+}
+
 export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   const [state, setState] = useState<EditorState>({ phase: "loading" });
   const [content, setContent] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [cursor, setCursor] = useState<CursorPosition>({ line: 1, col: 1 });
   const originalContent = useRef("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchContent = useCallback(async () => {
@@ -46,6 +53,25 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   }, [fetchContent]);
 
   const hasChanges = content !== originalContent.current;
+
+  // Sync gutter scroll position with textarea.
+  function handleScroll() {
+    if (textareaRef.current && gutterRef.current) {
+      gutterRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  }
+
+  // Compute cursor line and column from selection position.
+  function updateCursorPosition() {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const pos = textarea.selectionStart;
+    const textBefore = content.slice(0, pos);
+    const line = textBefore.split("\n").length;
+    const lastNewline = textBefore.lastIndexOf("\n");
+    const col = pos - lastNewline;
+    setCursor({ line, col });
+  }
 
   async function handleSave() {
     if (!hasChanges) return;
@@ -94,9 +120,9 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
 
       // Insert markdown at the current cursor position.
       const textarea = textareaRef.current;
-      const cursor = textarea?.selectionStart ?? content.length;
-      const before = content.slice(0, cursor);
-      const after = content.slice(cursor);
+      const cursorPos = textarea?.selectionStart ?? content.length;
+      const before = content.slice(0, cursorPos);
+      const after = content.slice(cursorPos);
       setContent(before + markdown + after);
     } catch (err) {
       setState({
@@ -160,16 +186,52 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
 
   // Editing / saving states.
   const isSaving = state.phase === "saving";
+  const totalLines = content.split("\n").length;
+  const lineNumbers = Array.from({ length: totalLines }, (_, i) => i + 1);
 
   return (
     <div className="mt-4 rounded-xl border border-outline-variant/20 bg-surface-low p-4">
-      <textarea
-        ref={textareaRef}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        disabled={isSaving}
-        className="w-full min-h-[50vh] resize-y rounded-lg border border-outline-variant bg-bg px-4 py-3 font-mono text-xs leading-relaxed text-on-surface outline-none transition-colors focus:border-primary/50"
-      />
+      {/* Editor area: line gutter + textarea */}
+      <div className="flex rounded-lg border border-outline-variant overflow-hidden bg-bg transition-colors focus-within:border-primary/50">
+        {/* Line number gutter */}
+        <div
+          ref={gutterRef}
+          className="select-none overflow-hidden border-r border-outline-variant/30 bg-surface-low py-3 pr-3 pl-2 text-right font-mono text-xs text-on-surface-variant/30"
+          aria-hidden="true"
+          style={{ lineHeight: "1.625" }}
+        >
+          {lineNumbers.map((n) => (
+            <div
+              key={n}
+              className={
+                n === cursor.line
+                  ? "text-primary font-medium"
+                  : ""
+              }
+            >
+              {n}
+            </div>
+          ))}
+        </div>
+
+        {/* Textarea */}
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => {
+            setContent(e.target.value);
+            requestAnimationFrame(updateCursorPosition);
+          }}
+          onScroll={handleScroll}
+          onSelect={updateCursorPosition}
+          onClick={updateCursorPosition}
+          onKeyUp={updateCursorPosition}
+          disabled={isSaving}
+          spellCheck={false}
+          className="flex-1 min-h-[50vh] resize-y border-0 bg-bg px-4 py-3 font-mono text-xs text-on-surface outline-none overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-on-surface-variant/20 hover:[&::-webkit-scrollbar-thumb]:bg-on-surface-variant/40"
+          style={{ lineHeight: "1.625" }}
+        />
+      </div>
 
       <input
         ref={fileInputRef}
@@ -182,10 +244,18 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
         }}
       />
 
+      {/* Status bar: cursor position + action buttons */}
       <div className="mt-3 flex items-center justify-between">
-        <p className="font-mono text-[11px] text-on-surface-variant">
-          {hasChanges ? "Changelog summary will be auto-generated." : "No changes yet."}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="font-mono text-[11px] text-on-surface-variant/50">
+            Ln {cursor.line}, Col {cursor.col}
+            <span className="mx-1.5 text-outline-variant/30">|</span>
+            {totalLines} lines
+          </p>
+          <p className="font-mono text-[11px] text-on-surface-variant">
+            {hasChanges ? "Changelog summary will be auto-generated." : "No changes yet."}
+          </p>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
