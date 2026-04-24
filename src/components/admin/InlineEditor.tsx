@@ -258,7 +258,8 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
           onScroll={handleScroll}
           disabled={isSaving}
           spellCheck={false}
-          className="w-full min-h-[50vh] resize-y border-0 bg-bg py-3 pr-4 font-mono text-xs text-on-surface outline-none overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-on-surface-variant/20 hover:[&::-webkit-scrollbar-thumb]:bg-on-surface-variant/40"
+          wrap="off"
+          className="w-full min-h-[50vh] resize-y border-0 bg-bg py-3 pr-4 font-mono text-xs text-on-surface outline-none overflow-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-on-surface-variant/20 hover:[&::-webkit-scrollbar-thumb]:bg-on-surface-variant/40"
           style={{
             lineHeight: "1.625",
             paddingLeft: `calc(${gutterWidth} + 1rem)`,
