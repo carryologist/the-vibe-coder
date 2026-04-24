@@ -61,12 +61,14 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
     }
   }
 
-  // Compute cursor line and column from selection position.
+  // Compute cursor line and column from the DOM element directly
+  // to avoid stale React state after onChange.
   function updateCursorPosition() {
     const textarea = textareaRef.current;
     if (!textarea) return;
     const pos = textarea.selectionStart;
-    const textBefore = content.slice(0, pos);
+    const text = textarea.value;
+    const textBefore = text.slice(0, pos);
     const line = textBefore.split("\n").length;
     const lastNewline = textBefore.lastIndexOf("\n");
     const col = pos - lastNewline;
@@ -189,29 +191,40 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   const totalLines = content.split("\n").length;
   const lineNumbers = Array.from({ length: totalLines }, (_, i) => i + 1);
 
+  // Width for gutter depends on digit count.
+  const gutterChars = String(totalLines).length;
+  const gutterWidth = `${gutterChars + 2}ch`;
+
   return (
     <div className="mt-4 rounded-xl border border-outline-variant/20 bg-surface-low p-4">
-      {/* Editor area: line gutter + textarea */}
-      <div className="flex rounded-lg border border-outline-variant overflow-hidden bg-bg transition-colors focus-within:border-primary/50">
+      {/* Editor area: gutter is absolutely positioned so its content
+          height cannot inflate the flex container. The textarea drives
+          the container height via min-h and resize-y. */}
+      <div className="relative rounded-lg border border-outline-variant overflow-hidden bg-bg transition-colors focus-within:border-primary/50">
         {/* Line number gutter */}
         <div
           ref={gutterRef}
-          className="select-none overflow-hidden border-r border-outline-variant/30 bg-surface-low py-3 pr-3 pl-2 text-right font-mono text-xs text-on-surface-variant/30"
+          className="absolute left-0 top-0 bottom-0 overflow-hidden border-r border-outline-variant/30 bg-surface-low"
           aria-hidden="true"
-          style={{ lineHeight: "1.625" }}
+          style={{ width: gutterWidth }}
         >
-          {lineNumbers.map((n) => (
-            <div
-              key={n}
-              className={
-                n === cursor.line
-                  ? "text-primary font-medium"
-                  : ""
-              }
-            >
-              {n}
-            </div>
-          ))}
+          <div
+            className="py-3 pr-2 pl-2 text-right font-mono text-xs text-on-surface-variant/30 select-none"
+            style={{ lineHeight: "1.625" }}
+          >
+            {lineNumbers.map((n) => (
+              <div
+                key={n}
+                className={
+                  n === cursor.line
+                    ? "text-primary font-medium"
+                    : ""
+                }
+              >
+                {n}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Textarea */}
@@ -228,8 +241,11 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
           onKeyUp={updateCursorPosition}
           disabled={isSaving}
           spellCheck={false}
-          className="flex-1 min-h-[50vh] resize-y border-0 bg-bg px-4 py-3 font-mono text-xs text-on-surface outline-none overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-on-surface-variant/20 hover:[&::-webkit-scrollbar-thumb]:bg-on-surface-variant/40"
-          style={{ lineHeight: "1.625" }}
+          className="w-full min-h-[50vh] resize-y border-0 bg-bg py-3 pr-4 font-mono text-xs text-on-surface outline-none overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-on-surface-variant/20 hover:[&::-webkit-scrollbar-thumb]:bg-on-surface-variant/40"
+          style={{
+            lineHeight: "1.625",
+            paddingLeft: `calc(${gutterWidth} + 1rem)`,
+          }}
         />
       </div>
 
