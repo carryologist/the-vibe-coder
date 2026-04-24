@@ -26,7 +26,7 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   const [cursor, setCursor] = useState<CursorPosition>({ line: 1, col: 1 });
   const originalContent = useRef("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const gutterRef = useRef<HTMLDivElement>(null);
+  const gutterInnerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchContent = useCallback(async () => {
@@ -54,16 +54,19 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
 
   const hasChanges = content !== originalContent.current;
 
-  // Sync gutter scroll position with textarea.
+  // Sync gutter with textarea scroll using CSS transform for
+  // same-frame compositing instead of scrollTop which lags a frame.
   function handleScroll() {
-    if (textareaRef.current && gutterRef.current) {
-      gutterRef.current.scrollTop = textareaRef.current.scrollTop;
+    if (textareaRef.current && gutterInnerRef.current) {
+      const y = textareaRef.current.scrollTop;
+      gutterInnerRef.current.style.transform = `translateY(-${y}px)`;
     }
   }
 
-  // Compute cursor line and column from the DOM element directly
-  // to avoid stale React state after onChange.
-  function updateCursorPosition() {
+  // Compute cursor line and column from the DOM element directly.
+  // Called from selectionchange (covers all cursor movement) and
+  // onChange (covers content edits).
+  const updateCursorPosition = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     const pos = textarea.selectionStart;
@@ -73,7 +76,23 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
     const lastNewline = textBefore.lastIndexOf("\n");
     const col = pos - lastNewline;
     setCursor({ line, col });
-  }
+  }, []);
+
+  // Track cursor via the document selectionchange event. This fires
+  // after every cursor movement regardless of source: tap, touch
+  // drag, keyboard arrows, magnifier bar on iOS, etc. The inline
+  // event handlers (onClick, onSelect, onKeyUp) missed many of
+  // these on mobile Safari.
+  useEffect(() => {
+    function handleSelectionChange() {
+      if (document.activeElement === textareaRef.current) {
+        updateCursorPosition();
+      }
+    }
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () =>
+      document.removeEventListener("selectionchange", handleSelectionChange);
+  }, [updateCursorPosition]);
 
   async function handleSave() {
     if (!hasChanges) return;
@@ -198,18 +217,19 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   return (
     <div className="mt-4 rounded-xl border border-outline-variant/20 bg-surface-low p-4">
       {/* Editor area: gutter is absolutely positioned so its content
-          height cannot inflate the flex container. The textarea drives
+          height cannot inflate the container. The textarea drives
           the container height via min-h and resize-y. */}
       <div className="relative rounded-lg border border-outline-variant overflow-hidden bg-bg transition-colors focus-within:border-primary/50">
-        {/* Line number gutter */}
+        {/* Line number gutter: outer div clips, inner div translates
+            via CSS transform for same-frame scroll sync. */}
         <div
-          ref={gutterRef}
           className="absolute left-0 top-0 bottom-0 overflow-hidden border-r border-outline-variant/30 bg-surface-low"
           aria-hidden="true"
           style={{ width: gutterWidth }}
         >
           <div
-            className="py-3 pr-2 pl-2 text-right font-mono text-xs text-on-surface-variant/30 select-none"
+            ref={gutterInnerRef}
+            className="py-3 pr-2 pl-2 text-right font-mono text-xs text-on-surface-variant/30 select-none will-change-transform"
             style={{ lineHeight: "1.625" }}
           >
             {lineNumbers.map((n) => (
@@ -236,9 +256,6 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
             requestAnimationFrame(updateCursorPosition);
           }}
           onScroll={handleScroll}
-          onSelect={updateCursorPosition}
-          onClick={updateCursorPosition}
-          onKeyUp={updateCursorPosition}
           disabled={isSaving}
           spellCheck={false}
           className="w-full min-h-[50vh] resize-y border-0 bg-bg py-3 pr-4 font-mono text-xs text-on-surface outline-none overflow-y-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-on-surface-variant/20 hover:[&::-webkit-scrollbar-thumb]:bg-on-surface-variant/40"
