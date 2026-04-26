@@ -448,18 +448,42 @@ def print_summary(results):
     for r in results:
         print(f"  {r['model']:<22} {'Yes' if r['syntax_valid'] else 'No':<8} {r['features']:<10} {r['functional']:<12} {r['score']:>6}")
 
-    # Save results
+    # Merge with existing results (don't overwrite previous runs)
     results_file = os.path.expanduser("~/benchmark/results_round2_full.json")
-    with open(results_file, "w") as f:
-        clean = [{k: v for k, v in r.items() if k != "raw_output"} for r in results]
-        json.dump(clean, f, indent=2)
-    print(f"\n  Results saved to: {results_file}")
+    existing = []
+    if os.path.exists(results_file):
+        try:
+            with open(results_file, "r") as f:
+                existing = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            existing = []
 
-    # Save raw outputs
+    # Update: replace existing model entries, append new ones
+    clean = [{k: v for k, v in r.items() if k != "raw_output"} for r in results]
+    existing_models = {r["model"]: i for i, r in enumerate(existing)}
+    for r in clean:
+        if r["model"] in existing_models:
+            existing[existing_models[r["model"]]] = r
+        else:
+            existing.append(r)
+
+    with open(results_file, "w") as f:
+        json.dump(existing, f, indent=2)
+    print(f"\n  Results saved to: {results_file} ({len(existing)} models total)")
+
+    # Merge raw outputs too
     raw_file = os.path.expanduser("~/benchmark/raw_outputs_round2.json")
+    existing_raw = {}
+    if os.path.exists(raw_file):
+        try:
+            with open(raw_file, "r") as f:
+                existing_raw = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            existing_raw = {}
+    for r in results:
+        existing_raw[r["model"]] = r["raw_output"]
     with open(raw_file, "w") as f:
-        raw = {r["model"]: r["raw_output"] for r in results}
-        json.dump(raw, f, indent=2)
+        json.dump(existing_raw, f, indent=2)
     print(f"  Raw outputs saved to: {raw_file}")
 
 
