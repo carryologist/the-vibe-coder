@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SearchDialog } from "@/components/SearchDialog";
 
 const navLinks = [
   { href: "/", label: "Blog" },
@@ -87,6 +88,7 @@ export function Header() {
             ))}
           </nav>
 
+          <SearchDialog />
           <ThemeToggle />
 
           {/* Mobile hamburger */}
@@ -122,6 +124,14 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/search"
+            onClick={() => setMenuOpen(false)}
+            className="block py-2.5 text-xs uppercase tracking-widest text-on-surface-variant/60 transition-colors hover:text-primary"
+            style={{ fontFamily: "var(--font-label)" }}
+          >
+            Search
+          </Link>
         </nav>
       )}
     </header>
