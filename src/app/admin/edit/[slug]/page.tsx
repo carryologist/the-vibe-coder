@@ -65,9 +65,15 @@ export default function EditPostPage({ params }: EditPostPageProps) {
     setError("");
 
     try {
-      const published = content.replace(
+      const today = new Date().toISOString().split("T")[0];
+      let published = content.replace(
         /^published:\s*false\s*$/m,
         "published: true",
+      );
+      // Update the post date to the publish date
+      published = published.replace(
+        /^date:\s*'[^']*'/m,
+        `date: '${today}'`,
       );
       const res = await fetch("/api/posts", {
         method: "PUT",

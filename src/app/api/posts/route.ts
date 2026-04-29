@@ -32,6 +32,26 @@ function fixDateYear(content: string): string {
   return content;
 }
 
+/**
+ * When a draft is published (published: false → true transition),
+ * update the frontmatter date to today so the post appears with
+ * the date it actually went live — not the date it was drafted.
+ */
+function stampPublishDate(oldContent: string | null, newContent: string): string {
+  const oldParsed = oldContent ? matter(oldContent) : null;
+  const newParsed = matter(newContent);
+
+  const wasDraft = oldParsed ? oldParsed.data.published === false : false;
+  const isNowPublished = newParsed.data.published === true;
+
+  if (wasDraft && isNowPublished) {
+    const today = new Date().toISOString().split("T")[0];
+    newParsed.data.date = today;
+    return matter.stringify(newParsed.content, newParsed.data);
+  }
+  return newContent;
+}
+
 // Create a new post, optionally with images.
 export async function POST(request: NextRequest) {
   try {
@@ -121,22 +141,29 @@ export async function PUT(request: NextRequest) {
     // Resolve the changelog summary: use explicit summary, auto-generate
     // from a diff, or skip the changelog entirely.
     let effectiveSummary = summary;
-    if (!effectiveSummary && autoSummary) {
-      const existing = await readFile(path);
-      effectiveSummary = existing
-        ? generateDiffSummary(existing, content)
-        : "Initial content";
-    }
 
     let finalContent = content;
 
     // Auto-correct stale year in frontmatter dates.
     finalContent = fixDateYear(finalContent);
 
+    // Read the existing file so we can detect draft → published transitions
+    // and (optionally) auto-generate changelog summaries.
+    const existing = await readFile(path);
+
+    // Stamp today's date when publishing a draft.
+    finalContent = stampPublishDate(existing, finalContent);
+
+    if (!effectiveSummary && autoSummary) {
+      effectiveSummary = existing
+        ? generateDiffSummary(existing, finalContent)
+        : "Initial content";
+    }
+
     // When we have a summary, add a changelog entry to the frontmatter
     // before committing.
     if (effectiveSummary) {
-      const parsed = matter(content);
+      const parsed = matter(finalContent);
       const changelog = Array.isArray(parsed.data.changelog)
         ? parsed.data.changelog
         : [];
