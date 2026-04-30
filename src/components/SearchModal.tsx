@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import Fuse from "fuse.js";
-import type { FuseResult } from "fuse.js";
+import Fuse, { type IFuseOptions, type FuseResult } from "fuse.js";
 import { TagBadge } from "@/components/TagBadge";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
@@ -63,7 +62,7 @@ function CloseIcon() {
 
 /* ── Fuse config ───────────────────────────────────────────────────── */
 
-const FUSE_OPTIONS: Fuse.IFuseOptions<SearchIndexEntry> = {
+const FUSE_OPTIONS: IFuseOptions<SearchIndexEntry> = {
   keys: [
     { name: "title", weight: 3 },
     { name: "tags", weight: 2 },
