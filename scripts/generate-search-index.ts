@@ -47,8 +47,10 @@ function generateIndex() {
     date: post.date,
     description: post.description,
     tags: post.tags,
-    // Strip markdown and truncate to keep the index small (~2KB per post)
-    content: stripMarkdown(post.content).substring(0, 1500),
+    // Strip markdown for clean matching. Full content is indexed — at 14 posts
+    // the total index is ~130 KB (smaller than a hero image), fetched once and
+    // cached by the browser. No truncation needed at this scale.
+    content: stripMarkdown(post.content),
   }));
 
   const outputPath = path.join(process.cwd(), "public", "search-index.json");
