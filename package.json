@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "bash scripts/fetch-content.sh",
+    "prebuild": "bash scripts/fetch-content.sh && npx tsx scripts/generate-search-index.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -16,6 +16,7 @@
     "@vercel/analytics": "^2.0.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
+    "fuse.js": "^7.3.0",
     "gray-matter": "^4.0.3",
     "jose": "^6.2.2",
     "next": "16.2.3",
