@@ -11,6 +11,7 @@ export interface PostMeta {
   description: string;
   tags: string[];
   published: boolean;
+  publishAt?: string;
   changelog?: ChangelogEntry[];
   loomUrl?: string;
   devtoUrl?: string;
