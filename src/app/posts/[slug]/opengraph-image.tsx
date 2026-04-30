@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
+import fs from "fs";
+import path from "path";
 
 export const runtime = "nodejs";
 export const contentType = "image/png";
@@ -50,7 +52,28 @@ export default async function OgImage({
     );
   }
 
-  const firstImage = extractFirstImage(post.content);
+  const rawImage = extractFirstImage(post.content);
+
+  // Read image from local filesystem as a data URI instead of fetching
+  // from the live site, which may not have the image yet during build.
+  let firstImage: string | null = null;
+  if (rawImage) {
+    try {
+      const imgPath = path.join(process.cwd(), "public", rawImage);
+      const buf = fs.readFileSync(imgPath);
+      const ext = path.extname(rawImage).replace(".", "").toLowerCase();
+      const mime =
+        ext === "jpg" || ext === "jpeg"
+          ? "image/jpeg"
+          : ext === "svg"
+            ? "image/svg+xml"
+            : `image/${ext}`;
+      firstImage = `data:${mime};base64,${buf.toString("base64")}`;
+    } catch {
+      // Image file not found locally — skip background image gracefully
+      firstImage = null;
+    }
+  }
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "long",
@@ -98,7 +121,7 @@ export default async function OgImage({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`https://vibescoder.dev${firstImage}`}
+              src={firstImage}
               alt=""
               style={{
                 width: "100%",
