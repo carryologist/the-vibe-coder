@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchModal } from "@/components/SearchModal";
@@ -53,9 +53,34 @@ function WaveformMark() {
   );
 }
 
+/** Detect Mac vs other for keyboard shortcut hint. */
+function useIsMac() {
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    setIsMac(
+      typeof navigator !== "undefined" &&
+        /Mac|iPhone|iPad/.test(navigator.userAgent),
+    );
+  }, []);
+  return isMac;
+}
+
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const isMac = useIsMac();
+
+  // Global Cmd+K / Ctrl+K handler
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-xl shadow-header">
@@ -89,31 +114,58 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Search Button (Desktop) */}
+          {/* Search trigger (Desktop) */}
           <button
             onClick={() => setSearchOpen(true)}
             className="hidden items-center gap-2 rounded-md border border-on-surface-variant/20 px-2 py-1 text-on-surface-variant transition-colors hover:border-primary hover:text-primary sm:flex"
-            aria-label="Search"
+            aria-label="Search posts"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
             </svg>
-            <span className="text-xs font-medium">Search</span>
-            <div className="flex items-center gap-0.5 rounded border border-on-surface-variant/20 px-1 py-0.5 text-[10px] font-mono text-on-surface-variant/50">
-              K
-            </div>
+            <span
+              className="text-xs font-medium"
+              style={{ fontFamily: "var(--font-label)" }}
+            >
+              Search
+            </span>
+            <kbd className="rounded border border-on-surface-variant/20 px-1 py-0.5 text-[10px] font-mono text-on-surface-variant/50">
+              {isMac ? "⌘K" : "Ctrl+K"}
+            </kbd>
           </button>
 
           <ThemeToggle />
 
-          {/* Mobile Search */}
+          {/* Search trigger (Mobile) */}
           <button
             onClick={() => setSearchOpen(true)}
             className="inline-flex items-center justify-center rounded-md p-2 text-on-surface-variant transition-colors hover:text-primary sm:hidden"
-            aria-label="Search"
+            aria-label="Search posts"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
             </svg>
@@ -127,11 +179,26 @@ export function Header() {
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
@@ -155,7 +222,10 @@ export function Header() {
         </nav>
       )}
 
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} onOpen={() => setSearchOpen(true)} />
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
     </header>
   );
 }

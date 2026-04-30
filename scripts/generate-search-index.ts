@@ -1,40 +1,66 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { getAllPosts } from '../src/lib/posts';
-
-// Since we are running this in a script, we might need to handle the TS compilation 
-// or just use ts-node. But for now, let's try to see if we can run it with ts-node.
+import fs from "fs";
+import path from "path";
+import { getAllPosts } from "../src/lib/posts";
 
 /**
- * NOTE: This script is intended to be run with ts-node or after compilation.
- * For this environment, I'll try to use a simple approach.
+ * Build-time search index generator.
+ *
+ * Run via: npx tsx scripts/generate-search-index.ts
+ * Called automatically in the prebuild step.
+ *
+ * Produces public/search-index.json consumed by the client-side
+ * SearchModal component (Fuse.js).
  */
 
-async function generateIndex() {
-  const posts = getAllPosts();
-  
-  const index = posts.map(post => ({
-    slug: post.slug,
-    title: post.title,
-    description: post.description,
-    tags: post.tags,
-    // We only want a snippet of content to keep the index small
-    content: post.content.substring(0, 1000), 
-  }));
-
-  const outputPath = path.join(process.cwd(), 'public', 'search-index.json');
-  
-  // Ensure public directory exists
-  if (!fs.existsSync(path.join(process.cwd(), 'public'))) {
-    fs.mkdirSync(path.join(process.cwd(), 'public'), { recursive: true });
-  }
-
-  fs.writeFileSync(outputPath, JSON.stringify(index, null, 2));
-  console.log(`Search index generated at ${outputPath} with ${index.length} posts.`);
+/** Strip MDX/markdown syntax so Fuse matches against plain text. */
+function stripMarkdown(md: string): string {
+  return (
+    md
+      // Remove code fences and their content
+      .replace(/```[\s\S]*?```/g, "")
+      // Remove inline code
+      .replace(/`[^`]+`/g, "")
+      // Remove images/links but keep alt text / label
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+      // Remove HTML tags
+      .replace(/<[^>]+>/g, "")
+      // Remove MDX component tags
+      .replace(/<\/?[A-Z]\w*[^>]*>/g, "")
+      // Remove heading markers
+      .replace(/^#{1,6}\s+/gm, "")
+      // Remove bold/italic markers
+      .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
+      // Remove horizontal rules
+      .replace(/^[-*_]{3,}\s*$/gm, "")
+      // Collapse whitespace
+      .replace(/\n{2,}/g, "\n")
+      .trim()
+  );
 }
 
-generateIndex().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+function generateIndex() {
+  const posts = getAllPosts();
+
+  const index = posts.map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    date: post.date,
+    description: post.description,
+    tags: post.tags,
+    // Strip markdown for clean matching. Full content is indexed — at 14 posts
+    // the total index is ~130 KB (smaller than a hero image), fetched once and
+    // cached by the browser. No truncation needed at this scale.
+    content: stripMarkdown(post.content),
+  }));
+
+  const outputPath = path.join(process.cwd(), "public", "search-index.json");
+
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, JSON.stringify(index));
+
+  console.log(
+    `[search-index] Generated ${outputPath} — ${index.length} posts, ${(Buffer.byteLength(JSON.stringify(index)) / 1024).toFixed(1)} KB`,
+  );
+}
+
+generateIndex();

@@ -51,6 +51,9 @@ next-env.d.ts
 # plans
 PLAN.md
 
+# Generated build artifacts
+public/search-index.json
+
 # Content (fetched from private repo at build time)
 content/posts/
 content/settings.json
