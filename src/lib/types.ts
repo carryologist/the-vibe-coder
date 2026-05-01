@@ -4,6 +4,9 @@ export interface ChangelogEntry {
   summary: string;
 }
 
+/** Content type — controlled vocabulary for primary navigation. */
+export type PostType = 'how-to' | 'opinion';
+
 /** Frontmatter fields parsed from MDX files. */
 export interface PostMeta {
   title: string;
@@ -11,6 +14,7 @@ export interface PostMeta {
   description: string;
   tags: string[];
   published: boolean;
+  type?: PostType;
   publishAt?: string;
   changelog?: ChangelogEntry[];
   loomUrl?: string;
@@ -24,6 +28,7 @@ export interface Post {
   date: string;
   description: string;
   tags: string[];
+  type: PostType;
   readingTime: string;
   content: string;
   changelog?: ChangelogEntry[];

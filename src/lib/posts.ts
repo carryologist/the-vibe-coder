@@ -30,6 +30,7 @@ export function getAllPosts(): Post[] {
         content,
         readingTime: readingTime(content).text,
         ...meta,
+        type: meta.type ?? 'how-to',
       };
     })
     .filter((post): post is Post => post !== null);
@@ -59,6 +60,7 @@ export function getAllPostsAdmin(): (Post & { published: boolean })[] {
         content,
         readingTime: readingTime(content).text,
         ...meta,
+        type: meta.type ?? 'how-to',
         published: meta.published !== false,
       };
     });
@@ -88,6 +90,7 @@ export function getPostBySlug(slug: string): Post | null {
     content,
     readingTime: readingTime(content).text,
     ...meta,
+    type: meta.type ?? 'how-to',
   };
 }
 
@@ -102,21 +105,4 @@ export function getAllTags(): string[] {
   }
 
   return Array.from(tagSet).sort();
-}
-
-/**
- * Return the top N tags by post frequency (descending).
- * Accepts a pre-fetched posts array to avoid re-reading from disk.
- */
-export function getTopTags(posts: Post[], n: number): string[] {
-  const counts = new Map<string, number>();
-  for (const post of posts) {
-    for (const tag of post.tags) {
-      counts.set(tag, (counts.get(tag) ?? 0) + 1);
-    }
-  }
-  return Array.from(counts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, n)
-    .map(([tag]) => tag);
 }
