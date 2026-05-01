@@ -4,14 +4,13 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostCard } from "@/components/PostCard";
-import { FilterBar } from "@/components/FilterBar";
+import { FilterBar, type ActiveFilter } from "@/components/FilterBar";
 import type { Post } from "@/lib/types";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
 interface PostListWithFiltersProps {
   posts: Post[];
-  topTags: string[];
   allTags: string[];
   isAdmin: boolean;
 }
@@ -20,7 +19,6 @@ interface PostListWithFiltersProps {
 
 export function PostListWithFilters({
   posts,
-  topTags,
   allTags,
   isAdmin,
 }: PostListWithFiltersProps) {
@@ -28,17 +26,21 @@ export function PostListWithFilters({
   const searchParams = useSearchParams();
 
   /* Read initial state from URL */
+  const initialFilter = (searchParams.get("filter") ?? "*") as ActiveFilter;
   const initialTag = searchParams.get("tag") ?? "*";
   const initialSort =
     searchParams.get("sort") === "oldest" ? "oldest" : "newest";
 
+  const [activeFilter, setActiveFilter] =
+    useState<ActiveFilter>(initialFilter);
   const [activeTag, setActiveTag] = useState<string>(initialTag);
   const [sortDir, setSortDir] = useState<"newest" | "oldest">(initialSort);
 
   /* Sync state → URL (shallow, no server re-fetch) */
   const syncUrl = useCallback(
-    (tag: string, sort: "newest" | "oldest") => {
+    (filter: ActiveFilter, tag: string, sort: "newest" | "oldest") => {
       const params = new URLSearchParams();
+      if (filter !== "*") params.set("filter", filter);
       if (tag !== "*") params.set("tag", tag);
       if (sort !== "newest") params.set("sort", sort);
       const qs = params.toString();
@@ -47,39 +49,69 @@ export function PostListWithFilters({
     [router],
   );
 
+  const handleFilterChange = useCallback(
+    (filter: ActiveFilter) => {
+      setActiveFilter(filter);
+      syncUrl(filter, activeTag, sortDir);
+    },
+    [activeTag, sortDir, syncUrl],
+  );
+
   const handleTagChange = useCallback(
     (tag: string) => {
       setActiveTag(tag);
-      syncUrl(tag, sortDir);
+      syncUrl(activeFilter, tag, sortDir);
     },
-    [sortDir, syncUrl],
+    [activeFilter, sortDir, syncUrl],
   );
 
   const handleSortChange = useCallback(
     (dir: "newest" | "oldest") => {
       setSortDir(dir);
-      syncUrl(activeTag, dir);
+      syncUrl(activeFilter, activeTag, dir);
     },
-    [activeTag, syncUrl],
+    [activeFilter, activeTag, syncUrl],
   );
 
   /* Filter + sort */
   const filtered = useMemo(() => {
-    const subset =
-      activeTag === "*"
-        ? posts
-        : posts.filter((p) => p.tags.includes(activeTag));
+    let subset = posts;
 
+    // Content-type filter
+    if (activeFilter === "how-to" || activeFilter === "opinion") {
+      subset = subset.filter((p) => p.type === activeFilter);
+    }
+
+    // Tag filter (from expanded tag row)
+    if (activeTag !== "*") {
+      subset = subset.filter((p) => p.tags.includes(activeTag));
+    }
+
+    // Sort
+    if (activeFilter === "popular") {
+      return [...subset].sort(
+        (a, b) => (b.commentCount ?? 0) - (a.commentCount ?? 0),
+      );
+    }
     return sortDir === "newest" ? subset : [...subset].reverse();
-  }, [posts, activeTag, sortDir]);
+  }, [posts, activeFilter, activeTag, sortDir]);
+
+  /* Reset handler */
+  const handleReset = useCallback(() => {
+    setActiveFilter("*");
+    setActiveTag("*");
+    setSortDir("newest");
+    syncUrl("*", "*", "newest");
+  }, [syncUrl]);
 
   return (
     <>
       <FilterBar
-        topTags={topTags}
         allTags={allTags}
+        activeFilter={activeFilter}
         activeTag={activeTag}
         sortDir={sortDir}
+        onFilterChange={handleFilterChange}
         onTagChange={handleTagChange}
         onSortChange={handleSortChange}
       />
@@ -91,7 +123,7 @@ export function PostListWithFilters({
         >
           No posts match.{" "}
           <button
-            onClick={() => handleTagChange("*")}
+            onClick={handleReset}
             className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary cursor-pointer"
           >
             Try [*] to reset.

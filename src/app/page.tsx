@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { verifySession } from "@/lib/auth";
-import { getAllPosts, getAllTags, getTopTags } from "@/lib/posts";
+import { getAllPosts, getAllTags } from "@/lib/posts";
 import { getCommentCounts } from "@/lib/discussions";
 import { AnimateIn } from "@/components/AnimateIn";
 import { PostListWithFilters } from "@/components/PostListWithFilters";
@@ -23,7 +23,6 @@ export default async function HomePage() {
     commentCount: commentCounts[post.slug] ?? 0,
   }));
 
-  const topTags = getTopTags(posts, 4);
   const allTags = getAllTags();
 
   return (
@@ -65,7 +64,6 @@ export default async function HomePage() {
         <Suspense>
           <PostListWithFilters
             posts={postsWithComments}
-            topTags={topTags}
             allTags={allTags}
             isAdmin={isAdmin}
           />

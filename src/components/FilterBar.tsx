@@ -5,11 +5,14 @@ import { useState } from "react";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
+export type ActiveFilter = "*" | "how-to" | "opinion" | "popular";
+
 interface FilterBarProps {
-  topTags: string[];
   allTags: string[];
+  activeFilter: ActiveFilter;
   activeTag: string;
   sortDir: "newest" | "oldest";
+  onFilterChange: (filter: ActiveFilter) => void;
   onTagChange: (tag: string) => void;
   onSortChange: (dir: "newest" | "oldest") => void;
 }
@@ -51,23 +54,28 @@ function Pill({
 /* ── FilterBar ─────────────────────────────────────────────────────── */
 
 export function FilterBar({
-  topTags,
   allTags,
+  activeFilter,
   activeTag,
   sortDir,
+  onFilterChange,
   onTagChange,
   onSortChange,
 }: FilterBarProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
 
-  const overflowTags = allTags.filter((t) => !topTags.includes(t));
-  const hasOverflow = overflowTags.length > 0;
+  const filters: { key: ActiveFilter; label: string }[] = [
+    { key: "*", label: "*" },
+    { key: "how-to", label: "how-to" },
+    { key: "opinion", label: "opinion" },
+    { key: "popular", label: "popular" },
+  ];
 
   return (
     <div className="mb-8 flex flex-col gap-3">
       {/* Main row */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        {/* Left: tag pills */}
+        {/* Left: content-type pills + tag expander */}
         <div className="flex flex-wrap items-center gap-2">
           <span
             className="mr-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/50"
@@ -76,51 +84,53 @@ export function FilterBar({
             {"// grep"}
           </span>
 
-          <Pill
-            label="*"
-            active={activeTag === "*"}
-            onClick={() => onTagChange("*")}
-          />
-
-          {topTags.map((tag) => (
+          {filters.map(({ key, label }) => (
             <Pill
-              key={tag}
-              label={tag.replace(/-/g, " ")}
-              active={activeTag === tag}
-              onClick={() => onTagChange(activeTag === tag ? "*" : tag)}
+              key={key}
+              label={label}
+              active={activeFilter === key}
+              onClick={() => onFilterChange(activeFilter === key ? "*" : key)}
             />
           ))}
 
-          {hasOverflow && (
+          {allTags.length > 0 && (
             <Pill
-              label={expanded ? "−" : `+${overflowTags.length}`}
-              dimmed={!expanded}
-              onClick={() => setExpanded((e) => !e)}
+              label={tagsExpanded ? "−tags" : "+tags"}
+              dimmed={!tagsExpanded && activeTag === "*"}
+              active={tagsExpanded || activeTag !== "*"}
+              onClick={() => {
+                if (tagsExpanded && activeTag !== "*") {
+                  onTagChange("*");
+                }
+                setTagsExpanded((e) => !e);
+              }}
             />
           )}
         </div>
 
-        {/* Right: sort toggle */}
-        <div className="flex items-center gap-2 sm:ml-auto">
-          <span
-            className="mr-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/50"
-            style={{ fontFamily: "var(--font-label)" }}
-          >
-            {"// sort"}
-          </span>
-          <Pill
-            label={sortDir === "newest" ? "newest ↓" : "oldest ↑"}
-            active
-            onClick={() =>
-              onSortChange(sortDir === "newest" ? "oldest" : "newest")
-            }
-          />
-        </div>
+        {/* Right: sort toggle (hidden when popular is active) */}
+        {activeFilter !== "popular" && (
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <span
+              className="mr-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/50"
+              style={{ fontFamily: "var(--font-label)" }}
+            >
+              {"// sort"}
+            </span>
+            <Pill
+              label={sortDir === "newest" ? "newest ↓" : "oldest ↑"}
+              active
+              onClick={() =>
+                onSortChange(sortDir === "newest" ? "oldest" : "newest")
+              }
+            />
+          </div>
+        )}
       </div>
 
-      {/* Expanded overflow row */}
+      {/* Expanded tag row */}
       <AnimatePresence>
-        {expanded && (
+        {tagsExpanded && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -129,14 +139,12 @@ export function FilterBar({
             className="overflow-hidden"
           >
             <div className="flex flex-wrap gap-2 pt-1">
-              {overflowTags.map((tag) => (
+              {allTags.map((tag) => (
                 <Pill
                   key={tag}
                   label={tag.replace(/-/g, " ")}
                   active={activeTag === tag}
-                  onClick={() => {
-                    onTagChange(activeTag === tag ? "*" : tag);
-                  }}
+                  onClick={() => onTagChange(activeTag === tag ? "*" : tag)}
                 />
               ))}
             </div>
