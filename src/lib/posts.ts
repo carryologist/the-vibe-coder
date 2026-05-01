@@ -40,7 +40,7 @@ export function getAllPosts(): Post[] {
   );
 }
 
-export function getAllPostsAdmin(): (Post & { published: boolean })[] {
+export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: string })[] {
   if (!fs.existsSync(POSTS_DIR)) {
     return [];
   }
@@ -62,6 +62,7 @@ export function getAllPostsAdmin(): (Post & { published: boolean })[] {
         ...meta,
         type: meta.type ?? 'how-to',
         published: meta.published !== false,
+        publishAt: meta.publishAt,
       };
     });
 
