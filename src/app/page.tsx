@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 import { verifySession } from "@/lib/auth";
-import { getAllPosts } from "@/lib/posts";
+import { getAllPosts, getAllTags, getTopTags } from "@/lib/posts";
 import { getCommentCounts } from "@/lib/discussions";
-import { PostCard } from "@/components/PostCard";
 import { AnimateIn } from "@/components/AnimateIn";
+import { PostListWithFilters } from "@/components/PostListWithFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,9 @@ export default async function HomePage() {
     ...post,
     commentCount: commentCounts[post.slug] ?? 0,
   }));
+
+  const topTags = getTopTags(posts, 4);
+  const allTags = getAllTags();
 
   return (
     <div>
@@ -58,13 +62,14 @@ export default async function HomePage() {
           No posts yet. Check back soon.
         </p>
       ) : (
-        <div className="flex flex-col gap-6">
-          {postsWithComments.map((post, i) => (
-            <AnimateIn key={post.slug} delay={0.15 + i * 0.05}>
-              <PostCard post={post} isAdmin={isAdmin} />
-            </AnimateIn>
-          ))}
-        </div>
+        <Suspense>
+          <PostListWithFilters
+            posts={postsWithComments}
+            topTags={topTags}
+            allTags={allTags}
+            isAdmin={isAdmin}
+          />
+        </Suspense>
       )}
     </div>
   );
