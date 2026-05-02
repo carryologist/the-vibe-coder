@@ -44,8 +44,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "vibescoder",
     description: "Building in public with AI agents. CEO of Coder.",
-    site: "@robwhiteley",
-    creator: "@robwhiteley",
+    site: "@rwhiteley0",
+    creator: "@rwhiteley0",
   },
   alternates: {
     canonical: "https://vibescoder.dev",

@@ -51,8 +51,8 @@ export async function generateMetadata({ params }: PostPageProps) {
       card: "summary_large_image",
       title: post.title,
       description: post.description,
-      site: "@robwhiteley",
-      creator: "@robwhiteley",
+      site: "@rwhiteley0",
+      creator: "@rwhiteley0",
     },
     alternates: {
       canonical: `https://vibescoder.dev/posts/${slug}`,

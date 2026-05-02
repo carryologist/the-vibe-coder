@@ -37,6 +37,11 @@ export function JsonLd(props: JsonLdProps) {
           name: "Rob Whiteley",
           url: "https://vibescoder.dev/about",
           jobTitle: "CEO",
+          sameAs: [
+            "https://www.linkedin.com/in/rwhiteley",
+            "https://github.com/carryologist",
+            "https://x.com/rwhiteley0",
+          ],
           worksFor: {
             "@type": "Organization",
             name: "Coder",
@@ -59,6 +64,11 @@ export function JsonLd(props: JsonLdProps) {
           name: "Rob Whiteley",
           url: "https://vibescoder.dev/about",
           jobTitle: "CEO",
+          sameAs: [
+            "https://www.linkedin.com/in/rwhiteley",
+            "https://github.com/carryologist",
+            "https://x.com/rwhiteley0",
+          ],
           worksFor: {
             "@type": "Organization",
             name: "Coder",
