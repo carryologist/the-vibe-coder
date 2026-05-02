@@ -149,9 +149,12 @@ export function DraftsList({ drafts }: DraftsListProps) {
                 <div className="min-w-0 flex-1">
                   {/* Title row */}
                   <div className="flex items-center gap-2 mb-1">
-                    <h2 className="truncate font-mono text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
+                    <Link
+                      href={`/admin/preview/${draft.slug}`}
+                      className="truncate font-mono text-sm font-medium text-on-surface transition-colors hover:text-primary"
+                    >
                       {draft.title}
-                    </h2>
+                    </Link>
                     <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
                       draft
                     </span>

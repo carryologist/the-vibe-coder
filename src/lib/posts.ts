@@ -95,6 +95,28 @@ export function getPostBySlug(slug: string): Post | null {
   };
 }
 
+/** Like getPostBySlug but includes unpublished drafts. Admin-only. */
+export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }) | null {
+  const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
+
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  const raw = fs.readFileSync(filePath, "utf-8");
+  const { data, content } = matter(raw);
+  const meta = data as PostMeta;
+
+  return {
+    slug,
+    content,
+    readingTime: readingTime(content).text,
+    ...meta,
+    type: meta.type ?? 'how-to',
+    published: meta.published !== false,
+  };
+}
+
 export function getAllTags(): string[] {
   const posts = getAllPosts();
   const tagSet = new Set<string>();
