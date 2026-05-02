@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 interface ShareButtonProps {
   type: "table" | "code";
@@ -15,7 +16,7 @@ const SOCIAL_LINKS = [
   {
     label: "LinkedIn",
     icon: "in",
-    url: (postUrl: string, title: string) =>
+    url: (postUrl: string, _title: string) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`,
   },
   {
@@ -44,23 +45,48 @@ export function ShareButton({
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
 
   const postUrl = `https://vibescoder.dev/posts/${slug}`;
+
+  // Position popover relative to button
+  useEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const popoverWidth = 224; // w-56 = 14rem = 224px
+    let left = rect.right - popoverWidth;
+    // Keep it on screen
+    if (left < 8) left = 8;
+    setPopoverPos({
+      top: rect.bottom + 8 + window.scrollY,
+      left: left + window.scrollX,
+    });
+  }, [open]);
 
   // Close on outside click
   useEffect(() => {
     if (!open) return;
     function onPointerDown(e: PointerEvent) {
       if (
-        popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node)
+        buttonRef.current?.contains(e.target as Node) ||
+        popoverRef.current?.contains(e.target as Node)
       ) {
-        setOpen(false);
+        return;
       }
+      setOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  // Close on scroll
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => setOpen(false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, [open]);
 
   const generateImage = useCallback(async (): Promise<Blob | null> => {
@@ -111,37 +137,22 @@ export function ShareButton({
         setOpen(false);
       }, 1500);
     } catch {
-      // Fallback: download if clipboard isn't available
       handleDownload();
     }
   }
 
-  return (
-    <div ref={popoverRef} className="relative" style={{ zIndex: 10 }}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded-lg border border-outline-variant/20 bg-surface-low/80 px-2 py-1 font-mono text-[11px] text-on-surface-variant backdrop-blur-sm transition-all hover:border-primary/30 hover:text-primary"
-        title="Share as image"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+  const popover = open
+    ? createPortal(
+        <div
+          ref={popoverRef}
+          className="fixed w-56 rounded-xl border border-outline-variant/20 bg-bg p-2 shadow-2xl"
+          style={{
+            zIndex: 9999,
+            top: popoverPos.top,
+            left: popoverPos.left,
+            position: "absolute",
+          }}
         >
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </svg>
-        Share
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-outline-variant/20 bg-bg p-2 shadow-xl" style={{ zIndex: 20 }}>
           {error && (
             <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5">
               <p className="font-mono text-[10px] text-red-400">{error}</p>
@@ -193,8 +204,36 @@ export function ShareButton({
               </a>
             ))}
           </div>
-        </div>
-      )}
-    </div>
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 rounded-lg border border-outline-variant/20 bg-surface-low/80 px-2 py-1 font-mono text-[11px] text-on-surface-variant backdrop-blur-sm transition-all hover:border-primary/30 hover:text-primary"
+        title="Share as image"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+        Share
+      </button>
+      {popover}
+    </>
   );
 }
