@@ -55,8 +55,9 @@ PLAN.md
 public/search-index.json
 
 # Content (fetched from private repo at build time)
+/content
 content/posts/
 content/settings.json
 content/TODO.md
 blog-drafts/
-public/images/
+/public/images
