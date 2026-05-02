@@ -24,6 +24,23 @@ const COLORS = {
   codeBg: "#0d0f0f",
 };
 
+// Layout constants (px)
+const PADDING_Y = 48;
+const PADDING_X = 56;
+const CAPTION_HEIGHT = 38; // fontSize 16 + margin
+const FOOTER_HEIGHT = 50; // waveform + text
+const TABLE_HEADER_HEIGHT = 46;
+const TABLE_ROW_HEIGHT = 42;
+const CODE_LINE_HEIGHT = 24; // 14px * 1.7
+const CODE_PADDING = 32; // top + bottom inside code block
+const CODE_LANG_HEIGHT = 32; // language label bar
+const CODE_CHAR_WIDTH = 8.4; // ~px per char in monospace at 14px
+const CODE_BLOCK_PAD_X = 40; // left + right padding inside code block
+const MIN_HEIGHT = 280;
+const MIN_WIDTH = 480; // enough for footer branding
+const TABLE_WIDTH = 1200;
+const MAX_WIDTH = 1200;
+
 // Waveform bar data: [height, opacity]
 const BARS: [number, number][] = [
   [14, 0.4],
@@ -47,7 +64,6 @@ function parseMarkdownTable(md: string): { headers: string[]; rows: string[][] }
       .filter((c) => c.length > 0 && !/^[-:]+$/.test(c));
 
   const headers = parseLine(lines[0]);
-  // Skip separator line (line[1])
   const rows = lines
     .slice(2)
     .filter((l) => !/^\|?\s*[-:]+/.test(l.replace(/\|/g, "").trim()))
@@ -60,11 +76,33 @@ function stripBold(text: string): string {
   return text.replace(/\*\*/g, "");
 }
 
-function renderTable(headers: string[], rows: string[][]) {
-  // Limit rows to fit the image
-  const maxRows = Math.min(rows.length, 8);
-  const displayRows = rows.slice(0, maxRows);
+// Estimate how many lines a cell wraps to at a given column width.
+// Rough heuristic: ~7.5px per character at fontSize 13.
+function estimateCellLines(text: string, colWidthPx: number): number {
+  const cleaned = stripBold(text);
+  const charsPerLine = Math.max(1, Math.floor(colWidthPx / 7.5));
+  return Math.max(1, Math.ceil(cleaned.length / charsPerLine));
+}
 
+function calcTableHeight(headers: string[], rows: string[][], numCols: number): number {
+  // First column is fixed 220px, rest share remaining space
+  const availableWidth = TABLE_WIDTH - PADDING_X * 2 - 40; // minus table padding
+  const otherColWidth = numCols > 1 ? (availableWidth - 220) / (numCols - 1) : availableWidth;
+
+  let totalHeight = TABLE_HEADER_HEIGHT;
+  for (const row of rows) {
+    let maxLines = 1;
+    for (let ci = 0; ci < row.length; ci++) {
+      const colW = ci === 0 ? 220 : otherColWidth;
+      maxLines = Math.max(maxLines, estimateCellLines(row[ci], colW));
+    }
+    // Base row height + extra for wrapped lines
+    totalHeight += 20 + maxLines * 18.2; // padding + line-height per line
+  }
+  return totalHeight;
+}
+
+function renderTable(headers: string[], rows: string[][]) {
   return (
     <div
       style={{
@@ -82,7 +120,6 @@ function renderTable(headers: string[], rows: string[][]) {
           display: "flex",
           backgroundColor: COLORS.surfaceHigh,
           padding: "14px 20px",
-          gap: "0",
         }}
       >
         {headers.map((h, i) => (
@@ -90,7 +127,7 @@ function renderTable(headers: string[], rows: string[][]) {
             key={i}
             style={{
               flex: i === 0 ? "0 0 auto" : "1",
-              ...(i === 0 && { width: "200px" }),
+              ...(i === 0 && { width: "220px" }),
               fontSize: 14,
               fontWeight: 700,
               color: COLORS.text,
@@ -103,13 +140,13 @@ function renderTable(headers: string[], rows: string[][]) {
         ))}
       </div>
 
-      {/* Data rows */}
-      {displayRows.map((row, ri) => (
+      {/* ALL data rows — no truncation */}
+      {rows.map((row, ri) => (
         <div
           key={ri}
           style={{
             display: "flex",
-            padding: "12px 20px",
+            padding: "10px 20px",
             borderTop: `1px solid ${COLORS.border}`,
             backgroundColor: ri % 2 === 0 ? COLORS.surface : COLORS.bg,
           }}
@@ -119,10 +156,10 @@ function renderTable(headers: string[], rows: string[][]) {
               key={ci}
               style={{
                 flex: ci === 0 ? "0 0 auto" : "1",
-                ...(ci === 0 && { width: "200px" }),
-                fontSize: 14,
+                ...(ci === 0 && { width: "220px" }),
+                fontSize: 13,
                 color: ci === 0 ? COLORS.primary : COLORS.textMuted,
-                lineHeight: "1.5",
+                lineHeight: "1.4",
                 fontWeight: ci === 0 ? 600 : 400,
               }}
             >
@@ -131,31 +168,12 @@ function renderTable(headers: string[], rows: string[][]) {
           ))}
         </div>
       ))}
-
-      {rows.length > maxRows && (
-        <div
-          style={{
-            display: "flex",
-            padding: "10px 20px",
-            borderTop: `1px solid ${COLORS.border}`,
-            backgroundColor: COLORS.surface,
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontSize: 13, color: COLORS.textMuted }}>
-            +{rows.length - maxRows} more rows — see full table at vibescoder.dev
-          </span>
-        </div>
-      )}
     </div>
   );
 }
 
 function renderCode(content: string, language?: string) {
-  const lines = content.split("\n");
-  const maxLines = Math.min(lines.length, 18);
-  const displayLines = lines.slice(0, maxLines);
-
+  // Show all lines — no truncation
   return (
     <div
       style={{
@@ -168,8 +186,7 @@ function renderCode(content: string, language?: string) {
         backgroundColor: COLORS.codeBg,
       }}
     >
-      {/* Language label */}
-      {language && (
+      {language ? (
         <div
           style={{
             display: "flex",
@@ -189,9 +206,8 @@ function renderCode(content: string, language?: string) {
             {language}
           </span>
         </div>
-      )}
+      ) : null}
 
-      {/* Code content */}
       <div style={{ display: "flex", padding: "16px 20px" }}>
         <pre
           style={{
@@ -204,8 +220,7 @@ function renderCode(content: string, language?: string) {
             wordBreak: "break-word",
           }}
         >
-          {displayLines.join("\n")}
-          {lines.length > maxLines ? `\n  … +${lines.length - maxLines} more lines` : ""}
+          {content}
         </pre>
       </div>
     </div>
@@ -230,6 +245,49 @@ function Waveform() {
   );
 }
 
+function calcDimensions(
+  type: "table" | "code",
+  content: string,
+  language: string | undefined,
+  caption: string | undefined,
+  tableData: { headers: string[]; rows: string[][] } | null,
+): { width: number; height: number } {
+  let contentHeight: number;
+  let width: number;
+
+  if (type === "table" && tableData) {
+    contentHeight = calcTableHeight(
+      tableData.headers,
+      tableData.rows,
+      tableData.headers.length,
+    );
+    width = TABLE_WIDTH;
+  } else {
+    // Code: width based on longest line
+    const lines = content.split("\n");
+    const maxLineLen = Math.max(...lines.map((l) => l.length));
+    const codeContentWidth = maxLineLen * CODE_CHAR_WIDTH + CODE_BLOCK_PAD_X;
+    // Add outer padding + border
+    width = Math.ceil(codeContentWidth + PADDING_X * 2);
+    width = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width));
+    contentHeight =
+      CODE_PADDING + lines.length * CODE_LINE_HEIGHT + (language ? CODE_LANG_HEIGHT : 0);
+  }
+
+  const height =
+    PADDING_Y +
+    (caption ? CAPTION_HEIGHT : 0) +
+    contentHeight +
+    20 + // gap between content and footer
+    FOOTER_HEIGHT +
+    PADDING_Y;
+
+  return {
+    width,
+    height: Math.max(MIN_HEIGHT, Math.ceil(height)),
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: ShareImageRequest = await request.json();
@@ -245,6 +303,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const dims = calcDimensions(type, content, language, caption, tableData);
+
+    // For code, scale down footer title max-width relative to image width
+    const titleMaxWidth = Math.max(200, dims.width - 340);
+
     const image = new ImageResponse(
       (
         <div
@@ -254,9 +317,8 @@ export async function POST(request: NextRequest) {
             display: "flex",
             flexDirection: "column",
             backgroundColor: COLORS.bg,
-            padding: "48px 56px",
+            padding: `${PADDING_Y}px ${PADDING_X}px`,
             fontFamily: "system-ui, sans-serif",
-            position: "relative",
           }}
         >
           {/* Caption / section label */}
@@ -275,20 +337,21 @@ export async function POST(request: NextRequest) {
             </div>
           ) : null}
 
-          {/* Content area */}
-          <div style={{ display: "flex", flex: 1, flexDirection: "column", justifyContent: "center" }}>
+          {/* Content area — no flex:1, just natural size */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
             {isTable && tableData
               ? renderTable(tableData.headers, tableData.rows)
               : renderCode(content, language)}
           </div>
 
-          {/* Bottom branding bar */}
+          {/* Footer — pinned to bottom via flex spacer */}
+          <div style={{ display: "flex", flex: 1 }} />
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginTop: "24px",
+              marginTop: "20px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -310,8 +373,12 @@ export async function POST(request: NextRequest) {
             <div
               style={{
                 display: "flex",
-                fontSize: 14,
+                fontSize: 13,
                 color: COLORS.textMuted,
+                maxWidth: `${titleMaxWidth}px`,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {title}
@@ -320,8 +387,8 @@ export async function POST(request: NextRequest) {
         </div>
       ),
       {
-        width: 1200,
-        height: 630,
+        width: dims.width,
+        height: dims.height,
       },
     );
 
