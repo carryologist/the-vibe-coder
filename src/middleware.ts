@@ -15,7 +15,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/admin/login" ||
     pathname.startsWith("/api/auth/") ||
     pathname === "/api/analytics/track" ||
-    pathname.startsWith("/api/slack/")
+    pathname.startsWith("/api/slack/") ||
+    pathname === "/api/share-image"
   ) {
     return NextResponse.next();
   }

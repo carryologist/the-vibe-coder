@@ -90,7 +90,7 @@ function renderTable(headers: string[], rows: string[][]) {
             key={i}
             style={{
               flex: i === 0 ? "0 0 auto" : "1",
-              width: i === 0 ? "200px" : undefined,
+              ...(i === 0 && { width: "200px" }),
               fontSize: 14,
               fontWeight: 700,
               color: COLORS.text,
@@ -119,7 +119,7 @@ function renderTable(headers: string[], rows: string[][]) {
               key={ci}
               style={{
                 flex: ci === 0 ? "0 0 auto" : "1",
-                width: ci === 0 ? "200px" : undefined,
+                ...(ci === 0 && { width: "200px" }),
                 fontSize: 14,
                 color: ci === 0 ? COLORS.primary : COLORS.textMuted,
                 lineHeight: "1.5",
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
           }}
         >
           {/* Caption / section label */}
-          {caption && (
+          {caption ? (
             <div
               style={{
                 display: "flex",
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
             >
               {caption}
             </div>
-          )}
+          ) : null}
 
           {/* Content area */}
           <div style={{ display: "flex", flex: 1, flexDirection: "column", justifyContent: "center" }}>
@@ -327,6 +327,7 @@ export async function POST(request: NextRequest) {
 
     return image;
   } catch (err) {
+    console.error("[share-image] ERROR:", err);
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to generate image" },
       { status: 500 },
