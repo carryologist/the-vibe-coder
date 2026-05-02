@@ -16,7 +16,10 @@ export async function generateMetadata({ params }: TagPageProps) {
   const { tag } = await params;
   return {
     title: `#${tag}`,
-    description: `Posts tagged with "${tag}".`,
+    description: `Posts tagged with "${tag}" on vibescoder — AI-assisted development, agents, and building in public.`,
+    alternates: {
+      canonical: `https://vibescoder.dev/tags/${tag}`,
+    },
   };
 }
 

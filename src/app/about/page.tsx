@@ -5,6 +5,9 @@ import { AnimateIn } from "@/components/AnimateIn";
 export const metadata: Metadata = {
   title: "About",
   description: "About Vibes Coder — a blog on software development and AI-assisted coding.",
+  alternates: {
+    canonical: "https://vibescoder.dev/about",
+  },
 };
 
 export default function AboutPage() {

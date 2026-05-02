@@ -6,7 +6,7 @@ import { getCommentCounts } from "@/lib/discussions";
 import { AnimateIn } from "@/components/AnimateIn";
 import { PostListWithFilters } from "@/components/PostListWithFilters";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function HomePage() {
   const cookieStore = await cookies();

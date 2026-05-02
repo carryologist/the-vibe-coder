@@ -196,30 +196,44 @@ function HorizontalRule() {
 
 function MDXImage(props: ComponentPropsWithoutRef<"img">) {
   const { src, alt = "", width, height, ...rest } = props;
-
   if (!src) return null;
 
-  if (typeof src === "string" && width && height) {
-    return (
+  const effectiveAlt =
+    alt || (typeof src === "string" ? src.split("/").pop()?.replace(/[-_]/g, " ").replace(/\.\w+$/, "") ?? "" : "");
+
+  const imageElement =
+    typeof src === "string" && width && height ? (
       <Image
         src={src}
-        alt={alt}
+        alt={effectiveAlt}
         width={Number(width)}
         height={Number(height)}
-        className="my-6 rounded-lg"
+        className="rounded-lg"
+      />
+    ) : (
+      /* eslint-disable @next/next/no-img-element */
+      <img
+        src={src}
+        alt={effectiveAlt}
+        className="w-full rounded-lg"
+        loading="lazy"
+        {...rest}
       />
     );
+
+  if (effectiveAlt && effectiveAlt !== alt) {
+    return <figure className="my-6">{imageElement}</figure>;
   }
 
-  /* eslint-disable @next/next/no-img-element */
   return (
-    <img
-      src={src}
-      alt={alt}
-      className="my-6 w-full rounded-lg"
-      loading="lazy"
-      {...rest}
-    />
+    <figure className="my-6">
+      {imageElement}
+      {alt && (
+        <figcaption className="mt-2 text-center text-xs text-on-surface-variant/60 italic">
+          {alt}
+        </figcaption>
+      )}
+    </figure>
   );
 }
 

@@ -1,0 +1,25 @@
+# vibescoder.dev
+
+> Building in public with AI agents. A technical blog by Rob Whiteley, CEO of Coder, documenting the experience of building software with AI coding agents.
+
+## About
+- Author: Rob Whiteley, CEO of Coder (https://coder.com)
+- Focus: AI-assisted software development, agentic coding, local LLMs, developer tools
+- Stack: Next.js, Vercel, MDX, Tailwind CSS
+- Content type: Technical blog posts, benchmarks, how-to guides, build journals
+
+## What This Site Covers
+- Real-world experiences building software with AI coding agents
+- Benchmarking local vs cloud LLMs for coding tasks
+- Setting up self-hosted AI development environments (GPU, models, infrastructure)
+- Building and deploying with agentic coding tools (Coder workspaces, Claude, etc.)
+- Practical guides for developer tooling, homelab setup, and workflow automation
+- The "vibe coding" methodology — building entirely through AI conversation
+
+## Links
+- Homepage: https://vibescoder.dev
+- About: https://vibescoder.dev/about
+- All tags: https://vibescoder.dev/tags
+- RSS Feed: https://vibescoder.dev/feed.xml
+- Sitemap: https://vibescoder.dev/sitemap.xml
+- Full content for LLMs: https://vibescoder.dev/llms-full.txt

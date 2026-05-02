@@ -21,10 +21,12 @@ export async function GET() {
 
       return `    <item>
       <title>${escapeXml(post.title)}</title>
-      <link>${siteUrl}/blog/${post.slug}</link>
+      <link>${siteUrl}/posts/${post.slug}</link>
       <description>${escapeXml(post.description)}</description>
+      <content:encoded><![CDATA[${post.content}]]></content:encoded>
+      <author>rob@vibescoder.dev (Rob Whiteley)</author>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <guid isPermaLink="true">${siteUrl}/blog/${post.slug}</guid>
+      <guid isPermaLink="true">${siteUrl}/posts/${post.slug}</guid>
 ${categories}
     </item>`;
     })
@@ -32,12 +34,13 @@ ${categories}
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/feed-style.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Vibes Coder</title>
     <link>${siteUrl}</link>
-    <description>Thoughts on software development, AI-assisted coding, and the craft of building software.</description>
+    <description>Building in public with AI agents. A technical blog by Rob Whiteley, CEO of Coder.</description>
     <language>en</language>
+    <managingEditor>rob@vibescoder.dev (Rob Whiteley)</managingEditor>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml" />
 ${items}
@@ -47,6 +50,7 @@ ${items}
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, max-age=900, s-maxage=900",
     },
   });
 }

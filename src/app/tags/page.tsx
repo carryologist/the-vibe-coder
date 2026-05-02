@@ -5,7 +5,10 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Tags",
-  description: "Browse posts by tag.",
+  description: "Browse all topics on vibescoder — AI agents, local LLMs, developer tools, homelab, and more.",
+  alternates: {
+    canonical: "https://vibescoder.dev/tags",
+  },
 };
 
 export default async function TagsPage() {

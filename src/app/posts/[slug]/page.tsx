@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
 import { verifySession } from "@/lib/auth";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { MDXComponents } from "@/components/MDXComponents";
@@ -14,6 +15,7 @@ import { AdminPostControls } from "@/components/admin/AdminPostControls";
 import Changelog from "@/components/Changelog";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import { GiscusComments } from "@/components/GiscusComments";
+import { JsonLd } from "@/components/JsonLd";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -33,17 +35,27 @@ export async function generateMetadata({ params }: PostPageProps) {
   return {
     title: post.title,
     description: post.description,
+    authors: [{ name: "Rob Whiteley", url: "https://vibescoder.dev/about" }],
     openGraph: {
       title: post.title,
       description: post.description,
       url: `https://vibescoder.dev/posts/${slug}`,
+      siteName: "vibescoder",
       type: "article",
       publishedTime: post.date,
+      modifiedTime: post.changelog?.[0]?.date ?? post.date,
+      authors: ["Rob Whiteley"],
+      tags: post.tags,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.description,
+      site: "@robwhiteley",
+      creator: "@robwhiteley",
+    },
+    alternates: {
+      canonical: `https://vibescoder.dev/posts/${slug}`,
     },
   };
 }
@@ -70,6 +82,24 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <>
+      <JsonLd
+        type="blogposting"
+        title={post.title}
+        description={post.description}
+        datePublished={post.date}
+        dateModified={post.changelog?.[0]?.date}
+        slug={slug}
+        tags={post.tags}
+        readingTime={post.readingTime}
+      />
+      <JsonLd
+        type="breadcrumb"
+        items={[
+          { name: "Home", url: "https://vibescoder.dev" },
+          { name: "Posts", url: "https://vibescoder.dev" },
+          { name: post.title, url: `https://vibescoder.dev/posts/${slug}` },
+        ]}
+      />
       <ReadingProgress />
       <article>
         {/* Back link */}
@@ -148,6 +178,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 mdxOptions: {
                   remarkPlugins: [remarkGfm],
                   rehypePlugins: [
+                    rehypeSlug,
                     [rehypePrettyCode, { theme: "github-dark" }],
                   ],
                 },

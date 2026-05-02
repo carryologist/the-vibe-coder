@@ -5,6 +5,7 @@ import { PageViewTracker } from "@/components/PageViewTracker";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
+import { JsonLd } from "@/components/JsonLd";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,6 +44,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "vibescoder",
     description: "Building in public with AI agents. CEO of Coder.",
+    site: "@robwhiteley",
+    creator: "@robwhiteley",
+  },
+  alternates: {
+    canonical: "https://vibescoder.dev",
   },
   icons: {
     icon: [
@@ -70,6 +76,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="alternate" type="application/rss+xml" title="vibescoder RSS Feed" href="/feed.xml" />
+        <JsonLd type="website" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Header />

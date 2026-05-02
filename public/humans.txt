@@ -1,0 +1,22 @@
+/* TEAM */
+Author: Rob Whiteley
+Role: CEO of Coder
+Site: https://coder.com
+Location: Austin, TX
+Contact: https://www.linkedin.com/in/rwhiteley
+
+/* SITE */
+Name: vibescoder.dev
+Description: Building in public with AI agents
+Standards: HTML5, CSS3, RSS 2.0
+Components: Next.js 16, React 19, Tailwind CSS 4, MDX
+Software: Built entirely with AI coding agents in Coder workspaces
+Hosting: Vercel
+CDN: Cloudflare
+Analytics: Vercel Analytics, Upstash Redis
+
+/* BUILD */
+Last update: 2026-05-02
+Language: English
+IDE: Coder (https://coder.com)
+AI: Claude (Anthropic)
