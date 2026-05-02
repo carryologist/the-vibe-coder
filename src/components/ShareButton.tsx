@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 interface ShareButtonProps {
   type: "table" | "code";
-  content: string;
+  getContent: () => string;
   language?: string;
   title: string;
   slug: string;
@@ -35,7 +35,7 @@ const SOCIAL_LINKS = [
 
 export function ShareButton({
   type,
-  content,
+  getContent,
   language,
   title,
   slug,
@@ -96,7 +96,7 @@ export function ShareButton({
       const res = await fetch("/api/share-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, content, language, title, slug, caption }),
+        body: JSON.stringify({ type, content: getContent(), language, title, slug, caption }),
       });
       if (!res.ok) throw new Error("Failed to generate image");
       return await res.blob();
@@ -106,7 +106,7 @@ export function ShareButton({
     } finally {
       setGenerating(false);
     }
-  }, [type, content, language, title, slug, caption]);
+  }, [type, getContent, language, title, slug, caption]);
 
   async function handleDownload() {
     const blob = await generateImage();
