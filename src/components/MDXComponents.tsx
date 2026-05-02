@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PhoneScreenshot, PhoneScreenshots, PhoneScreenshotItem } from "@/components/PhoneScreenshot";
 import CollapsibleCode from "@/components/CollapsibleCode";
+import { ShareableSnippet } from "@/components/ShareableSnippet";
 
 /* ------------------------------------------------------------------ */
 /*  Neon Brutalist prose — theme-aware via CSS custom properties       */
@@ -127,7 +128,7 @@ function InlineCode(props: ComponentPropsWithoutRef<"code">) {
   );
 }
 
-function Pre(props: ComponentPropsWithoutRef<"pre">) {
+function BasePre(props: ComponentPropsWithoutRef<"pre">) {
   // Code blocks stay dark in both themes for readability.
   // Reset child <code> to remove InlineCode styles that cause clipping.
   return (
@@ -138,7 +139,7 @@ function Pre(props: ComponentPropsWithoutRef<"pre">) {
   );
 }
 
-function Table(props: ComponentPropsWithoutRef<"table">) {
+function BaseTable(props: ComponentPropsWithoutRef<"table">) {
   return (
     <div className="my-6 overflow-x-auto rounded-xl border border-outline-variant/20">
       <table
@@ -238,9 +239,10 @@ function MDXImage(props: ComponentPropsWithoutRef<"img">) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Exported component map — pass to MDXRemote / next-mdx-remote      */
+/*  Component map factories                                            */
 /* ------------------------------------------------------------------ */
 
+/** Base components without share buttons (for admin preview, etc.) */
 export const MDXComponents = {
   h1: H1,
   h2: H2,
@@ -253,10 +255,10 @@ export const MDXComponents = {
   ol: OrderedList,
   li: ListItem,
   code: InlineCode,
-  pre: Pre,
+  pre: BasePre,
   hr: HorizontalRule,
   img: MDXImage,
-  table: Table,
+  table: BaseTable,
   thead: TableHead,
   tbody: TableBody,
   tr: TableRow,
@@ -267,3 +269,34 @@ export const MDXComponents = {
   PhoneScreenshotItem,
   CollapsibleCode,
 };
+
+/** Components with share buttons on code blocks and tables. */
+export function createMDXComponents(slug: string, title: string) {
+  function Pre(props: ComponentPropsWithoutRef<"pre">) {
+    // Try to extract language from the child code element's className
+    const children = props.children as React.ReactElement<{ className?: string }> | undefined;
+    const className = children?.props?.className || "";
+    const langMatch = className.match(/language-(\w+)/);
+    const language = langMatch ? langMatch[1] : undefined;
+
+    return (
+      <ShareableSnippet type="code" language={language} title={title} slug={slug}>
+        <BasePre {...props} />
+      </ShareableSnippet>
+    );
+  }
+
+  function Table(props: ComponentPropsWithoutRef<"table">) {
+    return (
+      <ShareableSnippet type="table" title={title} slug={slug}>
+        <BaseTable {...props} />
+      </ShareableSnippet>
+    );
+  }
+
+  return {
+    ...MDXComponents,
+    pre: Pre,
+    table: Table,
+  };
+}

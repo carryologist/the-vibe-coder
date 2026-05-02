@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import { verifySession } from "@/lib/auth";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
-import { MDXComponents } from "@/components/MDXComponents";
+import { createMDXComponents } from "@/components/MDXComponents";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { AnimateIn } from "@/components/AnimateIn";
 import { TagBadge } from "@/components/TagBadge";
@@ -173,7 +173,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="prose">
             <MDXRemote
               source={post.content}
-              components={MDXComponents}
+              components={createMDXComponents(slug, post.title)}
               options={{
                 mdxOptions: {
                   remarkPlugins: [remarkGfm],
