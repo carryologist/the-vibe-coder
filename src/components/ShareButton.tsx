@@ -141,7 +141,7 @@ export function ShareButton({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-outline-variant/20 bg-surface-low/95 backdrop-blur-md p-2 shadow-xl" style={{ zIndex: 20 }}>
+        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-outline-variant/20 bg-bg p-2 shadow-xl" style={{ zIndex: 20 }}>
           {error && (
             <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5">
               <p className="font-mono text-[10px] text-red-400">{error}</p>
