@@ -103,7 +103,7 @@ export function ShareableSnippet({
   return (
     <div ref={containerRef} className="group/share relative">
       {children}
-      <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover/share:opacity-100">
+      <div className="absolute right-2 top-2 opacity-60 md:opacity-0 transition-opacity md:group-hover/share:opacity-100">
         <ShareButton
           type={type}
           content={shareContent}
