@@ -176,7 +176,7 @@ function TableRow(props: ComponentPropsWithoutRef<"tr">) {
 function TableHeader(props: ComponentPropsWithoutRef<"th">) {
   return (
     <th
-      className="px-4 py-3 font-semibold text-on-surface"
+      className="px-2 py-3 font-semibold text-on-surface sm:px-4"
       {...props}
     />
   );
@@ -185,7 +185,7 @@ function TableHeader(props: ComponentPropsWithoutRef<"th">) {
 function TableCell(props: ComponentPropsWithoutRef<"td">) {
   return (
     <td
-      className="px-4 py-3 leading-[1.6]"
+      className="px-2 py-3 leading-[1.6] sm:px-4"
       {...props}
     />
   );
