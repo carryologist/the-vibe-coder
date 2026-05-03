@@ -38,23 +38,27 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     <>
       <ReadingProgress />
 
-      {/* Draft banner */}
-      {!post.published && (
-        <div className="mb-6 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+      {/* Admin controls */}
+      <div className="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-bg px-4 py-3">
+        <span className="font-mono text-xs text-outline">// admin</span>
+        {!post.published && (
           <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
-            draft preview
+            draft
           </span>
-          <span className="font-mono text-xs text-on-surface-variant">
-            This post is not published.
-          </span>
-          <Link
-            href={`/admin/record?edit=${slug}`}
-            className="ml-auto font-mono text-xs text-primary transition-colors hover:text-primary-container"
-          >
-            Edit →
-          </Link>
-        </div>
-      )}
+        )}
+        <Link
+          href={`/admin/edit/${slug}`}
+          className="rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
+        >
+          Type Edits
+        </Link>
+        <Link
+          href={`/admin/record?edit=${slug}`}
+          className="rounded border border-outline-variant px-3 py-1.5 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
+        >
+          Record Edits
+        </Link>
+      </div>
 
       <article>
         {/* Back link */}

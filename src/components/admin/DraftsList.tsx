@@ -208,7 +208,7 @@ export function DraftsList({ drafts }: DraftsListProps) {
                 {/* Actions */}
                 <div className="flex shrink-0 items-center gap-2">
                   <Link
-                    href={`/admin/record?edit=${draft.slug}`}
+                    href={`/admin/edit/${draft.slug}`}
                     className="rounded-lg border border-outline-variant/20 px-3 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
                   >
                     Edit

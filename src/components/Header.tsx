@@ -219,6 +219,14 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/admin"
+            onClick={() => setMenuOpen(false)}
+            className="block py-2.5 text-xs uppercase tracking-widest text-outline-variant/40 transition-colors hover:text-primary"
+            style={{ fontFamily: "var(--font-label)" }}
+          >
+            Admin
+          </Link>
         </nav>
       )}
 

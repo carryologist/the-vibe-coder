@@ -34,8 +34,8 @@ function Pill({
     <button
       onClick={onClick}
       className={`
-        inline-block cursor-pointer rounded-lg px-2.5 py-1 text-[11px]
-        uppercase tracking-wider transition-colors duration-150
+        inline-block cursor-pointer rounded-lg px-2 py-1 text-[11px]
+        uppercase tracking-wide transition-colors duration-150
         ${
           active
             ? "bg-primary/15 text-primary"
@@ -76,9 +76,9 @@ export function FilterBar({
       {/* Main row */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         {/* Left: content-type pills + tag expander */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className="mr-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/50"
+            className="mr-0.5 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/50"
             style={{ fontFamily: "var(--font-label)" }}
           >
             {"// grep"}

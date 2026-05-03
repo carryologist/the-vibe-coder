@@ -109,10 +109,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            href={`/posts/${slug}`}
+            href={isDraft ? `/admin/preview/${slug}` : `/posts/${slug}`}
             className="font-mono text-xs text-on-surface-variant transition-colors hover:text-primary"
           >
-            ← back to post
+            ← {isDraft ? "back to preview" : "back to post"}
           </Link>
           <h1 className="font-mono text-xs uppercase tracking-widest text-primary">
             // editing: {slug}
