@@ -74,7 +74,7 @@ export function FilterBar({
   return (
     <div className="mb-8 flex flex-col gap-3">
       {/* Main row */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div className="flex flex-wrap items-center gap-y-3">
         {/* Left: content-type pills + tag expander */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span
@@ -110,9 +110,9 @@ export function FilterBar({
 
         {/* Right: sort toggle (hidden when popular is active) */}
         {activeFilter !== "popular" && (
-          <div className="flex items-center gap-2 sm:ml-auto">
+          <div className="flex items-center gap-1.5 sm:ml-auto">
             <span
-              className="mr-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/50"
+              className="mr-0.5 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/50"
               style={{ fontFamily: "var(--font-label)" }}
             >
               {"// sort"}
