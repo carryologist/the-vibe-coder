@@ -17,7 +17,9 @@ interface DraftsListProps {
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
+  const normalized = dateStr.includes("T") ? dateStr : dateStr + "T00:00:00";
+  const d = new Date(normalized);
+  if (isNaN(d.getTime())) return dateStr || "No date";
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -147,23 +149,13 @@ export function DraftsList({ drafts }: DraftsListProps) {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  {/* Title row */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <Link
-                      href={`/admin/preview/${draft.slug}`}
-                      className="truncate font-mono text-sm font-medium text-on-surface transition-colors hover:text-primary"
-                    >
-                      {draft.title}
-                    </Link>
-                    <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
-                      draft
-                    </span>
-                    {isScheduled && (
-                      <span className="shrink-0 rounded bg-secondary/15 px-1.5 py-0.5 font-mono text-[10px] text-secondary">
-                        scheduled
-                      </span>
-                    )}
-                  </div>
+                  {/* Title */}
+                  <Link
+                    href={`/admin/preview/${draft.slug}`}
+                    className="block truncate font-mono text-sm font-medium text-on-surface transition-colors hover:text-primary mb-1"
+                  >
+                    {draft.title}
+                  </Link>
 
                   {/* Description */}
                   <p className="mb-2 text-xs leading-relaxed text-on-surface-variant line-clamp-2">
@@ -171,7 +163,15 @@ export function DraftsList({ drafts }: DraftsListProps) {
                   </p>
 
                   {/* Meta row */}
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                      draft
+                    </span>
+                    {isScheduled && (
+                      <span className="rounded bg-secondary/15 px-1.5 py-0.5 font-mono text-[10px] text-secondary">
+                        scheduled
+                      </span>
+                    )}
                     <span className="font-mono text-[11px] text-outline">
                       {formatDate(draft.date)}
                     </span>
@@ -183,24 +183,6 @@ export function DraftsList({ drafts }: DraftsListProps) {
                           ({relativeTime(draft.publishAt)})
                         </span>
                       </span>
-                    )}
-
-                    {draft.tags.length > 0 && (
-                      <div className="flex gap-1">
-                        {draft.tags.slice(0, 4).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded bg-surface-highest px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {draft.tags.length > 4 && (
-                          <span className="font-mono text-[10px] text-outline">
-                            +{draft.tags.length - 4}
-                          </span>
-                        )}
-                      </div>
                     )}
                   </div>
                 </div>
