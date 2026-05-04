@@ -112,6 +112,13 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/admin"
+              className="text-xs uppercase tracking-widest text-outline-variant/40 transition-colors hover:text-primary"
+              style={{ fontFamily: "var(--font-label)" }}
+            >
+              Admin
+            </Link>
           </nav>
 
           {/* Search trigger (Desktop) */}
