@@ -127,8 +127,9 @@ export async function POST(request: NextRequest) {
 
         const newPublishedAt = `${dateStr}T12:00:00Z`;
 
-        // Skip if already correct.
-        if (article.published_at && article.published_at === newPublishedAt) {
+        // Skip if the date already matches (compare date portion only;
+        // Dev.to returns full ISO timestamps like 2026-04-22T12:00:00Z).
+        if (article.published_at && article.published_at.slice(0, 10) === dateStr) {
           results.push({
             title: article.title,
             devtoId: article.id,

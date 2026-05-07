@@ -30,6 +30,8 @@ export default function SyndicationDashboard({
   const [syndicating, setSyndicating] = useState(false);
   const [results, setResults] = useState<BulkResult[] | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  const [fixingDates, setFixingDates] = useState(false);
+  const [fixDateResult, setFixDateResult] = useState<string | null>(null);
 
   // Split posts into categories.
   const published = posts.filter((p) => p.published);
@@ -279,6 +281,43 @@ export default function SyndicationDashboard({
           </div>
         </div>
       )}
+
+      {/* Maintenance tools */}
+      <div>
+        <h2 className="font-mono text-sm text-on-surface mb-4">Maintenance</h2>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={async () => {
+              if (!confirm("Update all Dev.to article dates to match vibescoder.dev? This will take several minutes.")) return;
+              setFixingDates(true);
+              setFixDateResult(null);
+              try {
+                const res = await fetch("/api/syndicate/devto/fix-dates", { method: "POST" });
+                const data = await res.json();
+                if (!res.ok) {
+                  setFixDateResult(`Error: ${data.error}`);
+                } else {
+                  setFixDateResult(`Done: ${data.summary.updated} updated, ${data.summary.skipped} skipped, ${data.summary.errors} errors`);
+                }
+              } catch {
+                setFixDateResult("Request failed");
+              } finally {
+                setFixingDates(false);
+              }
+            }}
+            disabled={fixingDates}
+            className="rounded border border-outline-variant px-4 py-2 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50"
+          >
+            {fixingDates ? "Fixing dates…" : "Fix Dev.to Dates"}
+          </button>
+          {fixDateResult && (
+            <span className="font-mono text-xs text-on-surface-variant">{fixDateResult}</span>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-outline">
+          Sets published_at on all Dev.to articles to match the original post date from vibescoder.dev.
+        </p>
+      </div>
     </div>
   );
 }

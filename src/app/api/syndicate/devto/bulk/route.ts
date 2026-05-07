@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
                   .slice(0, 4)
                   .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
                 published: true,
+                published_at: meta.date ? `${meta.date}T12:00:00Z` : undefined,
                 description: meta.description || "",
               },
             }),
