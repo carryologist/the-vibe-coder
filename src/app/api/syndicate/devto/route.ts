@@ -25,7 +25,15 @@ export async function POST(request: NextRequest) {
 
     const { data: meta, content } = matter(raw);
 
-    // Publish to Dev.to as draft.
+    // Idempotency guard: skip if already syndicated.
+    if (meta.devtoUrl) {
+      return NextResponse.json(
+        { error: "Already syndicated", devtoUrl: meta.devtoUrl },
+        { status: 409 }
+      );
+    }
+
+    // Publish to Dev.to as published.
     const devtoRes = await fetch("https://dev.to/api/articles", {
       method: "POST",
       headers: {
@@ -41,7 +49,7 @@ export async function POST(request: NextRequest) {
           tags: (meta.tags || [])
             .slice(0, 4)
             .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
-          published: false, // Draft mode
+          published: true, // Published
           description: meta.description || "",
         },
       }),

@@ -51,6 +51,19 @@ export default function AdminDashboardPage() {
           <EditPostPicker posts={posts} />
         </div>
 
+        <Link
+          href="/admin/syndication"
+          className="group glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high"
+        >
+          <div className="mb-2 text-2xl">📡</div>
+          <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
+            Syndication
+          </h2>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Publish posts to Dev.to. Bulk or one-at-a-time.
+          </p>
+        </Link>
+
         <div className="rounded-xl border border-outline-variant/10 p-6 opacity-50">
           <div className="mb-2 text-2xl">⚙️</div>
           <h2 className="font-mono text-sm font-medium text-on-surface-variant">

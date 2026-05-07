@@ -105,7 +105,7 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
             ? syndicateResult.error
             : (
                 <span>
-                  Drafted on DEV.to:{" "}
+                  Published on DEV.to:{" "}
                   <a
                     href={syndicateResult.url}
                     target="_blank"
