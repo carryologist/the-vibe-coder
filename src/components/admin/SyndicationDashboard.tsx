@@ -67,7 +67,7 @@ export default function SyndicationDashboard({
 
     setSyndicating(true);
     setResults(null);
-    setProgress(`Syndicating ${selected.size} posts (≈${selected.size * 3}s)…`);
+    setProgress(`Syndicating ${selected.size} posts (≈${Math.ceil(selected.size * 31 / 60)} min)…`);
 
     try {
       const res = await fetch("/api/syndicate/devto/bulk", {

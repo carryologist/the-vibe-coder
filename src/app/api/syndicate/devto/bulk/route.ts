@@ -10,10 +10,18 @@ interface BulkResult {
   error?: string;
 }
 
+const DELAY_BETWEEN_POSTS_MS = 31_000; // Dev.to enforces ~30s between creates
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 35_000; // Wait 35s on 429 before retrying
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Bulk syndicate posts to Dev.to. Accepts an array of slugs and processes
- * them sequentially with a delay between each to respect Dev.to rate limits
- * (roughly 30 req/min on their API).
+ * them sequentially with a 31-second delay between each to respect Dev.to
+ * rate limits. Retries 429s up to 2 times with a 35-second backoff.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,10 +43,12 @@ export async function POST(request: NextRequest) {
 
     const results: BulkResult[] = [];
 
-    for (const slug of slugs) {
-      // Rate-limit: wait 3 seconds between posts to stay well under Dev.to limits.
-      if (results.length > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+    for (let i = 0; i < slugs.length; i++) {
+      const slug = slugs[i];
+
+      // Rate-limit: wait 31 seconds between posts (skip delay before the first).
+      if (i > 0) {
+        await sleep(DELAY_BETWEEN_POSTS_MS);
       }
 
       try {
@@ -73,34 +83,44 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Publish to Dev.to.
-        const devtoRes = await fetch("https://dev.to/api/articles", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-key": apiKey,
-          },
-          body: JSON.stringify({
-            article: {
-              title: meta.title,
-              body_markdown: content,
-              canonical_url: `https://vibescoder.dev/posts/${slug}`,
-              tags: (meta.tags || [])
-                .slice(0, 4)
-                .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
-              published: true,
-              description: meta.description || "",
-            },
-          }),
-        });
+        // Publish to Dev.to with retry on 429.
+        let devtoRes: Response | null = null;
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          if (attempt > 0) {
+            await sleep(RETRY_DELAY_MS);
+          }
 
-        if (!devtoRes.ok) {
-          const err = await devtoRes.text();
+          devtoRes = await fetch("https://dev.to/api/articles", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "api-key": apiKey,
+            },
+            body: JSON.stringify({
+              article: {
+                title: meta.title,
+                body_markdown: content,
+                canonical_url: `https://vibescoder.dev/posts/${slug}`,
+                tags: (meta.tags || [])
+                  .slice(0, 4)
+                  .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
+                published: true,
+                description: meta.description || "",
+              },
+            }),
+          });
+
+          if (devtoRes.status !== 429) break;
+        }
+
+        if (!devtoRes || !devtoRes.ok) {
+          const err = devtoRes ? await devtoRes.text() : "No response";
+          const status = devtoRes?.status || 0;
           results.push({
             slug,
             title: meta.title || slug,
             status: "error",
-            error: `Dev.to ${devtoRes.status}: ${err}`,
+            error: `Dev.to ${status}: ${err}`,
           });
           continue;
         }
