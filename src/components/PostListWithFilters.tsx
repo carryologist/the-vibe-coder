@@ -89,9 +89,13 @@ export function PostListWithFilters({
 
     // Sort
     if (activeFilter === "popular") {
-      return [...subset].sort(
-        (a, b) => (b.commentCount ?? 0) - (a.commentCount ?? 0),
-      );
+      const COMMENT_WEIGHT = 20;
+      const scored = subset.map((p) => ({
+        post: p,
+        score: (p.viewCount ?? 0) + (p.commentCount ?? 0) * COMMENT_WEIGHT,
+      }));
+      scored.sort((a, b) => b.score - a.score);
+      return scored.slice(0, 5).map((s) => s.post);
     }
     return sortDir === "newest" ? subset : [...subset].reverse();
   }, [posts, activeFilter, activeTag, sortDir]);

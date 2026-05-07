@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     const pipeline = redis.pipeline();
     pipeline.incr(`views:${today}:total`);
     pipeline.incr(`views:${today}:${cleanPath}`);
+    pipeline.incr(`views:total:${cleanPath}`);
 
     // Also maintain a set of all dates that have data.
     pipeline.sadd("views:dates", today);

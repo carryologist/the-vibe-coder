@@ -35,4 +35,5 @@ export interface Post {
   loomUrl?: string;
   devtoUrl?: string;
   commentCount?: number;
+  viewCount?: number;
 }

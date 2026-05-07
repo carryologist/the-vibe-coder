@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { verifySession } from "@/lib/auth";
 import { getAllPosts, getAllTags } from "@/lib/posts";
 import { getCommentCounts } from "@/lib/discussions";
+import { getPostViewCounts } from "@/lib/analytics";
 import { AnimateIn } from "@/components/AnimateIn";
 import { PostListWithFilters } from "@/components/PostListWithFilters";
 
@@ -18,9 +19,12 @@ export default async function HomePage() {
     getCommentCounts(),
   ]);
 
+  const viewCounts = await getPostViewCounts(posts.map((p) => p.slug));
+
   const postsWithComments = posts.map((post) => ({
     ...post,
     commentCount: commentCounts[post.slug] ?? 0,
+    viewCount: viewCounts[post.slug] ?? 0,
   }));
 
   const allTags = getAllTags();
