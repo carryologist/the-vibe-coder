@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
 import matter from "gray-matter";
 import { readFile, commitFile } from "@/lib/github";
 
@@ -26,14 +25,6 @@ export async function POST(request: NextRequest) {
 
     const { data: meta, content } = matter(raw);
 
-    // Idempotency guard: skip if already syndicated.
-    if (meta.devtoUrl) {
-      return NextResponse.json(
-        { error: "Already syndicated", devtoUrl: meta.devtoUrl },
-        { status: 409 }
-      );
-    }
-
     // Publish to Dev.to.
     const devtoRes = await fetch("https://dev.to/api/articles", {
       method: "POST",
@@ -46,6 +37,7 @@ export async function POST(request: NextRequest) {
           title: meta.title,
           body_markdown: content,
           canonical_url: `https://vibescoder.dev/posts/${slug}`,
+          // Dev.to tags: max 4, alphanumeric only, no hyphens.
           tags: (meta.tags || [])
             .slice(0, 4)
             .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
@@ -67,22 +59,15 @@ export async function POST(request: NextRequest) {
     const devtoData = await devtoRes.json();
     const devtoUrl = devtoData.url;
 
-    // Defer the GitHub commit to after the response is sent.
-    // This keeps the response fast and avoids Vercel's 10s timeout.
+    // Update the post frontmatter with the Dev.to URL.
     if (devtoUrl) {
-      after(async () => {
-        try {
-          const updatedMeta = { ...meta, devtoUrl };
-          const updatedRaw = matter.stringify(content, updatedMeta);
-          await commitFile(
-            `content/posts/${slug}.mdx`,
-            updatedRaw,
-            `syndicate: add Dev.to URL to "${meta.title}"`
-          );
-        } catch (err) {
-          console.error(`Failed to save devtoUrl for ${slug}:`, err);
-        }
-      });
+      const updatedMeta = { ...meta, devtoUrl };
+      const updatedRaw = matter.stringify(content, updatedMeta);
+      await commitFile(
+        `content/posts/${slug}.mdx`,
+        updatedRaw,
+        `syndicate: add Dev.to URL to "${meta.title}"`
+      );
     }
 
     return NextResponse.json({
