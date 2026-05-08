@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface PostInfo {
   slug: string;
@@ -11,7 +11,7 @@ interface PostInfo {
   tags: string[];
 }
 
-interface BulkResult {
+interface ResultItem {
   slug: string;
   title: string;
   status: "published" | "skipped" | "error";
@@ -23,15 +23,22 @@ interface SyndicationDashboardProps {
   posts: PostInfo[];
 }
 
+const DELAY_MS = 31_000; // 31 seconds between Dev.to API calls
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function SyndicationDashboard({
   posts,
 }: SyndicationDashboardProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [syndicating, setSyndicating] = useState(false);
-  const [results, setResults] = useState<BulkResult[] | null>(null);
+  const [results, setResults] = useState<ResultItem[]>([]);
   const [progress, setProgress] = useState<string | null>(null);
   const [fixingDates, setFixingDates] = useState(false);
-  const [fixDateResult, setFixDateResult] = useState<string | null>(null);
+  const [fixResults, setFixResults] = useState<string[]>([]);
+  const abortRef = useRef(false);
 
   // Split posts into categories.
   const published = posts.filter((p) => p.published);
@@ -58,57 +65,179 @@ export default function SyndicationDashboard({
     setSelected(new Set());
   }
 
+  // --- Bulk syndicate: client-side loop, one post at a time ---
   async function handleBulkSyndicate() {
-    if (selected.size === 0) return;
+    const slugs = Array.from(selected);
+    if (slugs.length === 0) return;
     if (
       !confirm(
-        `Publish ${selected.size} post${selected.size === 1 ? "" : "s"} to Dev.to? This will go live immediately.`
+        `Publish ${slugs.length} post${slugs.length === 1 ? "" : "s"} to Dev.to? This will take ~${Math.ceil((slugs.length * 31) / 60)} min.`
       )
     )
       return;
 
     setSyndicating(true);
-    setResults(null);
-    setProgress(`Syndicating ${selected.size} posts (≈${Math.ceil(selected.size * 31 / 60)} min)…`);
+    setResults([]);
+    abortRef.current = false;
+
+    for (let i = 0; i < slugs.length; i++) {
+      if (abortRef.current) break;
+
+      const slug = slugs[i];
+      setProgress(`Publishing ${i + 1} of ${slugs.length}: ${slug}…`);
+
+      // Wait 31s between posts (skip before the first).
+      if (i > 0) {
+        setProgress(
+          `Waiting 31s (rate limit)… then ${i + 1} of ${slugs.length}`
+        );
+        await sleep(DELAY_MS);
+        if (abortRef.current) break;
+        setProgress(`Publishing ${i + 1} of ${slugs.length}: ${slug}…`);
+      }
+
+      try {
+        const res = await fetch("/api/syndicate/devto/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setResults((prev) => [
+            ...prev,
+            {
+              slug,
+              title: data.title || slug,
+              status: "error",
+              error: data.error,
+            },
+          ]);
+        } else {
+          setResults((prev) => [
+            ...prev,
+            {
+              slug,
+              title: data.title || slug,
+              status: data.status || "published",
+              devtoUrl: data.devtoUrl,
+              error: data.error,
+            },
+          ]);
+        }
+      } catch {
+        setResults((prev) => [
+          ...prev,
+          { slug, title: slug, status: "error", error: "Network error" },
+        ]);
+      }
+    }
+
+    const done = abortRef.current ? "Stopped" : "Done";
+    setProgress(done);
+    setSyndicating(false);
+    setSelected(new Set());
+  }
+
+  // --- Fix dates: client-side loop, one article at a time ---
+  async function handleFixDates() {
+    if (
+      !confirm(
+        "Update all Dev.to article dates to match vibescoder.dev? This will take several minutes."
+      )
+    )
+      return;
+
+    setFixingDates(true);
+    setFixResults([]);
+    abortRef.current = false;
 
     try {
-      const res = await fetch("/api/syndicate/devto/bulk", {
+      // Step 1: Get the list of articles that need fixing.
+      setFixResults(["Fetching article list…"]);
+      const listRes = await fetch("/api/syndicate/devto/fix-dates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slugs: Array.from(selected) }),
+        body: JSON.stringify({ action: "list" }),
       });
-      const data = await res.json();
+      const listData = await listRes.json();
 
-      if (!res.ok) {
-        setProgress(null);
-        setResults([
-          {
-            slug: "",
-            title: "Bulk syndication failed",
-            status: "error",
-            error: data.error,
-          },
-        ]);
+      if (!listRes.ok) {
+        setFixResults([`Error: ${listData.error}`]);
+        setFixingDates(false);
         return;
       }
 
-      setResults(data.results);
-      setProgress(
-        `Done: ${data.summary.published} published, ${data.summary.skipped} skipped, ${data.summary.errors} errors`
+      const toFix = listData.articles.filter(
+        (a: { needsFix: boolean }) => a.needsFix
       );
-      setSelected(new Set());
-    } catch {
-      setProgress(null);
-      setResults([
-        {
-          slug: "",
-          title: "Request failed",
-          status: "error",
-          error: "Network error",
-        },
+      const alreadyCorrect = listData.articles.length - toFix.length;
+
+      if (toFix.length === 0) {
+        setFixResults([`All ${listData.articles.length} articles already have correct dates.`]);
+        setFixingDates(false);
+        return;
+      }
+
+      setFixResults([
+        `Found ${toFix.length} to update, ${alreadyCorrect} already correct.`,
       ]);
+
+      // Step 2: Fix each one with 31s delay.
+      for (let i = 0; i < toFix.length; i++) {
+        if (abortRef.current) break;
+
+        const article = toFix[i];
+
+        if (i > 0) {
+          setFixResults((prev) => [
+            ...prev,
+            `Waiting 31s (rate limit)…`,
+          ]);
+          await sleep(DELAY_MS);
+          if (abortRef.current) break;
+        }
+
+        try {
+          const res = await fetch("/api/syndicate/devto/fix-dates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "fix",
+              articleId: article.articleId,
+              publishedAt: article.correctPublishedAt,
+            }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            setFixResults((prev) => [
+              ...prev,
+              `✗ ${article.title} — ${data.error}`,
+            ]);
+          } else {
+            setFixResults((prev) => [
+              ...prev,
+              `✓ ${article.title} → ${article.correctPublishedAt}`,
+            ]);
+          }
+        } catch {
+          setFixResults((prev) => [
+            ...prev,
+            `✗ ${article.title} — Network error`,
+          ]);
+        }
+      }
+
+      setFixResults((prev) => [
+        ...prev,
+        abortRef.current ? "Stopped." : "Done.",
+      ]);
+    } catch {
+      setFixResults((prev) => [...prev, "Request failed."]);
     } finally {
-      setSyndicating(false);
+      setFixingDates(false);
     }
   }
 
@@ -197,6 +326,16 @@ export default function SyndicationDashboard({
                 ? "Syndicating…"
                 : `Publish ${selected.size} to Dev.to`}
             </button>
+            {syndicating && (
+              <button
+                onClick={() => {
+                  abortRef.current = true;
+                }}
+                className="rounded border border-red-400/30 px-4 py-2 font-mono text-xs text-red-400 hover:bg-red-400/10"
+              >
+                Stop
+              </button>
+            )}
             {progress && (
               <span className="font-mono text-xs text-on-surface-variant">
                 {progress}
@@ -206,8 +345,8 @@ export default function SyndicationDashboard({
         </div>
       )}
 
-      {/* Results */}
-      {results && (
+      {/* Syndication results */}
+      {results.length > 0 && (
         <div className="space-y-2">
           <h2 className="font-mono text-sm text-on-surface">Results</h2>
           {results.map((r, i) => (
@@ -287,36 +426,36 @@ export default function SyndicationDashboard({
         <h2 className="font-mono text-sm text-on-surface mb-4">Maintenance</h2>
         <div className="flex items-center gap-4">
           <button
-            onClick={async () => {
-              if (!confirm("Update all Dev.to article dates to match vibescoder.dev? This will take several minutes.")) return;
-              setFixingDates(true);
-              setFixDateResult(null);
-              try {
-                const res = await fetch("/api/syndicate/devto/fix-dates", { method: "POST" });
-                const data = await res.json();
-                if (!res.ok) {
-                  setFixDateResult(`Error: ${data.error}`);
-                } else {
-                  setFixDateResult(`Done: ${data.summary.updated} updated, ${data.summary.skipped} skipped, ${data.summary.errors} errors`);
-                }
-              } catch {
-                setFixDateResult("Request failed");
-              } finally {
-                setFixingDates(false);
-              }
-            }}
+            onClick={handleFixDates}
             disabled={fixingDates}
             className="rounded border border-outline-variant px-4 py-2 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50"
           >
             {fixingDates ? "Fixing dates…" : "Fix Dev.to Dates"}
           </button>
-          {fixDateResult && (
-            <span className="font-mono text-xs text-on-surface-variant">{fixDateResult}</span>
+          {fixingDates && (
+            <button
+              onClick={() => {
+                abortRef.current = true;
+              }}
+              className="rounded border border-red-400/30 px-4 py-2 font-mono text-xs text-red-400 hover:bg-red-400/10"
+            >
+              Stop
+            </button>
           )}
         </div>
         <p className="mt-2 text-xs text-outline">
-          Sets published_at on all Dev.to articles to match the original post date from vibescoder.dev.
+          Sets published_at on all Dev.to articles to match the original post
+          date from vibescoder.dev.
         </p>
+        {fixResults.length > 0 && (
+          <div className="mt-3 space-y-1">
+            {fixResults.map((line, i) => (
+              <div key={i} className="font-mono text-xs text-on-surface-variant">
+                {line}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

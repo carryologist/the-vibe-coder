@@ -2,33 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { readFile } from "@/lib/github";
 
-interface FixDateResult {
-  title: string;
-  devtoId: number;
-  slug: string;
-  status: "updated" | "skipped" | "error";
-  oldPublishedAt?: string;
-  newPublishedAt?: string;
-  error?: string;
-}
-
-const DELAY_BETWEEN_UPDATES_MS = 31_000; // Dev.to enforces ~30s between writes
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 35_000; // Wait 35s on 429 before retrying
-
-async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Vercel function timeout — needs enough time for 12+ articles at 31s each.
-export const maxDuration = 600; // 10 minutes
-
 /**
- * One-time endpoint to fix published_at dates on Dev.to articles.
+ * Fix published_at date for a single Dev.to article.
  *
- * For each article on Dev.to, finds the matching post in the content repo
- * via the canonical_url slug, reads the frontmatter `date` field, and
- * updates the Dev.to article's `published_at` to noon UTC on that date.
+ * Two modes:
+ * - POST { action: "list" } — returns all Dev.to articles with their current dates
+ *   and the correct dates from the content repo, so the client knows what needs fixing.
+ * - POST { action: "fix", articleId, publishedAt } — updates a single article's date.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -40,174 +20,101 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Fetch all articles from Dev.to for the authenticated user.
-    const listRes = await fetch("https://dev.to/api/articles/me/all?per_page=100", {
-      headers: { "api-key": apiKey },
-    });
+    const body = await request.json();
 
-    if (!listRes.ok) {
-      const err = await listRes.text();
-      return NextResponse.json(
-        { error: `Failed to fetch Dev.to articles: ${listRes.status} ${err}` },
-        { status: 502 }
-      );
-    }
+    // --- LIST MODE: return all articles with current vs correct dates ---
+    if (body.action === "list") {
+      const listRes = await fetch("https://dev.to/api/articles/me/all?per_page=100", {
+        headers: { "api-key": apiKey },
+      });
 
-    const articles: Array<{
-      id: number;
-      title: string;
-      canonical_url: string | null;
-      published_at: string | null;
-    }> = await listRes.json();
-
-    const results: FixDateResult[] = [];
-
-    for (let i = 0; i < articles.length; i++) {
-      const article = articles[i];
-
-      // Rate-limit: wait 31 seconds between updates (skip delay before the first).
-      if (i > 0) {
-        await sleep(DELAY_BETWEEN_UPDATES_MS);
+      if (!listRes.ok) {
+        const err = await listRes.text();
+        return NextResponse.json(
+          { error: `Failed to fetch Dev.to articles: ${listRes.status} ${err}` },
+          { status: 502 }
+        );
       }
 
-      try {
-        // 2. Extract slug from canonical_url.
-        if (!article.canonical_url) {
-          results.push({
-            title: article.title,
-            devtoId: article.id,
-            slug: "",
-            status: "skipped",
-            error: "No canonical_url set",
-          });
-          continue;
-        }
+      const articles: Array<{
+        id: number;
+        title: string;
+        canonical_url: string | null;
+        published_at: string | null;
+      }> = await listRes.json();
 
-        // canonical_url looks like: https://vibescoder.dev/posts/{slug}
+      const items = [];
+      for (const article of articles) {
+        if (!article.canonical_url) continue;
+
         const urlParts = article.canonical_url.split("/");
         const slug = urlParts[urlParts.length - 1];
-        if (!slug) {
-          results.push({
-            title: article.title,
-            devtoId: article.id,
-            slug: "",
-            status: "skipped",
-            error: `Could not extract slug from canonical_url: ${article.canonical_url}`,
-          });
-          continue;
-        }
+        if (!slug) continue;
 
-        // 3. Read the post from GitHub and parse frontmatter.
         const raw = await readFile(`content/posts/${slug}.mdx`);
-        if (!raw) {
-          results.push({
-            title: article.title,
-            devtoId: article.id,
-            slug,
-            status: "error",
-            error: "Post not found in content repo",
-          });
-          continue;
-        }
+        if (!raw) continue;
 
         const { data: meta } = matter(raw);
-        if (!meta.date) {
-          results.push({
-            title: article.title,
-            devtoId: article.id,
-            slug,
-            status: "skipped",
-            error: "No date field in frontmatter",
-          });
-          continue;
-        }
+        if (!meta.date) continue;
 
-        // 4. Build the new published_at timestamp (noon UTC).
         const dateStr =
           meta.date instanceof Date
             ? meta.date.toISOString().slice(0, 10)
             : String(meta.date).slice(0, 10);
 
-        const newPublishedAt = `${dateStr}T12:00:00Z`;
+        const correctPublishedAt = `${dateStr}T12:00:00Z`;
+        const currentDate = article.published_at?.slice(0, 10) || "";
+        const needsFix = currentDate !== dateStr;
 
-        // Skip if the date already matches (compare date portion only;
-        // Dev.to returns full ISO timestamps like 2026-04-22T12:00:00Z).
-        if (article.published_at && article.published_at.slice(0, 10) === dateStr) {
-          results.push({
-            title: article.title,
-            devtoId: article.id,
-            slug,
-            status: "skipped",
-            oldPublishedAt: article.published_at,
-            newPublishedAt,
-            error: "Already correct",
-          });
-          continue;
-        }
-
-        // 5. Update the Dev.to article with retry on 429.
-        let updateRes: Response | null = null;
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-          if (attempt > 0) {
-            await sleep(RETRY_DELAY_MS);
-          }
-
-          updateRes = await fetch(`https://dev.to/api/articles/${article.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "api-key": apiKey,
-            },
-            body: JSON.stringify({
-              article: { published_at: newPublishedAt },
-            }),
-          });
-
-          if (updateRes.status !== 429) break;
-        }
-
-        if (!updateRes || !updateRes.ok) {
-          const err = updateRes ? await updateRes.text() : "No response";
-          const status = updateRes?.status || 0;
-          results.push({
-            title: article.title,
-            devtoId: article.id,
-            slug,
-            status: "error",
-            oldPublishedAt: article.published_at ?? undefined,
-            error: `Dev.to ${status}: ${err}`,
-          });
-          continue;
-        }
-
-        results.push({
+        items.push({
+          articleId: article.id,
           title: article.title,
-          devtoId: article.id,
           slug,
-          status: "updated",
-          oldPublishedAt: article.published_at ?? undefined,
-          newPublishedAt,
-        });
-      } catch (err) {
-        results.push({
-          title: article.title,
-          devtoId: article.id,
-          slug: "",
-          status: "error",
-          error: err instanceof Error ? err.message : "Unknown error",
+          currentPublishedAt: article.published_at,
+          correctPublishedAt,
+          needsFix,
         });
       }
+
+      return NextResponse.json({ articles: items });
     }
 
-    const updated = results.filter((r) => r.status === "updated").length;
-    const skipped = results.filter((r) => r.status === "skipped").length;
-    const errors = results.filter((r) => r.status === "error").length;
+    // --- FIX MODE: update a single article's published_at ---
+    if (body.action === "fix") {
+      const { articleId, publishedAt } = body;
+      if (!articleId || !publishedAt) {
+        return NextResponse.json(
+          { error: "articleId and publishedAt are required" },
+          { status: 400 }
+        );
+      }
 
-    return NextResponse.json({
-      success: true,
-      summary: { total: results.length, updated, skipped, errors },
-      results,
-    });
+      const updateRes = await fetch(`https://dev.to/api/articles/${articleId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": apiKey,
+        },
+        body: JSON.stringify({
+          article: { published_at: publishedAt },
+        }),
+      });
+
+      if (!updateRes.ok) {
+        const err = await updateRes.text();
+        return NextResponse.json(
+          { error: `Dev.to ${updateRes.status}: ${err}` },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json(
+      { error: "Invalid action. Use 'list' or 'fix'." },
+      { status: 400 }
+    );
   } catch (error) {
     console.error("Fix dates error:", error);
     return NextResponse.json(

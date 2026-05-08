@@ -2,38 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { readFile, commitFile } from "@/lib/github";
 
-interface BulkResult {
-  slug: string;
-  title: string;
-  status: "published" | "skipped" | "error";
-  devtoUrl?: string;
-  error?: string;
-}
-
-const DELAY_BETWEEN_POSTS_MS = 31_000; // Dev.to enforces ~30s between creates
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 35_000; // Wait 35s on 429 before retrying
-
-async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Vercel function timeout — needs enough time for many posts at 31s each.
-export const maxDuration = 600; // 10 minutes
-
 /**
- * Bulk syndicate posts to Dev.to. Accepts an array of slugs and processes
- * them sequentially with a 31-second delay between each to respect Dev.to
- * rate limits. Retries 429s up to 2 times with a 35-second backoff.
+ * Syndicate a single post to Dev.to. The client is responsible for
+ * sequencing multiple calls with appropriate delays between them.
+ *
+ * This is the same as the parent /api/syndicate/devto route but kept
+ * as a separate path for clarity. The parent route is used by the
+ * single-post admin button; this one is called in a loop by the
+ * bulk syndication UI.
+ *
+ * POST { slug: string }
  */
 export async function POST(request: NextRequest) {
   try {
-    const { slugs } = await request.json();
-    if (!Array.isArray(slugs) || slugs.length === 0) {
-      return NextResponse.json(
-        { error: "No slugs provided. Send { slugs: string[] }" },
-        { status: 400 }
-      );
+    const { slug } = await request.json();
+    if (!slug) {
+      return NextResponse.json({ error: "No slug provided" }, { status: 400 });
     }
 
     const apiKey = process.env.DEVTO_API_KEY;
@@ -44,134 +28,82 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const results: BulkResult[] = [];
-
-    for (let i = 0; i < slugs.length; i++) {
-      const slug = slugs[i];
-
-      // Rate-limit: wait 31 seconds between posts (skip delay before the first).
-      if (i > 0) {
-        await sleep(DELAY_BETWEEN_POSTS_MS);
-      }
-
-      try {
-        // Read the post from GitHub.
-        const raw = await readFile(`content/posts/${slug}.mdx`);
-        if (!raw) {
-          results.push({ slug, title: slug, status: "error", error: "Post not found" });
-          continue;
-        }
-
-        const { data: meta, content } = matter(raw);
-
-        // Skip if already syndicated.
-        if (meta.devtoUrl) {
-          results.push({
-            slug,
-            title: meta.title || slug,
-            status: "skipped",
-            devtoUrl: meta.devtoUrl,
-          });
-          continue;
-        }
-
-        // Skip if not published on vibescoder.dev.
-        if (!meta.published) {
-          results.push({
-            slug,
-            title: meta.title || slug,
-            status: "skipped",
-            error: "Post is not published",
-          });
-          continue;
-        }
-
-        // Publish to Dev.to with retry on 429.
-        let devtoRes: Response | null = null;
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-          if (attempt > 0) {
-            await sleep(RETRY_DELAY_MS);
-          }
-
-          devtoRes = await fetch("https://dev.to/api/articles", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "api-key": apiKey,
-            },
-            body: JSON.stringify({
-              article: {
-                title: meta.title,
-                body_markdown: content,
-                canonical_url: `https://vibescoder.dev/posts/${slug}`,
-                tags: (meta.tags || [])
-                  .slice(0, 4)
-                  .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
-                published: true,
-                published_at: meta.date ? `${meta.date}T12:00:00Z` : undefined,
-                description: meta.description || "",
-              },
-            }),
-          });
-
-          if (devtoRes.status !== 429) break;
-        }
-
-        if (!devtoRes || !devtoRes.ok) {
-          const err = devtoRes ? await devtoRes.text() : "No response";
-          const status = devtoRes?.status || 0;
-          results.push({
-            slug,
-            title: meta.title || slug,
-            status: "error",
-            error: `Dev.to ${status}: ${err}`,
-          });
-          continue;
-        }
-
-        const devtoData = await devtoRes.json();
-        const devtoUrl = devtoData.url;
-
-        // Write devtoUrl back into frontmatter.
-        if (devtoUrl) {
-          const updatedMeta = { ...meta, devtoUrl };
-          const updatedRaw = matter.stringify(content, updatedMeta);
-          await commitFile(
-            `content/posts/${slug}.mdx`,
-            updatedRaw,
-            `syndicate: add Dev.to URL to "${meta.title}"`
-          );
-        }
-
-        results.push({
-          slug,
-          title: meta.title || slug,
-          status: "published",
-          devtoUrl,
-        });
-      } catch (err) {
-        results.push({
-          slug,
-          title: slug,
-          status: "error",
-          error: err instanceof Error ? err.message : "Unknown error",
-        });
-      }
+    // Read the post from GitHub.
+    const raw = await readFile(`content/posts/${slug}.mdx`);
+    if (!raw) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const published = results.filter((r) => r.status === "published").length;
-    const skipped = results.filter((r) => r.status === "skipped").length;
-    const errors = results.filter((r) => r.status === "error").length;
+    const { data: meta, content } = matter(raw);
+
+    // Skip if already syndicated.
+    if (meta.devtoUrl) {
+      return NextResponse.json(
+        { status: "skipped", title: meta.title, devtoUrl: meta.devtoUrl },
+      );
+    }
+
+    // Skip if not published.
+    if (!meta.published) {
+      return NextResponse.json(
+        { status: "skipped", title: meta.title, error: "Post is not published" },
+      );
+    }
+
+    // Publish to Dev.to.
+    const devtoRes = await fetch("https://dev.to/api/articles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        article: {
+          title: meta.title,
+          body_markdown: content,
+          canonical_url: `https://vibescoder.dev/posts/${slug}`,
+          tags: (meta.tags || [])
+            .slice(0, 4)
+            .map((t: string) => t.replace(/[^a-z0-9]/gi, "").toLowerCase()),
+          published: true,
+          published_at: meta.date ? `${meta.date}T12:00:00Z` : undefined,
+          description: meta.description || "",
+        },
+      }),
+    });
+
+    if (!devtoRes.ok) {
+      const err = await devtoRes.text();
+      return NextResponse.json(
+        { error: `Dev.to ${devtoRes.status}: ${err}` },
+        { status: 502 }
+      );
+    }
+
+    const devtoData = await devtoRes.json();
+    const devtoUrl = devtoData.url;
+
+    // Write devtoUrl back into frontmatter.
+    if (devtoUrl) {
+      const updatedMeta = { ...meta, devtoUrl };
+      const updatedRaw = matter.stringify(content, updatedMeta);
+      await commitFile(
+        `content/posts/${slug}.mdx`,
+        updatedRaw,
+        `syndicate: add Dev.to URL to "${meta.title}"`
+      );
+    }
 
     return NextResponse.json({
-      success: true,
-      summary: { total: results.length, published, skipped, errors },
-      results,
+      status: "published",
+      title: meta.title,
+      devtoUrl,
+      devtoId: devtoData.id,
     });
   } catch (error) {
     console.error("Bulk syndication error:", error);
     return NextResponse.json(
-      { error: "Bulk syndication failed" },
+      { error: "Syndication failed" },
       { status: 500 }
     );
   }
