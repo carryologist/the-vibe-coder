@@ -97,10 +97,11 @@ export default function SyndicationDashboard({
       }
 
       try {
+        // Step 1: Create article on Dev.to.
         const res = await fetch("/api/syndicate/devto/bulk", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug }),
+          body: JSON.stringify({ action: "create", slug }),
         });
         const data = await res.json();
 
@@ -125,6 +126,15 @@ export default function SyndicationDashboard({
               error: data.error,
             },
           ]);
+
+          // Step 2: Save devtoUrl back to frontmatter (fire and forget — don't block).
+          if (data.devtoUrl && data.status === "published") {
+            fetch("/api/syndicate/devto/bulk", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "save", slug, devtoUrl: data.devtoUrl }),
+            }).catch(() => {}); // Best effort
+          }
         }
       } catch {
         setResults((prev) => [
