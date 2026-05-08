@@ -36,8 +36,7 @@ export default function SyndicationDashboard({
   const [syndicating, setSyndicating] = useState(false);
   const [results, setResults] = useState<ResultItem[]>([]);
   const [progress, setProgress] = useState<string | null>(null);
-  const [rebuilding, setRebuilding] = useState(false);
-  const [rebuildLog, setRebuildLog] = useState<string[]>([]);
+
   const abortRef = useRef(false);
 
   // Split posts into categories.
@@ -140,123 +139,7 @@ export default function SyndicationDashboard({
     setSelected(new Set());
   }
 
-  // --- Rebuild: delete all Dev.to articles and recreate with correct dates ---
-  async function handleRebuild() {
-    if (
-      !confirm(
-        "Delete ALL Dev.to articles and recreate them with correct dates? This will take ~12 minutes."
-      )
-    )
-      return;
 
-    setRebuilding(true);
-    setRebuildLog([]);
-    abortRef.current = false;
-
-    try {
-      // Step 1: Get all articles from Dev.to.
-      setRebuildLog(["Fetching Dev.to articles…"]);
-      const listRes = await fetch("/api/syndicate/devto/rebuild", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "list" }),
-      });
-      const listData = await listRes.json();
-
-      if (!listRes.ok) {
-        setRebuildLog([`Error: ${listData.error}`]);
-        setRebuilding(false);
-        return;
-      }
-
-      const articles = listData.articles as Array<{
-        articleId: number;
-        title: string;
-        slug: string;
-      }>;
-
-      if (articles.length === 0) {
-        setRebuildLog(["No articles found on Dev.to."]);
-        setRebuilding(false);
-        return;
-      }
-
-      setRebuildLog((prev) => [...prev, `Found ${articles.length} articles. Deleting…`]);
-
-      // Step 2: Delete each article.
-      for (let i = 0; i < articles.length; i++) {
-        if (abortRef.current) break;
-        const a = articles[i];
-
-        if (i > 0) {
-          setRebuildLog((prev) => [...prev, "Waiting 31s (rate limit)…"]);
-          await sleep(DELAY_MS);
-          if (abortRef.current) break;
-        }
-
-        try {
-          const res = await fetch("/api/syndicate/devto/rebuild", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "delete", articleId: a.articleId }),
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            setRebuildLog((prev) => [...prev, `✗ Delete ${a.title} — ${data.error}`]);
-          } else {
-            setRebuildLog((prev) => [...prev, `✓ Deleted: ${a.title}`]);
-          }
-        } catch {
-          setRebuildLog((prev) => [...prev, `✗ Delete ${a.title} — Network error`]);
-        }
-      }
-
-      if (abortRef.current) {
-        setRebuildLog((prev) => [...prev, "Stopped."]);
-        setRebuilding(false);
-        return;
-      }
-
-      // Step 3: Recreate each article with correct dates.
-      // Collect unique slugs (skip empty).
-      const slugs = [...new Set(articles.map((a) => a.slug).filter(Boolean))];
-      setRebuildLog((prev) => [...prev, ``, `Recreating ${slugs.length} articles…`]);
-
-      for (let i = 0; i < slugs.length; i++) {
-        if (abortRef.current) break;
-        const slug = slugs[i];
-
-        setRebuildLog((prev) => [...prev, "Waiting 31s (rate limit)…"]);
-        await sleep(DELAY_MS);
-        if (abortRef.current) break;
-
-        try {
-          const res = await fetch("/api/syndicate/devto/rebuild", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "create", slug }),
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            setRebuildLog((prev) => [...prev, `✗ Create ${slug} — ${data.error}`]);
-          } else {
-            setRebuildLog((prev) => [...prev, `✓ Created: ${slug} → ${data.devtoUrl}`]);
-          }
-        } catch {
-          setRebuildLog((prev) => [...prev, `✗ Create ${slug} — Network error`]);
-        }
-      }
-
-      setRebuildLog((prev) => [
-        ...prev,
-        abortRef.current ? "Stopped." : "Done! Refresh the page to update devtoUrl links.",
-      ]);
-    } catch {
-      setRebuildLog((prev) => [...prev, "Request failed."]);
-    } finally {
-      setRebuilding(false);
-    }
-  }
 
   return (
     <div className="space-y-8">
@@ -438,42 +321,7 @@ export default function SyndicationDashboard({
         </div>
       )}
 
-      {/* Maintenance tools */}
-      <div>
-        <h2 className="font-mono text-sm text-on-surface mb-4">Maintenance</h2>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleRebuild}
-            disabled={rebuilding}
-            className="rounded border border-red-400/30 px-4 py-2 font-mono text-xs text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-50"
-          >
-            {rebuilding ? "Rebuilding…" : "Rebuild All on Dev.to"}
-          </button>
-          {rebuilding && (
-            <button
-              onClick={() => {
-                abortRef.current = true;
-              }}
-              className="rounded border border-red-400/30 px-4 py-2 font-mono text-xs text-red-400 hover:bg-red-400/10"
-            >
-              Stop
-            </button>
-          )}
-        </div>
-        <p className="mt-2 text-xs text-outline">
-          Deletes all Dev.to articles and recreates them with correct publish
-          dates. Takes ~12 min for 12 articles. New URLs will be generated.
-        </p>
-        {rebuildLog.length > 0 && (
-          <div className="mt-3 space-y-1">
-            {rebuildLog.map((line, i) => (
-              <div key={i} className="font-mono text-xs text-on-surface-variant">
-                {line}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }
