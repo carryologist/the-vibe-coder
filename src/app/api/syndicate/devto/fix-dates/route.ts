@@ -20,6 +20,9 @@ async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Vercel function timeout — needs enough time for 12+ articles at 31s each.
+export const maxDuration = 600; // 10 minutes
+
 /**
  * One-time endpoint to fix published_at dates on Dev.to articles.
  *

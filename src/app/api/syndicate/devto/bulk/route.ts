@@ -18,6 +18,9 @@ async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Vercel function timeout — needs enough time for many posts at 31s each.
+export const maxDuration = 600; // 10 minutes
+
 /**
  * Bulk syndicate posts to Dev.to. Accepts an array of slugs and processes
  * them sequentially with a 31-second delay between each to respect Dev.to
