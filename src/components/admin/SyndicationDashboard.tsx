@@ -36,8 +36,8 @@ export default function SyndicationDashboard({
   const [syndicating, setSyndicating] = useState(false);
   const [results, setResults] = useState<ResultItem[]>([]);
   const [progress, setProgress] = useState<string | null>(null);
-  const [fixingDates, setFixingDates] = useState(false);
-  const [fixResults, setFixResults] = useState<string[]>([]);
+  const [rebuilding, setRebuilding] = useState(false);
+  const [rebuildLog, setRebuildLog] = useState<string[]>([]);
   const abortRef = useRef(false);
 
   // Split posts into categories.
@@ -140,23 +140,23 @@ export default function SyndicationDashboard({
     setSelected(new Set());
   }
 
-  // --- Fix dates: client-side loop, one article at a time ---
-  async function handleFixDates() {
+  // --- Rebuild: delete all Dev.to articles and recreate with correct dates ---
+  async function handleRebuild() {
     if (
       !confirm(
-        "Update all Dev.to article dates to match vibescoder.dev? This will take several minutes."
+        "Delete ALL Dev.to articles and recreate them with correct dates? This will take ~12 minutes."
       )
     )
       return;
 
-    setFixingDates(true);
-    setFixResults([]);
+    setRebuilding(true);
+    setRebuildLog([]);
     abortRef.current = false;
 
     try {
-      // Step 1: Get the list of articles that need fixing.
-      setFixResults(["Fetching article list…"]);
-      const listRes = await fetch("/api/syndicate/devto/fix-dates", {
+      // Step 1: Get all articles from Dev.to.
+      setRebuildLog(["Fetching Dev.to articles…"]);
+      const listRes = await fetch("/api/syndicate/devto/rebuild", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "list" }),
@@ -164,80 +164,97 @@ export default function SyndicationDashboard({
       const listData = await listRes.json();
 
       if (!listRes.ok) {
-        setFixResults([`Error: ${listData.error}`]);
-        setFixingDates(false);
+        setRebuildLog([`Error: ${listData.error}`]);
+        setRebuilding(false);
         return;
       }
 
-      const toFix = listData.articles.filter(
-        (a: { needsFix: boolean }) => a.needsFix
-      );
-      const alreadyCorrect = listData.articles.length - toFix.length;
+      const articles = listData.articles as Array<{
+        articleId: number;
+        title: string;
+        slug: string;
+      }>;
 
-      if (toFix.length === 0) {
-        setFixResults([`All ${listData.articles.length} articles already have correct dates.`]);
-        setFixingDates(false);
+      if (articles.length === 0) {
+        setRebuildLog(["No articles found on Dev.to."]);
+        setRebuilding(false);
         return;
       }
 
-      setFixResults([
-        `Found ${toFix.length} to update, ${alreadyCorrect} already correct.`,
-      ]);
+      setRebuildLog((prev) => [...prev, `Found ${articles.length} articles. Deleting…`]);
 
-      // Step 2: Fix each one with 31s delay.
-      for (let i = 0; i < toFix.length; i++) {
+      // Step 2: Delete each article.
+      for (let i = 0; i < articles.length; i++) {
         if (abortRef.current) break;
-
-        const article = toFix[i];
+        const a = articles[i];
 
         if (i > 0) {
-          setFixResults((prev) => [
-            ...prev,
-            `Waiting 31s (rate limit)…`,
-          ]);
+          setRebuildLog((prev) => [...prev, "Waiting 31s (rate limit)…"]);
           await sleep(DELAY_MS);
           if (abortRef.current) break;
         }
 
         try {
-          const res = await fetch("/api/syndicate/devto/fix-dates", {
+          const res = await fetch("/api/syndicate/devto/rebuild", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "fix",
-              articleId: article.articleId,
-              publishedAt: article.correctPublishedAt,
-            }),
+            body: JSON.stringify({ action: "delete", articleId: a.articleId }),
           });
           const data = await res.json();
-
           if (!res.ok) {
-            setFixResults((prev) => [
-              ...prev,
-              `✗ ${article.title} — ${data.error}`,
-            ]);
+            setRebuildLog((prev) => [...prev, `✗ Delete ${a.title} — ${data.error}`]);
           } else {
-            setFixResults((prev) => [
-              ...prev,
-              `✓ ${article.title} → ${article.correctPublishedAt}`,
-            ]);
+            setRebuildLog((prev) => [...prev, `✓ Deleted: ${a.title}`]);
           }
         } catch {
-          setFixResults((prev) => [
-            ...prev,
-            `✗ ${article.title} — Network error`,
-          ]);
+          setRebuildLog((prev) => [...prev, `✗ Delete ${a.title} — Network error`]);
         }
       }
 
-      setFixResults((prev) => [
+      if (abortRef.current) {
+        setRebuildLog((prev) => [...prev, "Stopped."]);
+        setRebuilding(false);
+        return;
+      }
+
+      // Step 3: Recreate each article with correct dates.
+      // Collect unique slugs (skip empty).
+      const slugs = [...new Set(articles.map((a) => a.slug).filter(Boolean))];
+      setRebuildLog((prev) => [...prev, ``, `Recreating ${slugs.length} articles…`]);
+
+      for (let i = 0; i < slugs.length; i++) {
+        if (abortRef.current) break;
+        const slug = slugs[i];
+
+        setRebuildLog((prev) => [...prev, "Waiting 31s (rate limit)…"]);
+        await sleep(DELAY_MS);
+        if (abortRef.current) break;
+
+        try {
+          const res = await fetch("/api/syndicate/devto/rebuild", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "create", slug }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setRebuildLog((prev) => [...prev, `✗ Create ${slug} — ${data.error}`]);
+          } else {
+            setRebuildLog((prev) => [...prev, `✓ Created: ${slug} → ${data.devtoUrl}`]);
+          }
+        } catch {
+          setRebuildLog((prev) => [...prev, `✗ Create ${slug} — Network error`]);
+        }
+      }
+
+      setRebuildLog((prev) => [
         ...prev,
-        abortRef.current ? "Stopped." : "Done.",
+        abortRef.current ? "Stopped." : "Done! Refresh the page to update devtoUrl links.",
       ]);
     } catch {
-      setFixResults((prev) => [...prev, "Request failed."]);
+      setRebuildLog((prev) => [...prev, "Request failed."]);
     } finally {
-      setFixingDates(false);
+      setRebuilding(false);
     }
   }
 
@@ -426,13 +443,13 @@ export default function SyndicationDashboard({
         <h2 className="font-mono text-sm text-on-surface mb-4">Maintenance</h2>
         <div className="flex items-center gap-4">
           <button
-            onClick={handleFixDates}
-            disabled={fixingDates}
-            className="rounded border border-outline-variant px-4 py-2 font-mono text-xs text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50"
+            onClick={handleRebuild}
+            disabled={rebuilding}
+            className="rounded border border-red-400/30 px-4 py-2 font-mono text-xs text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-50"
           >
-            {fixingDates ? "Fixing dates…" : "Fix Dev.to Dates"}
+            {rebuilding ? "Rebuilding…" : "Rebuild All on Dev.to"}
           </button>
-          {fixingDates && (
+          {rebuilding && (
             <button
               onClick={() => {
                 abortRef.current = true;
@@ -444,12 +461,12 @@ export default function SyndicationDashboard({
           )}
         </div>
         <p className="mt-2 text-xs text-outline">
-          Sets published_at on all Dev.to articles to match the original post
-          date from vibescoder.dev.
+          Deletes all Dev.to articles and recreates them with correct publish
+          dates. Takes ~12 min for 12 articles. New URLs will be generated.
         </p>
-        {fixResults.length > 0 && (
+        {rebuildLog.length > 0 && (
           <div className="mt-3 space-y-1">
-            {fixResults.map((line, i) => (
+            {rebuildLog.map((line, i) => (
               <div key={i} className="font-mono text-xs text-on-surface-variant">
                 {line}
               </div>
