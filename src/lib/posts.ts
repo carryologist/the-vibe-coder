@@ -25,6 +25,11 @@ export function getAllPosts(): Post[] {
         return null;
       }
 
+      // Don't surface posts with a future date on public pages
+      if (new Date(meta.date) > new Date()) {
+        return null;
+      }
+
       return {
         slug,
         content,
@@ -83,6 +88,11 @@ export function getPostBySlug(slug: string): Post | null {
   const meta = data as PostMeta;
 
   if (!meta.published) {
+    return null;
+  }
+
+  // Don't surface posts with a future date on public pages
+  if (new Date(meta.date) > new Date()) {
     return null;
   }
 
