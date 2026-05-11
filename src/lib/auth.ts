@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
@@ -64,9 +64,15 @@ export function validatePassword(password: string): boolean {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) throw new Error("ADMIN_PASSWORD is not set");
 
-  // Use timing-safe comparison to prevent timing attacks.
-  const a = Buffer.from(password);
-  const b = Buffer.from(adminPassword);
-  if (a.length !== b.length) return false;
+  // Hash both inputs before comparing so the comparison runs in
+  // constant time regardless of input length. Returning early on a
+  // length mismatch (the previous implementation) would leak the
+  // password length via timing, since the early-return path is faster
+  // than the timingSafeEqual path.
+  //
+  // SHA-256 always produces 32 bytes, so timingSafeEqual cannot throw
+  // and the comparison is over fixed-size inputs.
+  const a = createHash("sha256").update(password).digest();
+  const b = createHash("sha256").update(adminPassword).digest();
   return timingSafeEqual(a, b);
 }

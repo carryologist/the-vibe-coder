@@ -24,6 +24,11 @@ export default function AdminLoginPage() {
         // session cookie and avoids stale RSC cache from soft nav.
         window.location.href = "/admin";
         return;
+      } else if (res.status === 429) {
+        // Rate-limited. Surface the server's message verbatim so the
+        // user knows to wait rather than keep retrying.
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(body.error ?? "Too many attempts. Try again later.");
       } else {
         setError("Invalid password");
       }
