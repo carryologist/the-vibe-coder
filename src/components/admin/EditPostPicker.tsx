@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { formatDate } from "@/lib/format-date";
 
 interface EditPostPickerProps {
   posts: { slug: string; title: string; date: string; published: boolean }[];
@@ -82,12 +83,3 @@ export default function EditPostPicker({ posts }: EditPostPickerProps) {
   );
 }
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d.getTime())) return dateStr || "No date";
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}

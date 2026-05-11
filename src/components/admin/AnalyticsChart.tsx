@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/format-date";
 
 interface DayData {
   date: string;
@@ -18,11 +19,6 @@ interface AnalyticsSummary {
   totalViews?: number;
   days?: DayData[];
   topPages?: PageData[];
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function AnalyticsChart() {
@@ -106,12 +102,12 @@ export function AnalyticsChart() {
                 <div
                   className="w-full rounded-t-sm bg-primary/70 transition-colors hover:bg-primary min-h-[2px]"
                   style={{ height: `${Math.max(heightPct, 1)}%` }}
-                  title={`${formatDate(day.date)}: ${day.views} views`}
+                  title={`${formatDate(day.date, { month: "short", day: "numeric" })}: ${day.views} views`}
                 />
                 {/* Show label every 5th bar */}
                 {i % 5 === 0 && (
                   <span className="absolute -bottom-5 font-mono text-[9px] text-on-surface-variant whitespace-nowrap">
-                    {formatDate(day.date)}
+                    {formatDate(day.date, { month: "short", day: "numeric" })}
                   </span>
                 )}
               </div>

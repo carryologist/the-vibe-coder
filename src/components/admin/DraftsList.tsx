@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { formatDate } from "@/lib/format-date";
 
 interface Draft {
   slug: string;
@@ -14,17 +15,6 @@ interface Draft {
 
 interface DraftsListProps {
   drafts: Draft[];
-}
-
-function formatDate(dateStr: string): string {
-  const normalized = dateStr.includes("T") ? dateStr : dateStr + "T00:00:00";
-  const d = new Date(normalized);
-  if (isNaN(d.getTime())) return dateStr || "No date";
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function relativeTime(dateStr: string): string {
