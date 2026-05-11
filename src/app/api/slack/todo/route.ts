@@ -5,19 +5,23 @@ import { createHmac, timingSafeEqual } from "crypto";
 // Slack signature verification
 // ----------------------------------------------------------------
 
-const SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET ?? "";
+// Read secrets per-request instead of at module load so that an env
+// var rotation in Vercel becomes effective without a redeploy. The
+// module is evaluated once per cold start; capturing process.env at
+// the top would freeze the old value across warm invocations.
 
 async function verifySlackSignature(req: NextRequest, body: string): Promise<boolean> {
+  const signingSecret = process.env.SLACK_SIGNING_SECRET ?? "";
   const timestamp = req.headers.get("x-slack-request-timestamp");
   const signature = req.headers.get("x-slack-signature");
-  if (!timestamp || !signature || !SIGNING_SECRET) return false;
+  if (!timestamp || !signature || !signingSecret) return false;
 
   // Reject requests older than 5 minutes to prevent replay attacks.
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - Number(timestamp)) > 300) return false;
 
   const basestring = `v0:${timestamp}:${body}`;
-  const hmac = createHmac("sha256", SIGNING_SECRET)
+  const hmac = createHmac("sha256", signingSecret)
     .update(basestring)
     .digest("hex");
   const expected = `v0=${hmac}`;
@@ -36,7 +40,10 @@ async function verifySlackSignature(req: NextRequest, body: string): Promise<boo
 // GitHub helpers
 // ----------------------------------------------------------------
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? "";
+function githubToken(): string {
+  return process.env.GITHUB_TOKEN ?? "";
+}
+
 const REPO_OWNER = "carryologist";
 const REPO_NAME = "the-vibe-coder-content";
 const FILE_PATH = "content/TODO.md";
@@ -51,7 +58,7 @@ async function fetchTodoFile(): Promise<{ content: string; sha: string }> {
     `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
     {
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Authorization: `Bearer ${githubToken()}`,
         Accept: "application/vnd.github+json",
       },
       cache: "no-store",
@@ -70,7 +77,7 @@ async function commitTodoFile(content: string, sha: string, message: string) {
     {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Authorization: `Bearer ${githubToken()}`,
         Accept: "application/vnd.github+json",
         "Content-Type": "application/json",
       },
@@ -163,7 +170,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  if (!GITHUB_TOKEN) {
+  if (!githubToken()) {
     return NextResponse.json({
       response_type: "ephemeral",
       text: "Server misconfiguration: missing GitHub token.",

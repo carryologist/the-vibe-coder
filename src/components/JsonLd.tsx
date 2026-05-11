@@ -112,7 +112,12 @@ export function JsonLd(props: JsonLdProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      // Escape the '<' character to '\u003c' so a frontmatter field
+      // containing '</script>' cannot terminate this script tag and
+      // inject HTML. JSON.stringify does not escape '<' by default.
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
     />
   );
 }
