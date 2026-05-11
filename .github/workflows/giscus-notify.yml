@@ -16,12 +16,18 @@ jobs:
       - name: Send Slack notification
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Pass event payload fields through env vars rather than
+          # `${{ ... }}` interpolation in the run script. GitHub Actions
+          # evaluates `${{ ... }}` expressions *before* bash sees the
+          # script, so an attacker-controlled discussion title or
+          # comment author handle could otherwise inject arbitrary shell
+          # commands. As env vars they reach bash as opaque strings.
+          COMMENTER: ${{ github.event.comment.user.login }}
+          AVATAR_URL: ${{ github.event.comment.user.avatar_url }}
+          COMMENT_URL: ${{ github.event.comment.html_url }}
+          DISCUSSION_TITLE: ${{ github.event.discussion.title }}
         run: |
-          # Extract fields from the event payload.
-          COMMENTER="${{ github.event.comment.user.login }}"
-          AVATAR_URL="${{ github.event.comment.user.avatar_url }}"
-          COMMENT_URL="${{ github.event.comment.html_url }}"
-          DISCUSSION_TITLE="${{ github.event.discussion.title }}"
+          set -euo pipefail
 
           # Read the comment body from the event JSON file so that
           # special characters and newlines are handled safely.
@@ -32,61 +38,44 @@ jobs:
             COMMENT_BODY="${COMMENT_BODY:0:500}..."
           fi
 
-          # Escape characters that would break the JSON payload.
-          COMMENT_BODY="$(echo "$COMMENT_BODY" | jq -Rs .)"
-
           # Build the blog URL from the discussion title. Giscus
           # creates titles like "posts/some-slug" (no leading slash).
           BLOG_URL="https://vibescoder.dev/${DISCUSSION_TITLE#/}"
 
-          # Post to Slack using Block Kit.
+          # Build the Slack payload with jq so every interpolated value
+          # is JSON-escaped. Hand-rolled JSON with shell interpolation
+          # would break (or be injectable) on any title or comment that
+          # contained a quote character.
+          PAYLOAD="$(jq -n \
+            --arg avatar  "$AVATAR_URL" \
+            --arg user    "$COMMENTER" \
+            --arg url     "$COMMENT_URL" \
+            --arg title   "$DISCUSSION_TITLE" \
+            --arg body    "$COMMENT_BODY" \
+            --arg blogUrl "$BLOG_URL" \
+            '{
+              blocks: [
+                {
+                  type: "context",
+                  elements: [
+                    { type: "image", image_url: $avatar, alt_text: $user },
+                    { type: "mrkdwn", text: ("*" + $user + "* commented on <" + $url + "|" + $title + ">") }
+                  ]
+                },
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: $body }
+                },
+                {
+                  type: "actions",
+                  elements: [
+                    { type: "button", text: { type: "plain_text", text: "Reply on GitHub" }, url: $url },
+                    { type: "button", text: { type: "plain_text", text: "View on Blog" }, url: $blogUrl }
+                  ]
+                }
+              ]
+            }')"
+
           curl -sf -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
-            -d @- <<EOF
-          {
-            "blocks": [
-              {
-                "type": "context",
-                "elements": [
-                  {
-                    "type": "image",
-                    "image_url": "${AVATAR_URL}",
-                    "alt_text": "${COMMENTER}"
-                  },
-                  {
-                    "type": "mrkdwn",
-                    "text": "*${COMMENTER}* commented on <${COMMENT_URL}|${DISCUSSION_TITLE}>"
-                  }
-                ]
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": ${COMMENT_BODY}
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "Reply on GitHub"
-                    },
-                    "url": "${COMMENT_URL}"
-                  },
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View on Blog"
-                    },
-                    "url": "${BLOG_URL}"
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
+            --data-raw "$PAYLOAD"
