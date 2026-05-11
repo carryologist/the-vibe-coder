@@ -10,6 +10,28 @@ function getSecret() {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ---------------------------------------------------------------------
+  // Markdown content negotiation
+  //
+  // If an agent requests a /posts/<slug> URL with Accept: text/markdown,
+  // rewrite to /posts/<slug>/raw which returns the raw MDX with
+  // Content-Type: text/markdown. Browsers send Accept: text/html and
+  // continue to receive the HTML page unchanged.
+  //
+  // The /raw route also sets Vary: Accept so shared caches keep the two
+  // representations separate.
+  // ---------------------------------------------------------------------
+  if (pathname.startsWith("/posts/") && !pathname.endsWith("/raw")) {
+    const accept = request.headers.get("accept") ?? "";
+    if (prefersMarkdown(accept)) {
+      const url = request.nextUrl.clone();
+      url.pathname = pathname.replace(/\/?$/, "") + "/raw";
+      const res = NextResponse.rewrite(url);
+      res.headers.set("Vary", "Accept");
+      return res;
+    }
+  }
+
   // Allow login page and auth API routes through.
   if (
     pathname === "/admin/login" ||
@@ -50,6 +72,30 @@ export async function middleware(request: NextRequest) {
   }
 }
 
+/**
+ * Returns true when the client's Accept header explicitly prefers
+ * text/markdown over text/html. We compare q-values rather than just
+ * checking for substring presence so that browsers sending the default
+ * "text/html,...;q=0.9,*\/*;q=0.8" pattern continue to get HTML.
+ */
+function prefersMarkdown(accept: string): boolean {
+  if (!accept) return false;
+  let markdownQ = 0;
+  let htmlQ = 0;
+  for (const part of accept.split(",")) {
+    const [mediaType, ...params] = part.trim().split(";").map((s) => s.trim());
+    if (!mediaType) continue;
+    const qParam = params.find((p) => p.startsWith("q="));
+    const q = qParam ? parseFloat(qParam.slice(2)) : 1;
+    if (mediaType === "text/markdown") markdownQ = Math.max(markdownQ, q);
+    else if (mediaType === "text/html") htmlQ = Math.max(htmlQ, q);
+  }
+  return markdownQ > 0 && markdownQ >= htmlQ;
+}
+
 export const config = {
-  matcher: ["/admin/:path*", "/api/:path*"],
+  // Matchers must be static string literals — Next.js validates them at
+  // build time. /posts/:path* covers the markdown negotiation rewrite;
+  // the auth-guard logic above is unchanged.
+  matcher: ["/admin/:path*", "/api/:path*", "/posts/:path*"],
 };

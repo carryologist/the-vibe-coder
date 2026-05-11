@@ -23,6 +23,26 @@ import type { NextConfig } from "next";
 // 'unsafe-inline' on script-src is required by the JSON-LD <script>
 // blocks rendered via dangerouslySetInnerHTML. Phase 4 replaces this
 // with a per-request nonce so we can drop 'unsafe-inline' entirely.
+
+// Link response headers (RFC 8288) advertising agent-discoverable
+// resources from the site root. We send these on every response — the
+// Cloudflare agent-readiness probe checks the homepage, and the values
+// are equally true everywhere else.
+//
+// Relation types:
+//   describedby   Pointer to the site description in agent-readable form
+//   alternate     Alternate representations (RSS feed, llms.txt)
+//   sitemap       The XML sitemap
+//
+// Next.js prepends its own preload Link headers for fonts/CSS. Multiple
+// Link headers on one response are valid per RFC 8288 §3.
+const LINK_HEADER = [
+  '</llms.txt>; rel="describedby"; type="text/plain"',
+  '</llms-full.txt>; rel="alternate"; type="text/plain"; title="Full content for LLMs"',
+  '</feed.xml>; rel="alternate"; type="application/rss+xml"; title="RSS feed"',
+  '</sitemap.xml>; rel="sitemap"; type="application/xml"',
+].join(", ");
+
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
@@ -74,6 +94,10 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy-Report-Only",
             value: CSP_DIRECTIVES,
+          },
+          {
+            key: "Link",
+            value: LINK_HEADER,
           },
         ],
       },
