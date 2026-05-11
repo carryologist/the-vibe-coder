@@ -2,8 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { SearchModal } from "@/components/SearchModal";
+
+// Lazy-load the search modal so that fuse.js and the static search
+// index payload are not in the initial bundle of every page in the
+// site. The modal is only mounted when the user opens search.
+const SearchModal = dynamic(
+  () => import("@/components/SearchModal").then((m) => m.SearchModal),
+  { ssr: false },
+);
 
 const navLinks = [
   { href: "/", label: "Blog" },
@@ -237,10 +245,12 @@ export function Header() {
         </nav>
       )}
 
-      <SearchModal
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
+      {searchOpen && (
+        <SearchModal
+          isOpen={searchOpen}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
     </header>
   );
 }

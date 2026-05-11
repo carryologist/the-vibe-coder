@@ -1,7 +1,4 @@
-"use client";
-
-import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 interface AnimateInProps {
   children: ReactNode;
@@ -9,19 +6,23 @@ interface AnimateInProps {
   className?: string;
 }
 
+/**
+ * CSS-only fade-in + translate. Previously used framer-motion which
+ * shipped ~35KB gzip to every page for what was, in practice, two
+ * lines of @keyframes. The animation matches the original timing:
+ *   opacity 0 -> 1, translateY 20px -> 0
+ *   500ms, ease [0.21, 0.47, 0.32, 0.98]
+ *
+ * `delay` is a prop and varies per call site, so it is plumbed through
+ * a CSS custom property instead of inlining N keyframes. Browsers
+ * with prefers-reduced-motion skip the transform via the rule in
+ * globals.css.
+ */
 export function AnimateIn({ children, delay = 0, className }: AnimateInProps) {
+  const style = { "--animate-in-delay": `${delay}s` } as CSSProperties;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.5,
-        delay,
-        ease: [0.21, 0.47, 0.32, 0.98],
-      }}
-      className={className}
-    >
+    <div className={`animate-in ${className ?? ""}`} style={style}>
       {children}
-    </motion.div>
+    </div>
   );
 }

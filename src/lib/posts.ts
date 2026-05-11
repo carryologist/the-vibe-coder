@@ -2,11 +2,20 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
+import { cache } from "react";
 import { Post, PostMeta } from "./types";
 
 const POSTS_DIR = path.join(process.cwd(), "content/posts");
 
-export function getAllPosts(): Post[] {
+// React.cache dedupes calls within a single server render pass so that
+// the homepage and the sitemap (or any other parallel callers) only
+// hit the filesystem once per request. The wrapped functions are
+// otherwise unchanged.
+export const getAllPosts = cache(_getAllPosts);
+export const getPostBySlug = cache(_getPostBySlug);
+export const getAllTags = cache(_getAllTags);
+
+function _getAllPosts(): Post[] {
   if (!fs.existsSync(POSTS_DIR)) {
     return [];
   }
@@ -76,7 +85,7 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
   );
 }
 
-export function getPostBySlug(slug: string): Post | null {
+function _getPostBySlug(slug: string): Post | null {
   const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
 
   if (!fs.existsSync(filePath)) {
@@ -127,7 +136,7 @@ export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }
   };
 }
 
-export function getAllTags(): string[] {
+function _getAllTags(): string[] {
   const posts = getAllPosts();
   const tagSet = new Set<string>();
 

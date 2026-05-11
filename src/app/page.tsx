@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
 import { Suspense } from "react";
-import { verifySession } from "@/lib/auth";
 import { getAllPosts, getAllTags } from "@/lib/posts";
 import { getCommentCounts } from "@/lib/discussions";
 import { getPostViewCounts } from "@/lib/analytics";
@@ -10,9 +8,9 @@ import { PostListWithFilters } from "@/components/PostListWithFilters";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_session")?.value;
-  const isAdmin = token ? await verifySession(token) : false;
+  // Admin state is resolved on the client by the AdminCardControlsIsland
+  // inside each PostCard. Keeping cookies() out of this server component
+  // lets the homepage stay statically rendered for the ISR window.
 
   const [posts, commentCounts] = await Promise.all([
     getAllPosts(),
@@ -69,7 +67,6 @@ export default async function HomePage() {
           <PostListWithFilters
             posts={postsWithComments}
             allTags={allTags}
-            isAdmin={isAdmin}
           />
         </Suspense>
       )}

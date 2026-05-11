@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { TagBadge } from "@/components/TagBadge";
-import { AdminCardControls } from "@/components/admin/AdminCardControls";
+import { AdminCardControlsIsland } from "@/components/admin/AdminCardControlsIsland";
 import type { Post } from "@/lib/types";
 
 interface PostCardProps {
   post: Post;
-  isAdmin?: boolean;
 }
 
-export function PostCard({ post, isAdmin }: PostCardProps) {
+export function PostCard({ post }: PostCardProps) {
   const { slug, title, date, description, tags, readingTime, commentCount } = post;
 
   return (
@@ -28,7 +27,7 @@ export function PostCard({ post, isAdmin }: PostCardProps) {
         >
           {title}
         </h2>
-        {isAdmin && <span className="pointer-events-auto"><AdminCardControls slug={slug} /></span>}
+        <span className="pointer-events-auto"><AdminCardControlsIsland slug={slug} /></span>
       </div>
 
       <div

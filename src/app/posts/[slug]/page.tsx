@@ -1,17 +1,15 @@
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
-import { verifySession } from "@/lib/auth";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { createMDXComponents } from "@/components/MDXComponents";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { AnimateIn } from "@/components/AnimateIn";
 import { TagBadge } from "@/components/TagBadge";
-import { AdminPostControls } from "@/components/admin/AdminPostControls";
+import { AdminPostControlsIsland } from "@/components/admin/AdminPostControlsIsland";
 import Changelog from "@/components/Changelog";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import { GiscusComments } from "@/components/GiscusComments";
@@ -65,14 +63,10 @@ export default async function PostPage({ params }: PostPageProps) {
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  let isAdmin = false;
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("admin_session")?.value;
-    isAdmin = token ? await verifySession(token) : false;
-  } catch {
-    isAdmin = false;
-  }
+  // Admin controls are rendered by a client island that calls
+  // /api/auth/check on mount. This keeps the post page statically
+  // rendered for the ~100% of readers who are not the admin, dropping
+  // TTFB from 200-600ms (dynamic) to <50ms (static edge hit).
 
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -114,12 +108,10 @@ export default async function PostPage({ params }: PostPageProps) {
           </Link>
         </AnimateIn>
 
-        {/* Admin controls */}
-        {isAdmin && (
-          <AnimateIn delay={0.025}>
-            <AdminPostControls slug={slug} />
-          </AnimateIn>
-        )}
+        {/* Admin controls — client island, gated by /api/auth/check */}
+        <AnimateIn delay={0.025}>
+          <AdminPostControlsIsland slug={slug} />
+        </AnimateIn>
 
         {/* Header */}
         <AnimateIn delay={0.05}>

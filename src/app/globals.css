@@ -163,3 +163,34 @@ pre > code {
 [data-theme="light"] .reading-progress {
   box-shadow: 0 0 8px rgba(124, 58, 237, 0.3);
 }
+
+/* ── AnimateIn (CSS-only replacement for framer-motion) ────────────────── */
+/* Fade in + translate, runs once on mount. delay is set per call site via
+   the --animate-in-delay custom property. */
+@keyframes animate-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  opacity: 0;
+  animation: animate-in-up 500ms cubic-bezier(0.21, 0.47, 0.32, 0.98) forwards;
+  animation-delay: var(--animate-in-delay, 0s);
+  /* Hint to the browser to promote to a compositor layer for the brief
+     duration of the animation. */
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}

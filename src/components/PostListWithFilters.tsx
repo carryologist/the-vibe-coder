@@ -12,7 +12,6 @@ import type { Post } from "@/lib/types";
 interface PostListWithFiltersProps {
   posts: Post[];
   allTags: string[];
-  isAdmin: boolean;
 }
 
 /* ── Component ─────────────────────────────────────────────────────── */
@@ -20,7 +19,6 @@ interface PostListWithFiltersProps {
 export function PostListWithFilters({
   posts,
   allTags,
-  isAdmin,
 }: PostListWithFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -156,7 +154,7 @@ export function PostListWithFilters({
                   transition: { duration: 0.2 },
                 }}
               >
-                <PostCard post={post} isAdmin={isAdmin} />
+                <PostCard post={post} />
               </motion.div>
             ))}
           </AnimatePresence>
