@@ -9,6 +9,13 @@ function escapeXml(s: string): string {
     .replace(/'/g, "&apos;");
 }
 
+// Split any literal "]]>" across two CDATA sections so MDX content
+// containing that sequence cannot terminate the surrounding CDATA block.
+// See https://www.w3.org/TR/xml/#NT-CData
+function cdataEscape(s: string): string {
+  return s.replace(/]]>/g, "]]]]><![CDATA[>");
+}
+
 export async function GET() {
   const posts = getAllPosts();
   const siteUrl = "https://vibescoder.dev";
@@ -23,7 +30,7 @@ export async function GET() {
       <title>${escapeXml(post.title)}</title>
       <link>${siteUrl}/posts/${post.slug}</link>
       <description>${escapeXml(post.description)}</description>
-      <content:encoded><![CDATA[${post.content}]]></content:encoded>
+      <content:encoded><![CDATA[${cdataEscape(post.content)}]]></content:encoded>
       <author>rob@vibescoder.dev (Rob Whiteley)</author>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
       <guid isPermaLink="true">${siteUrl}/posts/${post.slug}</guid>
