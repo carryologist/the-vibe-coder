@@ -95,7 +95,15 @@ function prefersMarkdown(accept: string): boolean {
 
 export const config = {
   // Matchers must be static string literals — Next.js validates them at
-  // build time. /posts/:path* covers the markdown negotiation rewrite;
-  // the auth-guard logic above is unchanged.
-  matcher: ["/admin/:path*", "/api/:path*", "/posts/:path*"],
+  // build time. The /posts/:path* and (/, /about, /tags) entries cover
+  // the markdown negotiation rewrites; the auth-guard logic above is
+  // unchanged.
+  matcher: [
+    "/admin/:path*",
+    "/api/:path*",
+    "/posts/:path*",
+    "/",
+    "/about",
+    "/tags",
+  ],
 };
