@@ -10,7 +10,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.88.0",
+    "@anthropic-ai/sdk": "^0.95.2",
     "@giscus/react": "^3.1.0",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.1",
@@ -19,7 +19,7 @@
     "fuse.js": "^7.3.0",
     "gray-matter": "^4.0.3",
     "jose": "^6.2.2",
-    "next": "16.2.3",
+    "next": "^16.2.6",
     "next-mdx-remote": "^6.0.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
