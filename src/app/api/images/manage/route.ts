@@ -41,13 +41,36 @@ export async function GET(request: NextRequest) {
 
     const postSlugs = new Set(posts.map((p) => p.slug));
 
-    const result = directories.map((dir) => ({
-      slug: dir.slug,
-      fileCount: dir.fileCount,
-      totalSize: dir.totalSize,
-      hasMatchingPost: postSlugs.has(dir.slug),
-      matchingPostTitle: posts.find((p) => p.slug === dir.slug)?.title ?? null,
-    }));
+    /**
+     * Match image directories to posts. Image dir slugs are often a prefix
+     * of the full post slug (e.g. "day-four" -> "day-four-rss-analytics-...").
+     * We check for exact match first, then prefix match, then content reference.
+     */
+    function findMatchingPost(dirSlug: string) {
+      // Exact match
+      const exact = posts.find((p) => p.slug === dirSlug);
+      if (exact) return exact;
+      // Prefix match: dir slug is a prefix of a post slug
+      const prefixMatch = posts.find((p) => p.slug.startsWith(dirSlug + "-"));
+      if (prefixMatch) return prefixMatch;
+      // Content reference: post body references /images/<dirSlug>/
+      const contentMatch = posts.find((p) =>
+        p.content.includes(`/images/${dirSlug}/`)
+      );
+      if (contentMatch) return contentMatch;
+      return null;
+    }
+
+    const result = directories.map((dir) => {
+      const match = findMatchingPost(dir.slug);
+      return {
+        slug: dir.slug,
+        fileCount: dir.fileCount,
+        totalSize: dir.totalSize,
+        hasMatchingPost: match !== null,
+        matchingPostTitle: match?.title ?? null,
+      };
+    });
 
     return NextResponse.json({
       directories: result,
