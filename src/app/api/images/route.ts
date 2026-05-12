@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { commitFileRaw } from "@/lib/github";
+import { commitFileRaw, deleteFile } from "@/lib/github";
+import { isValidImageRepoPath } from "@/lib/images";
 
 function sanitizeSlug(slug: string): string {
   return slug
@@ -58,4 +59,66 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Delete one or more images from the content repo. Accepts either:
+ *   { path: "public/images/<slug>/<file>" }                 — single
+ *   { paths: ["public/images/<slug>/<f1>", ...] }           — batch
+ *
+ * Batched deletes are useful when wiping an entire orphaned directory.
+ * Each path is validated and committed independently; the response
+ * reports per-path success so the caller can show partial failures.
+ */
+export async function DELETE(request: NextRequest) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "invalid json" }, { status: 400 });
+  }
+
+  const payload = body as { path?: string; paths?: string[] };
+  const paths: string[] = Array.isArray(payload.paths)
+    ? payload.paths
+    : typeof payload.path === "string"
+      ? [payload.path]
+      : [];
+
+  if (paths.length === 0) {
+    return NextResponse.json(
+      { error: "path or paths is required" },
+      { status: 400 }
+    );
+  }
+
+  // Validate all paths first. Reject the whole request on any bad
+  // path — we don't want to half-delete a directory because of a typo.
+  for (const p of paths) {
+    if (!isValidImageRepoPath(p)) {
+      return NextResponse.json(
+        { error: `invalid image path: ${p}` },
+        { status: 400 }
+      );
+    }
+  }
+
+  const results: { path: string; ok: boolean; error?: string }[] = [];
+  for (const p of paths) {
+    try {
+      await deleteFile(p, `image: delete ${p.replace(/^public\//, "")}`);
+      results.push({ path: p, ok: true });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "unknown delete error";
+      console.error(`Image delete failed for ${p}:`, error);
+      results.push({ path: p, ok: false, error: message });
+    }
+  }
+
+  const allOk = results.every((r) => r.ok);
+  return NextResponse.json(
+    { success: allOk, results },
+    { status: allOk ? 200 : 207 }
+  );
 }

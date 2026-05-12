@@ -7,6 +7,7 @@ const links = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/drafts", label: "Drafts" },
   { href: "/admin/record", label: "Record" },
+  { href: "/admin/images", label: "Images" },
 ];
 
 export function AdminNav() {
@@ -26,7 +27,8 @@ export function AdminNav() {
             key={link.href}
             href={link.href}
             className={`font-mono text-xs transition-colors ${
-              pathname === link.href
+              pathname === link.href ||
+              (link.href !== "/admin" && pathname.startsWith(link.href))
                 ? "text-primary"
                 : "text-on-surface-variant hover:text-on-surface"
             }`}
