@@ -39,28 +39,36 @@ export async function listDirectory(dirPath: string): Promise<GitHubFileEntry[]>
   const { token, repo } = getConfig();
   const url = `${GITHUB_API}/repos/${repo}/contents/${dirPath}?ref=main`;
 
-  const res = await fetch(url, {
-    headers: headers(token),
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
-  if (!res.ok) {
-    if (res.status === 404) return [];
-    const err = await res.text();
-    throw new Error(`GitHub API error: ${res.status} ${err}`);
+  try {
+    const res = await fetch(url, {
+      headers: headers(token),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) return [];
+      const err = await res.text();
+      throw new Error(`GitHub API error: ${res.status} ${err}`);
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+
+    return data.map((item: Record<string, unknown>) => ({
+      name: item.name as string,
+      path: item.path as string,
+      size: (item.size as number) || 0,
+      sha: item.sha as string,
+      type: item.type as "file" | "dir",
+      download_url: (item.download_url as string) || null,
+    }));
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-
-  return data.map((item: Record<string, unknown>) => ({
-    name: item.name as string,
-    path: item.path as string,
-    size: (item.size as number) || 0,
-    sha: item.sha as string,
-    type: item.type as "file" | "dir",
-    download_url: (item.download_url as string) || null,
-  }));
 }
 
 export interface ImageDirectory {

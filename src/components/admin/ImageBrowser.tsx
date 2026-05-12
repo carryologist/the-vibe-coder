@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+interface PostInfo {
+  slug: string;
+  title: string;
+}
 
 interface ImageDirectory {
   slug: string;
@@ -37,44 +42,50 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function ImageBrowser({
-  initialData,
-}: {
-  initialData: DirectoriesResponse;
-}) {
-  const [data, setData] = useState<DirectoriesResponse>(initialData);
+export function ImageBrowser({ posts }: { posts: PostInfo[] }) {
+  const [data, setData] = useState<DirectoriesResponse | null>(null);
   const [selectedDir, setSelectedDir] = useState<string | null>(null);
   const [files, setFiles] = useState<ImageFile[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingFiles, setLoadingFiles] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmDeleteDir, setConfirmDeleteDir] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchFiles = useCallback(async (slug: string) => {
+  // Fetch directories on mount
+  useEffect(() => {
+    fetchDirectories();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchDirectories = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/images/manage?slug=${encodeURIComponent(slug)}`);
-      if (!res.ok) throw new Error("Failed to fetch files");
-      const data: FilesResponse = await res.json();
-      setFiles(data.files);
-      setSelectedDir(slug);
+      const res = await fetch("/api/images/manage");
+      if (!res.ok) throw new Error("Failed to fetch directories");
+      const result: DirectoriesResponse = await res.json();
+      setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load files");
+      setError(err instanceof Error ? err.message : "Failed to load directories");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const refreshDirectories = useCallback(async () => {
+  const fetchFiles = useCallback(async (slug: string) => {
+    setLoadingFiles(true);
+    setError(null);
     try {
-      const res = await fetch("/api/images/manage");
-      if (!res.ok) throw new Error("Failed to refresh");
-      const newData: DirectoriesResponse = await res.json();
-      setData(newData);
-    } catch {
-      // Silently fail — stale data is still usable
+      const res = await fetch(`/api/images/manage?slug=${encodeURIComponent(slug)}`);
+      if (!res.ok) throw new Error("Failed to fetch files");
+      const result: FilesResponse = await res.json();
+      setFiles(result.files);
+      setSelectedDir(slug);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load files");
+    } finally {
+      setLoadingFiles(false);
     }
   }, []);
 
@@ -88,20 +99,20 @@ export function ImageBrowser({
         body: JSON.stringify({ path: filePath }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete");
+        const result = await res.json();
+        throw new Error(result.error || "Failed to delete");
       }
       // Remove from local state
       setFiles((prev) => prev.filter((f) => f.path !== filePath));
       setConfirmDelete(null);
       // Refresh directory list for updated counts
-      await refreshDirectories();
+      await fetchDirectories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete file");
     } finally {
       setDeleting(null);
     }
-  }, [refreshDirectories]);
+  }, [fetchDirectories]);
 
   const handleDeleteDirectory = useCallback(async (slug: string) => {
     setDeleting(slug);
@@ -113,8 +124,8 @@ export function ImageBrowser({
         body: JSON.stringify({ slug, all: true }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete directory");
+        const result = await res.json();
+        throw new Error(result.error || "Failed to delete directory");
       }
       setConfirmDeleteDir(null);
       if (selectedDir === slug) {
@@ -122,20 +133,56 @@ export function ImageBrowser({
         setFiles([]);
       }
       // Refresh
-      await refreshDirectories();
+      await fetchDirectories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete directory");
     } finally {
       setDeleting(null);
     }
-  }, [selectedDir, refreshDirectories]);
+  }, [selectedDir, fetchDirectories]);
 
   const isImageFile = (name: string): boolean => {
     return /\.(png|jpg|jpeg|gif|webp|svg|avif|ico)$/i.test(name);
   };
 
+  if (loading) {
+    return (
+      <div className="py-12 text-center font-mono text-xs text-outline">
+        Loading image directories from GitHub...
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="py-12 text-center font-mono text-xs text-red-400">
+        Failed to load image data. {error}
+      </div>
+    );
+  }
+
+  const totalFiles = data.directories.reduce((sum, d) => sum + d.fileCount, 0);
+  const totalSize = data.directories.reduce((sum, d) => sum + d.totalSize, 0);
+
   return (
     <div>
+      {/* Summary stats */}
+      <div className="mb-6 flex items-baseline justify-end">
+        <span className="font-mono text-xs text-on-surface-variant">
+          <span className="text-on-surface font-medium">{data.totalDirectories}</span> directories
+          {" · "}
+          <span className="text-on-surface font-medium">{totalFiles}</span> files
+          {" · "}
+          <span className="text-on-surface font-medium">{formatBytes(totalSize)}</span>
+          {data.orphanedCount > 0 && (
+            <>
+              {" · "}
+              <span className="text-accent-warm font-medium">{data.orphanedCount}</span> orphaned
+            </>
+          )}
+        </span>
+      </div>
+
       {error && (
         <div className="mb-4 rounded-lg border border-red-400/30 bg-red-400/10 p-3 font-mono text-xs text-red-400">
           {error}
@@ -174,7 +221,7 @@ export function ImageBrowser({
             })()}
           </div>
 
-          {loading ? (
+          {loadingFiles ? (
             <div className="py-12 text-center font-mono text-xs text-outline">
               Loading images...
             </div>
@@ -224,7 +271,7 @@ export function ImageBrowser({
                           disabled={deleting === file.path}
                           className="flex-1 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 font-mono text-[10px] text-red-400 transition-colors hover:bg-red-400/20 disabled:opacity-50"
                         >
-                          {deleting === file.path ? "Deleting..." : "Confirm"}
+                          {deleting === file.path ? "Deleting..." : "Confirm delete"}
                         </button>
                         <button
                           onClick={() => setConfirmDelete(null)}
