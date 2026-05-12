@@ -166,11 +166,15 @@ function DirectoryCard({
           <Link
             href={`/admin/images/${dir.slug}`}
             className="block truncate font-mono text-sm font-medium text-on-surface transition-colors hover:text-primary"
+            title={dir.slug}
           >
             {dir.slug}
           </Link>
           {dir.postTitle && (
-            <p className="mt-0.5 truncate text-xs text-on-surface-variant">
+            <p
+              className="mt-0.5 truncate text-xs text-on-surface-variant"
+              title={dir.postTitle}
+            >
               {dir.postTitle}
             </p>
           )}

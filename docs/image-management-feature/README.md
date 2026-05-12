@@ -39,6 +39,9 @@ Admin tools for browsing, previewing, and deleting images under
 - `screenshot.png` — `/admin/images` index, orphan section pinned to the top
 - `directory-detail.png` — `/admin/images/<slug>` detail with thumbnail grid
 - `dashboard.png` — `/admin` showing the new Images card
+- `polish-detail-default.png` — detail view with the new Select toolbar
+- `polish-detail-selected.png` — select mode with two files chosen and the "Delete N" batch button live
+- `polish-detail-mobile.png` — mobile viewport with delete buttons visible by default (no hover-only)
 
 ## Heritage
 
