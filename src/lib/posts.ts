@@ -80,9 +80,11 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
       };
     });
 
-  return posts.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
+  return posts.sort((a, b) => {
+    const aTime = new Date(a.publishAt ?? a.date).getTime();
+    const bTime = new Date(b.publishAt ?? b.date).getTime();
+    return bTime - aTime;
+  });
 }
 
 function _getPostBySlug(slug: string): Post | null {
