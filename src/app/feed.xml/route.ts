@@ -1,4 +1,5 @@
 import { getAllPosts } from "@/lib/posts";
+import { mdxToFeedHtml } from "@/lib/rss-html";
 
 function escapeXml(s: string): string {
   return s
@@ -20,24 +21,31 @@ export async function GET() {
   const posts = getAllPosts();
   const siteUrl = "https://vibescoder.dev";
 
-  const items = posts
-    .map((post) => {
-      const categories = post.tags
-        .map((tag) => `      <category>${escapeXml(tag)}</category>`)
-        .join("\n");
+  const items = (
+    await Promise.all(
+      posts.map(async (post) => {
+        const categories = post.tags
+          .map((tag) => `      <category>${escapeXml(tag)}</category>`)
+          .join("\n");
 
-      return `    <item>
+        // Render MDX -> HTML for `<content:encoded>` so importers
+        // (Substack, Medium, Feedly, etc.) get real HTML, not raw
+        // Markdown.
+        const html = await mdxToFeedHtml(post.content, siteUrl);
+
+        return `    <item>
       <title>${escapeXml(post.title)}</title>
       <link>${siteUrl}/posts/${post.slug}</link>
       <description>${escapeXml(post.description)}</description>
-      <content:encoded><![CDATA[${cdataEscape(post.content)}]]></content:encoded>
+      <content:encoded><![CDATA[${cdataEscape(html)}]]></content:encoded>
       <author>rob@vibescoder.dev (Rob Whiteley)</author>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
       <guid isPermaLink="true">${siteUrl}/posts/${post.slug}</guid>
 ${categories}
     </item>`;
-    })
-    .join("\n");
+      }),
+    )
+  ).join("\n");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/feed-style.xsl"?>
