@@ -20,6 +20,7 @@ function cdataEscape(s: string): string {
 export async function GET() {
   const posts = getAllPosts();
   const siteUrl = "https://vibescoder.dev";
+  const authorName = "Rob Whiteley";
 
   const items = (
     await Promise.all(
@@ -33,14 +34,20 @@ export async function GET() {
         // Markdown.
         const html = await mdxToFeedHtml(post.content, siteUrl);
 
+        // Use <dc:creator> instead of RSS 2.0 <author>. RSS 2.0
+        // <author> requires `email (Name)` format, and many importers
+        // (Substack included, in practice) reject feeds with author
+        // emails for privacy reasons. Ghost, WordPress, Beehiiv, and
+        // every other major blog platform Substack supports importing
+        // from uses <dc:creator>.
         return `    <item>
       <title>${escapeXml(post.title)}</title>
       <link>${siteUrl}/posts/${post.slug}</link>
       <description>${escapeXml(post.description)}</description>
       <content:encoded><![CDATA[${cdataEscape(html)}]]></content:encoded>
-      <author>rob@vibescoder.dev (Rob Whiteley)</author>
+      <dc:creator>${escapeXml(authorName)}</dc:creator>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <guid isPermaLink="true">${siteUrl}/posts/${post.slug}</guid>
+      <guid isPermaLink="false">${siteUrl}/posts/${post.slug}</guid>
 ${categories}
     </item>`;
       }),
@@ -49,14 +56,20 @@ ${categories}
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/feed-style.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Vibes Coder</title>
     <link>${siteUrl}</link>
     <description>Building in public with AI agents. A technical blog by Rob Whiteley, CEO of Coder.</description>
     <language>en</language>
-    <managingEditor>rob@vibescoder.dev (Rob Whiteley)</managingEditor>
+    <generator>vibescoder.dev custom Next.js feed generator</generator>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <ttl>60</ttl>
+    <image>
+      <url>${siteUrl}/opengraph-image.png</url>
+      <title>Vibes Coder</title>
+      <link>${siteUrl}</link>
+    </image>
     <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml" />
 ${items}
   </channel>
@@ -64,7 +77,7 @@ ${items}
 
   return new Response(xml, {
     headers: {
-      "Content-Type": "application/xml; charset=utf-8",
+      "Content-Type": "application/rss+xml; charset=utf-8",
       "Cache-Control": "public, max-age=900, s-maxage=900",
     },
   });
