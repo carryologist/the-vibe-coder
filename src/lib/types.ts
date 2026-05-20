@@ -19,6 +19,12 @@ export interface PostMeta {
   changelog?: ChangelogEntry[];
   loomUrl?: string;
   devtoUrl?: string;
+  /**
+   * When true, this post is included in the curated syndication feed
+   * at /syndicate.xml (consumed by Substack and similar newsletter
+   * platforms). Default: false — most posts stay blog-only.
+   */
+  syndicate?: boolean;
 }
 
 /** Fully resolved post used by pages and components. */
@@ -36,4 +42,5 @@ export interface Post {
   devtoUrl?: string;
   commentCount?: number;
   viewCount?: number;
+  syndicate?: boolean;
 }
