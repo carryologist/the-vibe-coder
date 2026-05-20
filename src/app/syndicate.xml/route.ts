@@ -1,4 +1,5 @@
 import { getAllPosts } from "@/lib/posts";
+import { mdxToFeedHtml } from "@/lib/rss-html";
 
 /**
  * Escape a string for safe inclusion inside a CDATA section. CDATA can
@@ -18,15 +19,15 @@ function cdata(s: string): string {
  * not the build logs / config writeups / homelab posts that live on
  * the blog.
  *
- * Format intentionally mirrors overreacted.io/rss.xml, which is the
- * smallest known-working feed against Substack's importer:
- * - <title> and <description> wrapped in CDATA (no entity encoding)
- * - <guid> as a bare URL (no isPermaLink attribute)
- * - No <dc:creator> or other extension elements
+ * Format intentionally mirrors overreacted.io/rss.xml structurally
+ * (CDATA-wrapped fields, bare guid, minimal channel metadata) but
+ * also includes <content:encoded> with each post's full HTML body.
+ * Substack's importer copies the body text from this field directly
+ * into the imported post — without it, the import contains only the
+ * description (a 1-3 sentence summary).
  *
- * The feed deliberately omits <content:encoded>. Substack's importer
- * fetches each post's <link> URL and parses the article body from the
- * HTML page directly.
+ * The xmlns:content namespace is declared on <rss> so <content:encoded>
+ * parses correctly.
  */
 export async function GET() {
   const allPosts = getAllPosts();
@@ -34,21 +35,25 @@ export async function GET() {
 
   const siteUrl = "https://vibescoder.dev";
 
-  const items = posts
-    .map((post) => {
-      const url = `${siteUrl}/posts/${post.slug}`;
-      return `        <item>
+  const items = (
+    await Promise.all(
+      posts.map(async (post) => {
+        const url = `${siteUrl}/posts/${post.slug}`;
+        const html = await mdxToFeedHtml(post.content, siteUrl);
+        return `        <item>
             <title>${cdata(post.title)}</title>
             <link>${url}</link>
             <guid>${url}</guid>
             <pubDate>${new Date(post.date).toUTCString()}</pubDate>
             <description>${cdata(post.description)}</description>
+            <content:encoded>${cdata(html)}</content:encoded>
         </item>`;
-    })
-    .join("\n");
+      }),
+    )
+  ).join("\n");
 
   const xml = `<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>Vibes Coder</title>
         <link>${siteUrl}/</link>
