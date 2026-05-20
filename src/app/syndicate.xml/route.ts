@@ -63,7 +63,7 @@ ${items}
 
   return new Response(xml, {
     headers: {
-      "Content-Type": "application/rss+xml; charset=utf-8",
+      "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "public, max-age=900, s-maxage=900",
     },
   });
