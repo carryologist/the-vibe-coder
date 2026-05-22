@@ -38,7 +38,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/auth/") ||
     pathname === "/api/analytics/track" ||
     pathname.startsWith("/api/slack/") ||
-    pathname === "/api/share-image"
+    pathname === "/api/share-image" ||
+    pathname.startsWith("/api/mcp/")
   ) {
     return NextResponse.next();
   }
