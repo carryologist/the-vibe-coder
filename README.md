@@ -80,6 +80,38 @@ published: true
 Your content here. Supports full MDX — React components, code blocks, etc.
 ```
 
+## MCP Server
+
+The site exposes an [MCP](https://modelcontextprotocol.io) server at `/api/mcp/mcp` with 16 tools for programmatic content management, analytics, deployment, and diagnostics. Designed for use with Claude (via Coder Agents), Cursor, Codex, or any MCP-compatible client.
+
+### Tools
+
+| Category | Tools |
+|----------|-------|
+| Content | `list_posts`, `get_post`, `create_post`, `update_post`, `publish_post`, `unpublish_post`, `delete_post` |
+| Editorial | `list_fodder`, `get_fodder`, `get_todo`, `update_todo` |
+| Analytics | `analytics_summary` |
+| Deploy & Syndication | `trigger_deploy`, `syndicate_post` |
+| Diagnostics | `site_health`, `get_settings` |
+
+### Connection
+
+Requires a bearer token (`MCP_API_TOKEN` env var). Example client config:
+
+```json
+{
+  "vibescoder": {
+    "command": "npx",
+    "args": [
+      "mcp-remote",
+      "https://vibescoder.dev/api/mcp/mcp",
+      "--header",
+      "Authorization: Bearer <your-token>"
+    ]
+  }
+}
+```
+
 ## Deployment
 
 Connected to Vercel for automatic deployments on push to `main`.
