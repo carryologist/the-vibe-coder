@@ -1,7 +1,11 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+
+const SHARE_IMAGE_LIMIT = 30;
+const SHARE_IMAGE_WINDOW_SECONDS = 60;
 
 interface ShareImageRequest {
   type: "table" | "code";
@@ -289,6 +293,23 @@ function calcDimensions(
 }
 
 export async function POST(request: NextRequest) {
+  // Per-IP rate limit: 30 requests per minute.
+  const ip = clientIp(request);
+  const rl = await rateLimit(
+    `ratelimit:share-image:${ip}`,
+    SHARE_IMAGE_LIMIT,
+    SHARE_IMAGE_WINDOW_SECONDS,
+  );
+  if (!rl.ok) {
+    return Response.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rl.retryAfter) },
+      },
+    );
+  }
+
   try {
     const body: ShareImageRequest = await request.json();
     const { type, content, language, title, slug, caption } = body;
@@ -396,7 +417,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error("[share-image] ERROR:", err);
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to generate image" },
+      { error: "Failed to generate image" },
       { status: 500 },
     );
   }

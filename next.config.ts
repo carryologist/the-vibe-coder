@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
-// Content Security Policy — shipped in Report-Only mode first so we can
-// observe violations in the browser console without breaking the site.
-// After ~a week of clean reports, flip the header name from
-// "Content-Security-Policy-Report-Only" to "Content-Security-Policy"
-// to start enforcing.
+// Content Security Policy — enforcing mode.
 //
 // Allowed origins (and why):
 //   self                        Site assets, MDX-rendered images
@@ -21,8 +17,10 @@ import type { NextConfig } from "next";
 //   https://github.githubassets.com  Giscus emoji/UI sprites
 //
 // 'unsafe-inline' on script-src is required by the JSON-LD <script>
-// blocks rendered via dangerouslySetInnerHTML. Phase 4 replaces this
-// with a per-request nonce so we can drop 'unsafe-inline' entirely.
+// blocks rendered via dangerouslySetInnerHTML and the theme-detection
+// snippet. These are static string literals (not user input), so the
+// risk is limited. Next step: migrate to per-request nonces so we can
+// drop 'unsafe-inline' entirely.
 
 // Link response headers (RFC 8288) advertising agent-discoverable
 // resources from the site root. We send these on every response — the
@@ -92,7 +90,7 @@ const nextConfig: NextConfig = {
             value: "max-age=31536000; includeSubDomains; preload",
           },
           {
-            key: "Content-Security-Policy-Report-Only",
+            key: "Content-Security-Policy",
             value: CSP_DIRECTIVES,
           },
           {

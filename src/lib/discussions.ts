@@ -1,5 +1,5 @@
-const REPO_OWNER = "carryologist";
-const REPO_NAME = "the-vibe-coder";
+const REPO_OWNER = process.env.CONTENT_REPO_OWNER ?? "carryologist";
+const REPO_NAME = process.env.CONTENT_REPO_NAME ?? "the-vibe-coder";
 const CATEGORY_NAME = "Announcements";
 
 interface GitHubDiscussion {

@@ -1,22 +1,20 @@
 /**
  * MCP bearer-token authentication.
  *
- * Same pattern as the fitness-tracker MCP server: timing-safe comparison
- * against MCP_API_TOKEN, minimum 16-char enforcement.
+ * Both inputs are hashed with SHA-256 before comparison so that
+ * timingSafeEqual always runs over fixed-size (32-byte) buffers.
+ * This avoids leaking token length via an early-return on
+ * mismatched lengths.
  */
 
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false
-  let mismatch = 0
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i)
-  }
-  return mismatch === 0
-}
+import { createHash, timingSafeEqual } from "crypto";
 
 export function isValidApiToken(token: string | null): boolean {
-  if (!token) return false
-  const expected = process.env.MCP_API_TOKEN
-  if (!expected || expected.length < 16) return false
-  return timingSafeEqual(token, expected)
+  if (!token) return false;
+  const expected = process.env.MCP_API_TOKEN;
+  if (!expected || expected.length < 16) return false;
+
+  const a = createHash("sha256").update(token).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
 }
