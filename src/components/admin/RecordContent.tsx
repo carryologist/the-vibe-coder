@@ -10,6 +10,11 @@ import type { Artifact } from "@/components/admin/ArtifactUploader";
 
 type Step = "record" | "transcript" | "preview" | "published";
 
+interface PromptPreset {
+  key: string;
+  label: string;
+}
+
 export function RecordContent() {
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("edit") || undefined;
@@ -26,6 +31,33 @@ export function RecordContent() {
     path: string;
   } | null>(null);
   const [error, setError] = useState("");
+
+  // Prompt presets
+  const [promptPresets, setPromptPresets] = useState<PromptPreset[]>([]);
+  const [selectedPrompt, setSelectedPrompt] = useState("");
+
+  // Load available prompt presets from settings.
+  useEffect(() => {
+    async function loadPresets() {
+      try {
+        const res = await fetch("/api/settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.prompts) {
+          const presets = Object.entries(data.prompts).map(
+            ([key, value]: [string, any]) => ({
+              key,
+              label: value.label || key,
+            })
+          );
+          setPromptPresets(presets);
+        }
+      } catch {
+        // Non-critical — presets just won't show.
+      }
+    }
+    loadPresets();
+  }, []);
 
   // When editing, fetch the existing post content so it can be passed
   // as context to the generation step.
@@ -61,14 +93,19 @@ export function RecordContent() {
         base64,
       }));
 
+      const body: Record<string, unknown> = {
+        transcript,
+        artifacts: artifactPayload,
+        existingContent,
+      };
+      if (selectedPrompt) {
+        body.promptName = selectedPrompt;
+      }
+
       const res = await fetch("/api/generate-post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript,
-          artifacts: artifactPayload,
-          existingContent,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) throw new Error("Generation failed");
@@ -123,6 +160,7 @@ export function RecordContent() {
     setMdx("");
     setPublishResult(null);
     setError("");
+    setSelectedPrompt("");
   }
 
   return (
@@ -176,6 +214,9 @@ export function RecordContent() {
             onTranscriptChange={setTranscript}
             onGenerate={handleGenerate}
             generating={generating}
+            promptPresets={promptPresets}
+            selectedPrompt={selectedPrompt}
+            onPromptChange={setSelectedPrompt}
           />
           <ArtifactUploader
             artifacts={artifacts}
