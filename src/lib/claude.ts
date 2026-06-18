@@ -18,17 +18,31 @@ function getClient() {
  * Generate a blog post from a transcript and optional artifacts
  * using a configurable style prompt. Returns the full MDX string
  * including frontmatter.
+ *
+ * @param transcript    Raw voice transcript
+ * @param stylePrompt   Base style/voice guidance (from settings.json)
+ * @param artifacts     Optional attached files (images, PDFs, text)
+ * @param existingContent  Existing MDX when editing a post
+ * @param promptExtension  Additional prompt rules for a specific post type
+ *                         (e.g. Thursday Thoughts conventions)
  */
 export async function generateBlogPost(
   transcript: string,
   stylePrompt: string,
   artifacts: Artifact[] = [],
-  existingContent?: string
+  existingContent?: string,
+  promptExtension?: string
 ): Promise<string> {
   const client = getClient();
   const today = new Date().toISOString().split("T")[0];
 
-  // Build the content blocks array for the message.
+  // --- System prompt: always-on voice & style guidance ---
+  let systemPrompt = stylePrompt;
+  if (promptExtension) {
+    systemPrompt += `\n\n${promptExtension}`;
+  }
+
+  // --- Build the user content blocks ---
   const content: MessageParam["content"] = [];
 
   // Add artifacts first so Claude has the context before the prompt.
@@ -97,12 +111,10 @@ ${existingContent}
 Incorporate the new transcript into the existing post. Preserve the original title, slug-friendly structure, and any content that is still relevant. Merge the new material naturally — add new sections, extend existing ones, or revise as appropriate. Keep the original date in the frontmatter.`;
   }
 
-  // Add the main prompt text.
+  // Add the main prompt text — focused on the task and transcript.
   content.push({
     type: "text",
-    text: `${stylePrompt}
-
-Today's date is ${today}.${artifactNote}${editNote}
+    text: `Today's date is ${today}.${artifactNote}${editNote}
 
 Here is the transcript to ${existingContent ? "incorporate into the existing post" : "transform into a blog post"}:
 
@@ -123,6 +135,7 @@ Start the response with --- (the frontmatter opening delimiter) and include noth
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 16000,
+    system: systemPrompt,
     messages: [
       {
         role: "user",
