@@ -1,10 +1,18 @@
 "use client";
 
+interface PromptPreset {
+  key: string;
+  label: string;
+}
+
 interface TranscriptEditorProps {
   transcript: string;
   onTranscriptChange: (value: string) => void;
   onGenerate: () => void;
   generating: boolean;
+  promptPresets?: PromptPreset[];
+  selectedPrompt: string;
+  onPromptChange: (value: string) => void;
 }
 
 export function TranscriptEditor({
@@ -12,6 +20,9 @@ export function TranscriptEditor({
   onTranscriptChange,
   onGenerate,
   generating,
+  promptPresets = [],
+  selectedPrompt,
+  onPromptChange,
 }: TranscriptEditorProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -32,13 +43,30 @@ export function TranscriptEditor({
         placeholder="Transcript will appear here..."
       />
 
-      <button
-        onClick={onGenerate}
-        disabled={generating || !transcript.trim()}
-        className="self-start rounded-lg bg-primary px-6 py-3 font-mono text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {generating ? "Generating..." : "Generate Post"}
-      </button>
+      <div className="flex items-center gap-3">
+        {promptPresets.length > 0 && (
+          <select
+            value={selectedPrompt}
+            onChange={(e) => onPromptChange(e.target.value)}
+            className="rounded-lg border border-outline-variant bg-bg px-3 py-3 font-mono text-sm text-on-surface outline-none transition-colors focus:border-primary/50"
+          >
+            <option value="">Default</option>
+            {promptPresets.map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <button
+          onClick={onGenerate}
+          disabled={generating || !transcript.trim()}
+          className="rounded-lg bg-primary px-6 py-3 font-mono text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {generating ? "Generating..." : "Generate Post"}
+        </button>
+      </div>
     </div>
   );
 }
