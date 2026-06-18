@@ -11,16 +11,23 @@ interface ArtifactPayload {
   base64: string;
 }
 
+interface Settings {
+  stylePrompt?: string;
+  prompts?: Record<string, { label: string; prompt: string }>;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const {
       transcript,
       stylePrompt: overridePrompt,
+      promptName,
       artifacts = [],
       existingContent,
     } = (await request.json()) as {
       transcript?: string;
       stylePrompt?: string;
+      promptName?: string;
       artifacts?: ArtifactPayload[];
       existingContent?: string;
     };
@@ -32,22 +39,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use override prompt if provided, otherwise read from settings.
-    let stylePrompt = overridePrompt;
-    if (!stylePrompt) {
-      const settingsRaw = await readFile("content/settings.json");
-      if (settingsRaw) {
-        const settings = JSON.parse(settingsRaw);
-        stylePrompt = settings.stylePrompt;
-      }
+    // Load settings from the content repo.
+    let settings: Settings = {};
+    const settingsRaw = await readFile("content/settings.json");
+    if (settingsRaw) {
+      settings = JSON.parse(settingsRaw);
     }
 
-    if (!stylePrompt) {
-      stylePrompt =
-        "Transform this transcript into a well-structured blog post with MDX frontmatter.";
+    // Resolve the base style prompt.
+    // Priority: explicit override > settings.json > hardcoded fallback.
+    const stylePrompt =
+      overridePrompt ||
+      settings.stylePrompt ||
+      "Transform this transcript into a well-structured blog post with MDX frontmatter.";
+
+    // Resolve the named prompt extension (e.g. "thursday-thoughts").
+    let promptExtension: string | undefined;
+    if (promptName && settings.prompts?.[promptName]) {
+      promptExtension = settings.prompts[promptName].prompt;
     }
 
-    const mdx = await generateBlogPost(transcript, stylePrompt, artifacts, existingContent);
+    const mdx = await generateBlogPost(
+      transcript,
+      stylePrompt,
+      artifacts,
+      existingContent,
+      promptExtension
+    );
 
     return NextResponse.json({ mdx });
   } catch (error) {
