@@ -39,11 +39,13 @@ function _getAllPosts(): Post[] {
         return null;
       }
 
+      const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
       return {
         slug,
         content,
         readingTime: readingTime(content).text,
         ...meta,
+        date: dateStr,
         type: meta.type ?? 'how-to',
       };
     })
@@ -69,11 +71,13 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
       const { data, content } = matter(raw);
       const meta = data as PostMeta;
 
+      const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
       return {
         slug,
         content,
         readingTime: readingTime(content).text,
         ...meta,
+        date: dateStr,
         type: meta.type ?? 'how-to',
         published: meta.published !== false,
         publishAt: meta.publishAt,
@@ -107,11 +111,13 @@ function _getPostBySlug(slug: string): Post | null {
     return null;
   }
 
+  const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
   return {
     slug,
     content,
     readingTime: readingTime(content).text,
     ...meta,
+    date: dateStr,
     type: meta.type ?? 'how-to',
   };
 }
@@ -128,11 +134,13 @@ export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }
   const { data, content } = matter(raw);
   const meta = data as PostMeta;
 
+  const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
   return {
     slug,
     content,
     readingTime: readingTime(content).text,
     ...meta,
+    date: dateStr,
     type: meta.type ?? 'how-to',
     published: meta.published !== false,
   };
