@@ -7,6 +7,16 @@ import { Post, PostMeta } from "./types";
 
 const POSTS_DIR = path.join(process.cwd(), "content/posts");
 
+/**
+ * Coerce a frontmatter date to a YYYY-MM-DD string.
+ * gray-matter auto-casts unquoted YAML dates to Date objects;
+ * this normalizes them so downstream code always sees a string.
+ */
+function normalizeDate(raw: unknown): string {
+  if (raw instanceof Date) return raw.toISOString().split("T")[0];
+  return String(raw);
+}
+
 // React.cache dedupes calls within a single server render pass so that
 // the homepage and the sitemap (or any other parallel callers) only
 // hit the filesystem once per request. The wrapped functions are
@@ -39,7 +49,7 @@ function _getAllPosts(): Post[] {
         return null;
       }
 
-      const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
+      const dateStr = normalizeDate(data.date);
       return {
         slug,
         content,
@@ -71,7 +81,7 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
       const { data, content } = matter(raw);
       const meta = data as PostMeta;
 
-      const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
+      const dateStr = normalizeDate(data.date);
       return {
         slug,
         content,
@@ -111,7 +121,7 @@ function _getPostBySlug(slug: string): Post | null {
     return null;
   }
 
-  const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
+  const dateStr = normalizeDate(data.date);
   return {
     slug,
     content,
@@ -134,7 +144,7 @@ export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }
   const { data, content } = matter(raw);
   const meta = data as PostMeta;
 
-  const dateStr = meta.date instanceof Date ? meta.date.toISOString().split("T")[0] : String(meta.date);
+  const dateStr = normalizeDate(data.date);
   return {
     slug,
     content,
