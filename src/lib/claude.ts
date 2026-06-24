@@ -134,6 +134,7 @@ Return the complete MDX file including frontmatter. The frontmatter must include
 Critical formatting rules:
 - Do NOT wrap the output in markdown code fences (no \`\`\`mdx or \`\`\`). Return raw MDX only.
 - Do NOT use emdash (U+2014), endash (U+2013), or " -- " anywhere in the output. Use commas, semicolons, colons, or periods instead. Restructure sentences if needed.
+- Do NOT bold key terms or phrases as a stylistic pattern. Bold is reserved for rare, genuine emphasis where the sentence meaning changes without it. Most paragraphs should have zero bold. If you find yourself bolding more than one phrase per section, remove them all.
 - Start the response with --- (the frontmatter opening delimiter) and include nothing before it.
 - End the response with the final line of content. No closing remarks or commentary after the post.`,
   });
