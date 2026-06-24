@@ -68,8 +68,9 @@ export async function POST(request: NextRequest) {
       promptExtension
     );
 
-    // Post-process: enforce frontmatter invariants the model may miss.
-    const patched = patchFrontmatter(mdx);
+    // Post-process: strip code fences and enforce frontmatter invariants.
+    const cleaned = stripCodeFences(mdx);
+    const patched = patchFrontmatter(cleaned);
 
     return NextResponse.json({ mdx: patched });
   } catch (error) {
@@ -84,6 +85,21 @@ export async function POST(request: NextRequest) {
 }
 
 const VALID_TYPES = ["how-to", "opinion"] as const;
+
+/**
+ * Strip markdown code fences wrapping the entire output.
+ * Models sometimes wrap MDX output in ```mdx ... ``` despite
+ * instructions not to. This extracts the inner content.
+ */
+function stripCodeFences(mdx: string): string {
+  const trimmed = mdx.trim();
+  // Match ```mdx or ``` at the start, and ``` at the end.
+  const match = trimmed.match(
+    /^```(?:mdx|markdown)?\s*\n([\s\S]*?)\n```\s*$/,
+  );
+  if (match) return match[1].trim();
+  return trimmed;
+}
 
 /**
  * Enforce frontmatter invariants after generation.

@@ -123,15 +123,19 @@ ${transcript}
 ---
 
 Return the complete MDX file including frontmatter. The frontmatter must include:
-- title (string)
+- title (string, no emdash or endash characters)
 - date: '${existingContent ? "keep the original date" : today}' (MUST be quoted in single quotes)
-- description (a one-sentence summary for SEO/previews)
-- tags (YAML list of 2-5 relevant lowercase hyphenated tags, e.g. building-in-public, vibe-coding)
+- description (a one-sentence summary for SEO/previews, no emdash or endash characters)
+- tags (YAML list of 2-5 relevant lowercase hyphenated tags from this set: agents, building-in-public, homelab, meta, ai, llm, mcp, next-js, security, vibe-coding, debugging, coder, devops, linux, future-of-coding, open-source, opinion)
 - published: false (drafts are reviewed before publishing)
 - type: 'how-to' or 'opinion' (use 'opinion' for thought leadership, editorials, and commentary; 'how-to' for tutorials, walkthroughs, and technical posts)
 - syndicate: true
 
-Start the response with --- (the frontmatter opening delimiter) and include nothing before it.`,
+Critical formatting rules:
+- Do NOT wrap the output in markdown code fences (no \`\`\`mdx or \`\`\`). Return raw MDX only.
+- Do NOT use emdash (U+2014), endash (U+2013), or " -- " anywhere in the output. Use commas, semicolons, colons, or periods instead. Restructure sentences if needed.
+- Start the response with --- (the frontmatter opening delimiter) and include nothing before it.
+- End the response with the final line of content. No closing remarks or commentary after the post.`,
   });
 
   const response = await client.messages.create({
