@@ -91,8 +91,8 @@ export function DraftsList({ drafts }: DraftsListProps) {
     setError("");
 
     try {
-      // Build publishAt with 9 AM ET default
-      const publishAt = `${scheduleDate}T09:00:00-04:00`;
+      // scheduleDate is now a datetime-local value (YYYY-MM-DDTHH:MM)
+      const publishAt = `${scheduleDate}:00-04:00`;
 
       const getRes = await fetch(`/api/posts?slug=${slug}`);
       if (!getRes.ok) throw new Error("Failed to load post");
@@ -278,10 +278,10 @@ export function DraftsList({ drafts }: DraftsListProps) {
                   {schedulingSlug === slug ? (
                     <div className="flex items-center gap-2">
                       <input
-                        type="date"
+                        type="datetime-local"
                         value={scheduleDate}
                         onChange={(e) => setScheduleDate(e.target.value)}
-                        min={new Date().toISOString().split("T")[0]}
+                        min={new Date().toISOString().slice(0, 16)}
                         className="rounded-lg border border-outline-variant bg-bg px-2 py-1 font-mono text-[11px] text-on-surface outline-none focus:border-primary/50"
                       />
                       <button
@@ -315,7 +315,11 @@ export function DraftsList({ drafts }: DraftsListProps) {
                         <button
                           onClick={() => {
                             setSchedulingSlug(slug);
-                            setScheduleDate("");
+                            // Default to tomorrow at 9 AM
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            const d = tomorrow.toISOString().split("T")[0];
+                            setScheduleDate(`${d}T09:00`);
                           }}
                           className="rounded-lg border border-outline-variant/20 px-3 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:border-secondary/30 hover:text-secondary"
                         >
