@@ -124,10 +124,12 @@ ${transcript}
 
 Return the complete MDX file including frontmatter. The frontmatter must include:
 - title (string)
-- date (${existingContent ? "keep the original date" : today})
+- date: '${existingContent ? "keep the original date" : today}' (MUST be quoted in single quotes)
 - description (a one-sentence summary for SEO/previews)
-- tags (array of 2-5 relevant lowercase tags)
-- published (set to false — drafts are reviewed before publishing)
+- tags (YAML list of 2-5 relevant lowercase hyphenated tags, e.g. building-in-public, vibe-coding)
+- published: false (drafts are reviewed before publishing)
+- type: 'how-to' or 'opinion' (use 'opinion' for thought leadership, editorials, and commentary; 'how-to' for tutorials, walkthroughs, and technical posts)
+- syndicate: true
 
 Start the response with --- (the frontmatter opening delimiter) and include nothing before it.`,
   });

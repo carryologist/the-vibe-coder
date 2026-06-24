@@ -36,6 +36,10 @@ export function DraftsList({ drafts }: DraftsListProps) {
     new Set(),
   );
   const [error, setError] = useState("");
+  const [schedulingSlug, setSchedulingSlug] = useState<string | null>(null);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [localSchedules, setLocalSchedules] = useState<Record<string, string | null>>({});
 
   async function handlePublish(slug: string) {
     setPublishingSlug(slug);
@@ -78,6 +82,93 @@ export function DraftsList({ drafts }: DraftsListProps) {
       );
     } finally {
       setPublishingSlug(null);
+    }
+  }
+
+  async function handleSchedule(slug: string) {
+    if (!scheduleDate) return;
+    setSavingSchedule(true);
+    setError("");
+
+    try {
+      // Build publishAt with 9 AM ET default
+      const publishAt = `${scheduleDate}T09:00:00-04:00`;
+
+      const getRes = await fetch(`/api/posts?slug=${slug}`);
+      if (!getRes.ok) throw new Error("Failed to load post");
+      const data = await getRes.json();
+
+      let updated = data.content as string;
+      // Add or update publishAt in frontmatter
+      if (/^publishAt:/m.test(updated)) {
+        updated = updated.replace(
+          /^publishAt:.*$/m,
+          `publishAt: '${publishAt}'`,
+        );
+      } else {
+        // Insert after the published: line
+        updated = updated.replace(
+          /^(published:.*$)/m,
+          `$1\npublishAt: '${publishAt}'`,
+        );
+      }
+
+      const putRes = await fetch("/api/posts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          content: updated,
+          summary: `Scheduled for ${scheduleDate}`,
+        }),
+      });
+      if (!putRes.ok) throw new Error("Failed to save schedule");
+
+      setLocalSchedules((prev) => ({ ...prev, [slug]: publishAt }));
+      setSchedulingSlug(null);
+      setScheduleDate("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to schedule",
+      );
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
+  async function handleClearSchedule(slug: string) {
+    setSavingSchedule(true);
+    setError("");
+
+    try {
+      const getRes = await fetch(`/api/posts?slug=${slug}`);
+      if (!getRes.ok) throw new Error("Failed to load post");
+      const data = await getRes.json();
+
+      const updated = (data.content as string).replace(
+        /^publishAt:.*\n?/m,
+        "",
+      );
+
+      const putRes = await fetch("/api/posts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          content: updated,
+          summary: "Cleared scheduled publish date",
+        }),
+      });
+      if (!putRes.ok) throw new Error("Failed to clear schedule");
+
+      setLocalSchedules((prev) => ({ ...prev, [slug]: null }));
+      setSchedulingSlug(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to clear schedule",
+      );
+    } finally {
+      setSavingSchedule(false);
     }
   }
 
@@ -129,8 +220,13 @@ export function DraftsList({ drafts }: DraftsListProps) {
       {/* Draft cards */}
       <div className="space-y-3">
         {activeDrafts.map((draft) => {
-          const isPublishing = publishingSlug === draft.slug;
-          const isScheduled = !!draft.publishAt;
+          const slug = draft.slug;
+          const isPublishing = publishingSlug === slug;
+          const effectivePublishAt =
+            slug in localSchedules
+              ? localSchedules[slug]
+              : draft.publishAt;
+          const isScheduled = !!effectivePublishAt;
 
           return (
             <div
@@ -166,11 +262,11 @@ export function DraftsList({ drafts }: DraftsListProps) {
                       {formatDate(draft.date)}
                     </span>
 
-                    {isScheduled && draft.publishAt && (
+                    {isScheduled && effectivePublishAt && (
                       <span className="font-mono text-[11px] text-secondary">
-                        publishes {formatDate(draft.publishAt)}{" "}
+                        publishes {formatDate(effectivePublishAt)}{" "}
                         <span className="text-outline">
-                          ({relativeTime(draft.publishAt)})
+                          ({relativeTime(effectivePublishAt)})
                         </span>
                       </span>
                     )}
@@ -179,19 +275,68 @@ export function DraftsList({ drafts }: DraftsListProps) {
 
                 {/* Actions */}
                 <div className="flex shrink-0 items-center gap-2">
-                  <Link
-                    href={`/admin/edit/${draft.slug}`}
-                    className="rounded-lg border border-outline-variant/20 px-3 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handlePublish(draft.slug)}
-                    disabled={isPublishing || publishingSlug !== null}
-                    className="rounded-lg border border-primary bg-primary/10 px-3 py-1.5 font-mono text-[11px] font-medium text-primary transition-all hover:bg-primary/20 disabled:opacity-50"
-                  >
-                    {isPublishing ? "Publishing…" : "Publish"}
-                  </button>
+                  {schedulingSlug === slug ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={scheduleDate}
+                        onChange={(e) => setScheduleDate(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
+                        className="rounded-lg border border-outline-variant bg-bg px-2 py-1 font-mono text-[11px] text-on-surface outline-none focus:border-primary/50"
+                      />
+                      <button
+                        onClick={() => handleSchedule(slug)}
+                        disabled={!scheduleDate || savingSchedule}
+                        className="rounded-lg border border-secondary bg-secondary/10 px-2 py-1.5 font-mono text-[11px] font-medium text-secondary transition-all hover:bg-secondary/20 disabled:opacity-50"
+                      >
+                        {savingSchedule ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSchedulingSlug(null);
+                          setScheduleDate("");
+                        }}
+                        className="rounded-lg border border-outline-variant/20 px-2 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:text-primary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {isScheduled ? (
+                        <button
+                          onClick={() => handleClearSchedule(slug)}
+                          disabled={savingSchedule}
+                          className="rounded-lg border border-outline-variant/20 px-3 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:border-red-500/30 hover:text-red-400 disabled:opacity-50"
+                        >
+                          Unschedule
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSchedulingSlug(slug);
+                            setScheduleDate("");
+                          }}
+                          className="rounded-lg border border-outline-variant/20 px-3 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:border-secondary/30 hover:text-secondary"
+                        >
+                          Schedule
+                        </button>
+                      )}
+                      <Link
+                        href={`/admin/edit/${draft.slug}`}
+                        className="rounded-lg border border-outline-variant/20 px-3 py-1.5 font-mono text-[11px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handlePublish(draft.slug)}
+                        disabled={isPublishing || publishingSlug !== null}
+                        className="rounded-lg border border-primary bg-primary/10 px-3 py-1.5 font-mono text-[11px] font-medium text-primary transition-all hover:bg-primary/20 disabled:opacity-50"
+                      >
+                        {isPublishing ? "Publishing..." : "Publish"}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
