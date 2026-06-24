@@ -19,7 +19,8 @@ export function PostPreview({
 }: PostPreviewProps) {
   const [slug, setSlug] = useState(() => {
     if (editSlug) return editSlug;
-    const titleMatch = mdx.match(/title:\s*"([^"]+)"/);
+    // Match title in single or double quotes.
+    const titleMatch = mdx.match(/title:\s*['"]([^'"]+)['"]/);
     if (titleMatch) {
       return titleMatch[1]
         .toLowerCase()
