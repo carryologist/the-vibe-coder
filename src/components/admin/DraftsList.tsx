@@ -233,7 +233,7 @@ export function DraftsList({ drafts }: DraftsListProps) {
               key={draft.slug}
               className="group rounded-xl border border-outline-variant/10 bg-surface-low p-5 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0 flex-1">
                   {/* Title */}
                   <Link
@@ -274,7 +274,7 @@ export function DraftsList({ drafts }: DraftsListProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                   {schedulingSlug === slug ? (
                     <div className="flex items-center gap-2">
                       <input
