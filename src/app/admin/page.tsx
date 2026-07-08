@@ -76,6 +76,19 @@ export default function AdminDashboardPage() {
             Browse, preview, and delete post images. Orphan detection included.
           </p>
         </Link>
+
+        <Link
+          href="/admin/tags"
+          className="group glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high"
+        >
+          <div className="mb-2 text-2xl">🏷️</div>
+          <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
+            Tags
+          </h2>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Rename or delete tags across every published and draft post.
+          </p>
+        </Link>
       </div>
     </div>
   );
