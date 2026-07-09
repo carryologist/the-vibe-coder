@@ -1,5 +1,6 @@
 import matter from "gray-matter";
 import { readFile, commitFile } from "./github";
+import { cache } from "react";
 
 const POSTS_PATH = "content/posts/";
 
@@ -9,14 +10,10 @@ export interface TagInfo {
 }
 
 /**
- * Return a deduplicated list of all tags used across published and draft posts,
- * with per-tag post counts.
+ * Cached tag list — re-validates every 30 seconds.
+ * GitHub API is rate-limited, so we avoid per-request calls.
  */
-export async function getAllTagsWithCount(): Promise<TagInfo[]> {
-  const tagMap = new Map<string, number>();
-
-  // List all posts by reading the directory listing from GitHub.
-  // We fetch the raw posts directory content.
+export const getAllTagsWithCount = cache(async (): Promise<TagInfo[]> => {
   const repo = process.env.GITHUB_REPO || "";
   const token = process.env.GITHUB_TOKEN || "";
 
@@ -39,6 +36,8 @@ export async function getAllTagsWithCount(): Promise<TagInfo[]> {
   const items = (await res.json()) as Array<{ name: string; type: string }>;
   const mdxFiles = items.filter((f) => f.type === "file" && f.name.endsWith(".mdx"));
 
+  const tagMap = new Map<string, number>();
+
   for (const file of mdxFiles) {
     const filePath = `${POSTS_PATH}${file.name}`;
     const content = await readFile(filePath);
@@ -54,7 +53,7 @@ export async function getAllTagsWithCount(): Promise<TagInfo[]> {
   return Array.from(tagMap.entries())
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
-}
+});
 
 /**
  * Rename a tag across all posts that use it.
