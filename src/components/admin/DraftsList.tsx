@@ -20,8 +20,18 @@ interface DraftsListProps {
 function relativeTime(dateStr: string): string {
   const target = new Date(dateStr);
   const now = new Date();
-  const diffMs = target.getTime() - now.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  // Compare calendar dates in the viewer's local timezone, not raw
+  // elapsed milliseconds. A publishAt of "tomorrow 4am" is only ~8
+  // hours away in the evening, which used to round to "today" even
+  // though the calendar day (in the browser's local timezone) hasn't
+  // changed yet. Zeroing both dates to local midnight and diffing
+  // whole days fixes that.
+  const startOfDay = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round(
+    (startOfDay(target) - startOfDay(now)) / (1000 * 60 * 60 * 24),
+  );
 
   if (diffDays === 0) return "today";
   if (diffDays === 1) return "tomorrow";
