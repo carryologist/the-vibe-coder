@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { readFile, commitFile } from "@/lib/github";
+import { sanitizeSlug } from "@/lib/slug";
 
 export async function POST(request: NextRequest) {
   try {
-    const { slug } = await request.json();
-    if (!slug) {
+    const { slug: rawSlug } = await request.json();
+    if (!rawSlug) {
       return NextResponse.json({ error: "No slug provided" }, { status: 400 });
     }
+    const slug = sanitizeSlug(rawSlug);
 
     const apiKey = process.env.DEVTO_API_KEY;
     if (!apiKey) {

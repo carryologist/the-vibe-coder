@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,11 @@ const MIN_HEIGHT = 280;
 const MIN_WIDTH = 480; // enough for footer branding
 const TABLE_WIDTH = 1200;
 const MAX_WIDTH = 1200;
+const MAX_HEIGHT = 4000; // generous ceiling for a very long snippet, still bounded
+const MAX_CONTENT_LENGTH = 20_000; // far past any real code block or table in a post
+const MAX_ROWS = 200;
+const SHARE_IMAGE_RATE_LIMIT = 20;
+const SHARE_IMAGE_RATE_WINDOW_SECONDS = 60;
 
 // Waveform bar data: [height, opacity]
 const BARS: [number, number][] = [
@@ -284,14 +290,43 @@ function calcDimensions(
 
   return {
     width,
-    height: Math.max(MIN_HEIGHT, Math.ceil(height)),
+    height: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, Math.ceil(height))),
   };
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Public, unauthenticated route (called client-side from the
+    // ShareableSnippet component) -- rate limit and bound the input
+    // size before doing any rendering work. Previously this had
+    // neither: an arbitrarily large `content` string, with no cap on
+    // rendered height, was reachable by anyone with no throttling,
+    // making it a real rendering-cost DoS vector.
+    const ip = clientIp(request);
+    const rl = await rateLimit(
+      `ratelimit:share-image:${ip}`,
+      SHARE_IMAGE_RATE_LIMIT,
+      SHARE_IMAGE_RATE_WINDOW_SECONDS,
+    );
+    if (!rl.ok) {
+      return Response.json(
+        { error: "rate_limited" },
+        { status: 429, headers: { "retry-after": String(rl.retryAfter) } },
+      );
+    }
+
     const body: ShareImageRequest = await request.json();
     const { type, content, language, title, slug, caption } = body;
+
+    if (typeof content !== "string" || content.length === 0) {
+      return Response.json({ error: "content is required" }, { status: 400 });
+    }
+    if (content.length > MAX_CONTENT_LENGTH) {
+      return Response.json(
+        { error: `content exceeds ${MAX_CONTENT_LENGTH} character limit` },
+        { status: 413 },
+      );
+    }
 
     const isTable = type === "table";
 
@@ -300,6 +335,12 @@ export async function POST(request: NextRequest) {
       tableData = parseMarkdownTable(content);
       if (!tableData.headers.length) {
         return Response.json({ error: "Could not parse table" }, { status: 400 });
+      }
+      if (tableData.rows.length > MAX_ROWS) {
+        return Response.json(
+          { error: `table exceeds ${MAX_ROWS} row limit` },
+          { status: 413 },
+        );
       }
     }
 

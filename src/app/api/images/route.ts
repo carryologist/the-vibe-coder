@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { commitFileRaw, deleteFile } from "@/lib/github";
 import { isValidImageRepoPath } from "@/lib/images";
-
-function sanitizeSlug(slug: string): string {
-  return slug
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+import { sanitizeSlug } from "@/lib/slug";
 
 function sanitizeFilename(name: string): string {
   return name

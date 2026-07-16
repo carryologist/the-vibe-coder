@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { commitFile, commitFileRaw, deleteFile, readFile } from "@/lib/github";
-
-function sanitizeSlug(slug: string): string {
-  return slug
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+import { sanitizeSlug } from "@/lib/slug";
 
 /**
  * Fix frontmatter dates with the wrong year. If the date's year is

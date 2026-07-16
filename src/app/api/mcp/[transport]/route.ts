@@ -6,6 +6,8 @@ import { commitFile, readFile, deleteFile } from "@/lib/github";
 import { listDirectory } from "@/lib/github-list";
 import { isValidApiToken } from "@/lib/mcp-auth";
 import { mcpLog } from "@/lib/mcp-log";
+import { rateLimit } from "@/lib/rate-limit";
+import { sanitizeSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -42,26 +44,34 @@ function corsHeaders(req: Request): Record<string, string> {
 }
 
 // ---------------------------------------------------------------------------
-// Rate limiting — in-memory, per-IP
+// Rate limiting — Redis-backed, per-IP
+//
+// Previously an in-memory Map keyed by IP. That degrades badly on
+// Vercel: each serverless instance gets its own Map, so a client
+// landing on N different cold-started instances effectively gets N
+// times the limit. Switched to the same Upstash-backed limiter used
+// for login and analytics, which is shared across every instance.
+// Fails open (see lib/rate-limit.ts) if Redis is unreachable or
+// unconfigured, matching every other rate-limited route in the app.
 // ---------------------------------------------------------------------------
-const buckets = new Map<string, { count: number; reset: number }>();
-const RATE_LIMIT = 120;
-const RATE_WINDOW_MS = 60_000;
+const MCP_RATE_LIMIT = 120;
+const MCP_RATE_WINDOW_SECONDS = 60;
 
-function rateLimit(req: Request): Response | null {
+async function checkRateLimit(req: Request): Promise<Response | null> {
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const now = Date.now();
-  let bucket = buckets.get(ip);
-  if (!bucket || now > bucket.reset) {
-    bucket = { count: 0, reset: now + RATE_WINDOW_MS };
-    buckets.set(ip, bucket);
-  }
-  bucket.count++;
-  if (bucket.count > RATE_LIMIT) {
+  const rl = await rateLimit(
+    `ratelimit:mcp:${ip}`,
+    MCP_RATE_LIMIT,
+    MCP_RATE_WINDOW_SECONDS,
+  );
+  if (!rl.ok) {
     return new Response(JSON.stringify({ error: "rate_limited" }), {
       status: 429,
-      headers: { "retry-after": "60", "content-type": "application/json" },
+      headers: {
+        "retry-after": String(rl.retryAfter),
+        "content-type": "application/json",
+      },
     });
   }
   return null;
@@ -70,13 +80,6 @@ function rateLimit(req: Request): Response | null {
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
-function sanitizeSlug(slug: string): string {
-  return slug
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 function getRedis() {
   const url = process.env.KV_REST_API_URL;
@@ -1255,7 +1258,7 @@ async function withGuards(req: Request): Promise<Response> {
     return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
 
-  const limited = rateLimit(req);
+  const limited = await checkRateLimit(req);
   if (limited) {
     const headers = new Headers(limited.headers);
     for (const [k, v] of Object.entries(corsHeaders(req))) headers.set(k, v);
