@@ -23,7 +23,7 @@ export default function AboutPage() {
 
         <div className="mt-8 flex flex-col sm:flex-row gap-8 items-start">
           <Image
-            src="/images/IMG_9133.jpeg"
+            src="/images/branding/IMG_9133.jpeg"
             alt="Rob Whiteley"
             width={120}
             height={120}
