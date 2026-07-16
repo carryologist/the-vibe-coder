@@ -49,8 +49,9 @@ export async function POST(request: NextRequest) {
 
     if (!devtoRes.ok) {
       const err = await devtoRes.text();
+      console.error(`Dev.to API error: ${devtoRes.status}`, err);
       return NextResponse.json(
-        { error: `Dev.to API error: ${devtoRes.status} ${err}` },
+        { error: "Upstream service error" },
         { status: 502 }
       );
     }

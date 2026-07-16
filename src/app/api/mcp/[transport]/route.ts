@@ -1291,14 +1291,16 @@ async function triggerDeploy(): Promise<Record<string, unknown>> {
     const res = await fetch(hook, { method: "POST" });
     if (!res.ok) {
       const body = await res.text();
-      return { error: "deploy_hook_failed", status: res.status, body };
+      console.error("deploy_hook_failed:", res.status, body);
+      return { error: "deploy_hook_failed", status: res.status };
     }
     const data = await res.json();
     return { triggered: true, ...data };
   } catch (err) {
+    console.error("deploy_hook_error:", err);
     return {
       error: "deploy_hook_error",
-      message: err instanceof Error ? err.message : "unknown",
+      message: "Internal error",
     };
   }
 }

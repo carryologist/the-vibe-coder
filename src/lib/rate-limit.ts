@@ -4,9 +4,10 @@ import { Redis } from "@upstash/redis";
  * Redis-backed fixed-window rate limiter.
  *
  * Pattern matches the rest of the codebase (see src/lib/analytics.ts):
- * if Upstash env vars are not configured, the limiter degrades to
- * "always allow" rather than crashing. That keeps local dev and any
- * preview environment without Redis configured from being locked out.
+ * if Upstash env vars are not configured, the limiter falls back to an
+ * in-memory Map-based counter rather than silently allowing unlimited
+ * requests. The in-memory fallback is per-process and will reset on
+ * cold starts, but it still enforces a hard cap within each instance.
  *
  * The window is fixed (per-key TTL) rather than sliding; for a 5/15min
  * login limit this difference is negligible and the implementation
@@ -29,12 +30,56 @@ export interface RateLimitResult {
   remaining: number;
 }
 
+// ----------------------------------------------------------------
+// In-memory fallback when Redis is not configured
+// ----------------------------------------------------------------
+
+interface MemoryEntry {
+  count: number;
+  expiresAt: number;
+}
+
+const memoryStore = new Map<string, MemoryEntry>();
+let memoryFallbackWarned = false;
+
+function rateLimitMemory(
+  key: string,
+  limit: number,
+  windowSeconds: number,
+): RateLimitResult {
+  if (!memoryFallbackWarned) {
+    console.warn(
+      "rate-limit: Redis is not configured. Using in-memory fallback. " +
+        "Set KV_REST_API_URL and KV_REST_API_TOKEN for production use.",
+    );
+    memoryFallbackWarned = true;
+  }
+
+  const now = Date.now();
+  const entry = memoryStore.get(key);
+
+  if (!entry || entry.expiresAt <= now) {
+    memoryStore.set(key, { count: 1, expiresAt: now + windowSeconds * 1000 });
+    return { ok: true, retryAfter: 0, remaining: limit - 1 };
+  }
+
+  entry.count += 1;
+
+  if (entry.count > limit) {
+    const retryAfter = Math.ceil((entry.expiresAt - now) / 1000);
+    return { ok: false, retryAfter: retryAfter > 0 ? retryAfter : windowSeconds, remaining: 0 };
+  }
+
+  return { ok: true, retryAfter: 0, remaining: Math.max(0, limit - entry.count) };
+}
+
 /**
  * Increment a counter for `key` and return whether it is at or below
  * `limit`. The counter expires after `windowSeconds`.
  *
- * Fails open: returns ok=true if Redis is unreachable or unconfigured.
- * Logs the underlying error so an outage is visible in Vercel logs.
+ * Falls back to an in-memory counter if Redis is unreachable or
+ * unconfigured. Logs the underlying error so an outage is visible in
+ * Vercel logs.
  */
 export async function rateLimit(
   key: string,
@@ -43,7 +88,7 @@ export async function rateLimit(
 ): Promise<RateLimitResult> {
   const redis = getRedis();
   if (!redis) {
-    return { ok: true, retryAfter: 0, remaining: limit };
+    return rateLimitMemory(key, limit, windowSeconds);
   }
 
   try {
@@ -69,7 +114,8 @@ export async function rateLimit(
     return { ok: true, retryAfter: 0, remaining: Math.max(0, limit - count) };
   } catch (error) {
     console.error("rate-limit redis error:", error);
-    return { ok: true, retryAfter: 0, remaining: limit };
+    // Redis is down; fall back to in-memory so we still enforce a cap.
+    return rateLimitMemory(key, limit, windowSeconds);
   }
 }
 

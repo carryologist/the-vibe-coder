@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/admin/login" ||
     pathname.startsWith("/api/auth/") ||
     pathname === "/api/analytics/track" ||
-    pathname.startsWith("/api/slack/") ||
+    pathname === "/api/slack/todo" ||
     pathname === "/api/share-image" ||
     pathname.startsWith("/api/mcp/")
   ) {
@@ -63,7 +63,10 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, secret);
+    await jwtVerify(token, secret, {
+      issuer: "vibescoder",
+      audience: "vibescoder-admin",
+    });
     return NextResponse.next();
   } catch {
     if (pathname.startsWith("/api/")) {

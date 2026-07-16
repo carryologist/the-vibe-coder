@@ -44,8 +44,8 @@ function githubToken(): string {
   return process.env.GITHUB_TOKEN ?? "";
 }
 
-const REPO_OWNER = "carryologist";
-const REPO_NAME = "the-vibe-coder-content";
+const REPO_OWNER = process.env.CONTENT_REPO_OWNER ?? "carryologist";
+const REPO_NAME = process.env.CONTENT_REPO_NAME ?? "the-vibe-coder-content";
 const FILE_PATH = "content/TODO.md";
 
 interface GitHubFileResponse {
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
     console.error("Failed to update TODO.md:", err);
     return NextResponse.json({
       response_type: "ephemeral",
-      text: `Failed to update TODO.md: ${err instanceof Error ? err.message : "unknown error"}`,
+      text: "Failed to update TODO.md. Please try again later.",
     });
   }
 }

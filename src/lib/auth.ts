@@ -16,13 +16,18 @@ export async function createSession(): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
+    .setIssuer("vibescoder")
+    .setAudience("vibescoder-admin")
     .sign(getSecret());
   return token;
 }
 
 export async function verifySession(token: string): Promise<boolean> {
   try {
-    await jwtVerify(token, getSecret());
+    await jwtVerify(token, getSecret(), {
+      issuer: "vibescoder",
+      audience: "vibescoder-admin",
+    });
     return true;
   } catch {
     return false;
