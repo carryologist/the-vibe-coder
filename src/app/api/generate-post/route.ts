@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateBlogPost } from "@/lib/claude";
-import { readFile } from "@/lib/github";
+import { getSettings, DEFAULT_STYLE_PROMPT } from "@/lib/settings";
 import matter from "gray-matter";
 
 export const maxDuration = 120;
@@ -10,11 +10,6 @@ interface ArtifactPayload {
   type: "image" | "pdf" | "text";
   mimeType: string;
   base64: string;
-}
-
-interface Settings {
-  stylePrompt?: string;
-  prompts?: Record<string, { label: string; prompt: string }>;
 }
 
 export async function POST(request: NextRequest) {
@@ -41,18 +36,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Load settings from the content repo.
-    let settings: Settings = {};
-    const settingsRaw = await readFile("content/settings.json");
-    if (settingsRaw) {
-      settings = JSON.parse(settingsRaw);
-    }
+    const settings = await getSettings();
 
     // Resolve the base style prompt.
     // Priority: explicit override > settings.json > hardcoded fallback.
     const stylePrompt =
-      overridePrompt ||
-      settings.stylePrompt ||
-      "Transform this transcript into a well-structured blog post with MDX frontmatter.";
+      overridePrompt || settings.stylePrompt || DEFAULT_STYLE_PROMPT;
 
     // Resolve the named prompt extension (e.g. "thursday-thoughts").
     let promptExtension: string | undefined;

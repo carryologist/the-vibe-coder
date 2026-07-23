@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, commitFile } from "@/lib/github";
+import { commitFile } from "@/lib/github";
+import { getSettings } from "@/lib/settings";
 
 const SETTINGS_PATH = "content/settings.json";
 
 export async function GET() {
   try {
-    const raw = await readFile(SETTINGS_PATH);
-    if (!raw) {
-      return NextResponse.json({
-        stylePrompt:
-          "Transform this transcript into a well-structured blog post with MDX frontmatter.",
-      });
-    }
-    return NextResponse.json(JSON.parse(raw));
+    const settings = await getSettings();
+    return NextResponse.json(settings);
   } catch (error) {
     console.error("Settings read error:", error);
     return NextResponse.json(
@@ -25,6 +20,32 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Request body must be a JSON object" },
+        { status: 400 }
+      );
+    }
+    const record = body as Record<string, unknown>;
+    if ("stylePrompt" in record && typeof record.stylePrompt !== "string") {
+      return NextResponse.json(
+        { error: "stylePrompt must be a string" },
+        { status: 400 }
+      );
+    }
+    if ("defaultTags" in record) {
+      const tags = record.defaultTags;
+      const valid =
+        Array.isArray(tags) && tags.every((t) => typeof t === "string");
+      if (!valid) {
+        return NextResponse.json(
+          { error: "defaultTags must be an array of strings" },
+          { status: 400 }
+        );
+      }
+    }
+
     const content = JSON.stringify(body, null, 2) + "\n";
 
     await commitFile(SETTINGS_PATH, content, "chore: update settings");
