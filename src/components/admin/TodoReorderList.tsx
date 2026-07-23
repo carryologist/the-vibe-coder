@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import LaunchAgentButton from "@/components/admin/LaunchAgentButton";
 
 interface DisplayItem {
   checked: boolean;
@@ -154,6 +155,7 @@ export function TodoReorderList({ initialItems }: Props) {
               className="flex-1"
               dangerouslySetInnerHTML={{ __html: item.html }}
             />
+            {!item.checked && <LaunchAgentButton text={item.text} />}
             <div className="ml-2 flex shrink-0 flex-col gap-0.5">
               <button
                 onClick={() => move(i, i - 1)}
