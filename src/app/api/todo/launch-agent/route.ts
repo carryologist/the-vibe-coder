@@ -80,38 +80,56 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const rawText = await coderResponse.text();
-  let data: unknown = null;
+  // Everything from here on touches the network response body, which can
+  // throw on its own (aborted stream, connection reset mid-read, etc.)
+  // independent of the try/catch above that only guards the initial
+  // fetch() call. Left unguarded, such a throw escapes this handler
+  // entirely and Vercel serves its own non-JSON 502 error page instead of
+  // ours — which is indistinguishable client-side from a real upstream
+  // failure. Wrap it all so we always return valid JSON.
   try {
-    data = rawText ? JSON.parse(rawText) : null;
-  } catch {
-    // Non-JSON response — fall through with rawText for debugging.
-  }
+    const rawText = await coderResponse.text();
+    let data: unknown = null;
+    try {
+      data = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      // Non-JSON response — fall through with rawText for debugging.
+    }
 
-  if (!coderResponse.ok) {
+    if (!coderResponse.ok) {
+      return NextResponse.json(
+        {
+          error: `Coder Agents API returned ${coderResponse.status}`,
+          detail: data ?? rawText,
+        },
+        { status: 502 }
+      );
+    }
+
+    // Response shape isn't fully pinned down in Coder's public docs at
+    // time of writing (POST is documented by example, not schema) — the
+    // GET/PATCH examples confirm chats have at least an `id`, `status`,
+    // and `workspace_id`. Extract defensively and let the client fall
+    // back to "launched, no direct link" if `id` is missing.
+    const chatId =
+      data && typeof data === "object" && "id" in data
+        ? String((data as { id: unknown }).id)
+        : null;
+
+    return NextResponse.json({
+      ok: true,
+      chatId,
+      chatUrl: chatId ? `${CODER_BASE_URL}/chat/${chatId}` : null,
+      raw: data,
+    });
+  } catch (err) {
     return NextResponse.json(
       {
-        error: `Coder Agents API returned ${coderResponse.status}`,
-        detail: data ?? rawText,
+        error: `Failed to read Coder Agents API response: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
       },
       { status: 502 }
     );
   }
-
-  // Response shape isn't fully pinned down in Coder's public docs at time
-  // of writing (POST is documented by example, not schema) — the GET/PATCH
-  // examples confirm chats have at least an `id`, `status`, and
-  // `workspace_id`. Extract defensively and let the client fall back to
-  // "launched, no direct link" if `id` is missing.
-  const chatId =
-    data && typeof data === "object" && "id" in data
-      ? String((data as { id: unknown }).id)
-      : null;
-
-  return NextResponse.json({
-    ok: true,
-    chatId,
-    chatUrl: chatId ? `${CODER_BASE_URL}/chat/${chatId}` : null,
-    raw: data,
-  });
 }
