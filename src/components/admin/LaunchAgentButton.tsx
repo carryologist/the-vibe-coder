@@ -29,6 +29,19 @@ export default function LaunchAgentButton({ text }: LaunchAgentButtonProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
+
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        // A non-JSON body (e.g. Vercel's HTML timeout/error page) means
+        // the request didn't complete normally server-side — most
+        // likely the function timed out waiting on the Coder Chats API.
+        throw new Error(
+          res.status === 504
+            ? "Request timed out waiting for the Coder Agents API."
+            : `Unexpected response (${res.status}) from the server.`
+        );
+      }
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.error || `Request failed (${res.status})`);

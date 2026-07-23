@@ -10,6 +10,15 @@ import { NextRequest, NextResponse } from "next/server";
 const CODER_BASE_URL = "https://coder.vibescoder.dev";
 const CODER_ORG_ID = "28332ca8-32f1-4962-858c-d4526eb0a8b8";
 
+// Spinning up a real Coder Agents workspace via the Chats API routinely
+// takes longer than Vercel's default function timeout (10s Hobby / 15s
+// Pro). Without this, Vercel kills the function mid-request and returns
+// its own HTML error page, which breaks the client's res.json() call
+// with a confusing "Unexpected token '<'" error instead of our JSON
+// error shape. Matches the pattern used by other slow external-API
+// routes in this app (see generate-post, mcp).
+export const maxDuration = 60;
+
 function buildPrompt(itemText: string): string {
   return (
     `Tackle this backlog item from content/TODO.md: \`${itemText}\`. ` +
