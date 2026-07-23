@@ -24,13 +24,36 @@ export interface ImageDirectory {
   postTitle: string | null;
   /** Whether the matched post is published. Null when no match. */
   postPublished: boolean | null;
-  /** How we matched the directory to a post: exact slug, prefix, content reference, or no match. */
-  matchKind: "exact" | "prefix" | "content" | "none";
-  /** True when no post matches this directory by any rule. */
+  /**
+   * How we matched the directory to a post, or to a static reference:
+   *   - exact/prefix/content: matched a post (see images.ts for the tiers)
+   *   - static: referenced by hardcoded `/images/...` string literals in
+   *     the app's own `.tsx` source (favicons, About page headshot, etc)
+   *     rather than by any post
+   *   - none: no match by any rule
+   */
+  matchKind: "exact" | "prefix" | "content" | "static" | "none";
+  /** True when no post or static reference matches this directory by any rule. */
   orphaned: boolean;
   fileCount: number;
   totalSize: number;
   files: ImageFile[];
+}
+
+/**
+ * A file that lives directly under `public/images/` with no per-post slug
+ * subdirectory of its own (e.g. a stray upload, or a shared branding asset
+ * living at the top level rather than inside `branding/`). These were
+ * previously invisible to orphan detection entirely — `listImageDirectories`
+ * only ever looked at subdirectories. Surfaced separately from
+ * `ImageDirectory` because "orphaned" here is a per-file property, not a
+ * per-directory one.
+ */
+export interface LooseImageFile extends ImageFile {
+  /** How this specific file was matched — see `ImageDirectory.matchKind`. */
+  matchKind: "content" | "static" | "none";
+  /** True when nothing references this file by any rule. */
+  orphaned: boolean;
 }
 
 /** Human-readable byte count: `1.4 MB`, `12.0 KB`, `512 B`. */

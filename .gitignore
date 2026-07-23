@@ -53,6 +53,7 @@ PLAN.md
 
 # Generated build artifacts
 public/search-index.json
+public/static-image-refs.json
 
 # Content (fetched from private repo at build time)
 /content

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "bash scripts/fetch-content.sh && npx tsx scripts/generate-search-index.ts",
+    "prebuild": "bash scripts/fetch-content.sh && npx tsx scripts/generate-search-index.ts && npx tsx scripts/generate-image-references.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
