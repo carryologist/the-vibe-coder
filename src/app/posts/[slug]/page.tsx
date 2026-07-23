@@ -3,6 +3,8 @@ import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import remarkGfm from "remark-gfm";
+import { remarkSmartQuotes } from "@/lib/remark-smart-quotes";
+import { smartQuotes } from "@/lib/typography";
 import rehypeSlug from "rehype-slug";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { createMDXComponents } from "@/components/MDXComponents";
@@ -120,7 +122,7 @@ export default async function PostPage({ params }: PostPageProps) {
               className="text-3xl font-bold tracking-tight sm:text-4xl text-on-surface"
               style={{ fontFamily: "var(--font-headline)" }}
             >
-              {post.title}
+              {smartQuotes(post.title)}
             </h1>
 
             <div
@@ -168,7 +170,7 @@ export default async function PostPage({ params }: PostPageProps) {
               components={createMDXComponents(slug, post.title)}
               options={{
                 mdxOptions: {
-                  remarkPlugins: [remarkGfm],
+                  remarkPlugins: [remarkGfm, remarkSmartQuotes],
                   rehypePlugins: [
                     rehypeSlug,
                     [rehypePrettyCode, { theme: "github-dark" }],

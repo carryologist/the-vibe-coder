@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { smartQuotes } from "@/lib/typography";
 
 export const runtime = "nodejs";
 
@@ -422,7 +423,7 @@ export async function POST(request: NextRequest) {
                 whiteSpace: "nowrap",
               }}
             >
-              {title}
+              {smartQuotes(title)}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { TagBadge } from "@/components/TagBadge";
 import { AdminCardControlsIsland } from "@/components/admin/AdminCardControlsIsland";
+import { smartQuotes } from "@/lib/typography";
 import type { Post } from "@/lib/types";
 
 interface PostCardProps {
@@ -25,7 +26,7 @@ export function PostCard({ post }: PostCardProps) {
           className="text-xl font-semibold tracking-tight text-on-surface transition-colors group-hover:text-primary"
           style={{ fontFamily: "var(--font-headline)" }}
         >
-          {title}
+          {smartQuotes(title)}
         </h2>
         <span className="pointer-events-auto"><AdminCardControlsIsland slug={slug} /></span>
       </div>
@@ -56,7 +57,7 @@ export function PostCard({ post }: PostCardProps) {
       </div>
 
       <p className="relative z-10 mt-3 text-sm leading-relaxed text-on-surface-variant pointer-events-none">
-        {description}
+        {smartQuotes(description)}
       </p>
 
       {tags.length > 0 && (
