@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
+import { smartQuotes } from "@/lib/typography";
 import fs from "fs";
 import path from "path";
 
@@ -174,7 +175,7 @@ export default async function OgImage({
               maxWidth: "1000px",
             }}
           >
-            {post.title}
+            {smartQuotes(post.title)}
           </div>
 
           {/* Date and reading time */}

@@ -1,6 +1,7 @@
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
+import { remarkSmartQuotes } from "./remark-smart-quotes";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
@@ -27,6 +28,7 @@ export async function mdxToFeedHtml(
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkSmartQuotes)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeStringify, { allowDangerousHtml: true })
