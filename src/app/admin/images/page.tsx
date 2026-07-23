@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { listImageDirectories } from "@/lib/images";
-import type { ImageDirectory } from "@/lib/image-types";
+import type { ImageDirectory, LooseImageFile } from "@/lib/image-types";
 import { ImageManager } from "@/components/admin/ImageManager";
 
 export const metadata: Metadata = {
@@ -14,17 +14,25 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminImagesPage() {
   let directories: ImageDirectory[] = [];
+  let looseFiles: LooseImageFile[] = [];
   let error: string | null = null;
   try {
-    directories = await listImageDirectories();
+    const result = await listImageDirectories();
+    directories = result.directories;
+    looseFiles = result.looseFiles;
   } catch (err) {
     error = err instanceof Error ? err.message : "Failed to load image data";
   }
 
   const totalDirs = directories.length;
-  const totalFiles = directories.reduce((acc, d) => acc + d.fileCount, 0);
-  const totalSize = directories.reduce((acc, d) => acc + d.totalSize, 0);
-  const orphanCount = directories.filter((d) => d.orphaned).length;
+  const totalFiles =
+    directories.reduce((acc, d) => acc + d.fileCount, 0) + looseFiles.length;
+  const totalSize =
+    directories.reduce((acc, d) => acc + d.totalSize, 0) +
+    looseFiles.reduce((acc, f) => acc + f.size, 0);
+  const orphanCount =
+    directories.filter((d) => d.orphaned).length +
+    looseFiles.filter((f) => f.orphaned).length;
 
   return (
     <div>
@@ -50,7 +58,7 @@ export default async function AdminImagesPage() {
           {error}
         </div>
       ) : (
-        <ImageManager directories={directories} />
+        <ImageManager directories={directories} looseFiles={looseFiles} />
       )}
     </div>
   );
