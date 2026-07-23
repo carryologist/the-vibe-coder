@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { ImageDirectory, LooseImageFile } from "@/lib/image-types";
+import type { ImageDirectory, ImageFile, LooseImageFile } from "@/lib/image-types";
 import { formatBytes } from "@/lib/image-types";
+import { ImageUploadForm } from "./ImageUploadForm";
 
 interface Props {
   directories: ImageDirectory[];
@@ -91,11 +92,49 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
     }
   }
 
+  function handleUploaded(slug: string, file: ImageFile) {
+    setDirectories((prev) => {
+      const existingIdx = prev.findIndex((d) => d.slug === slug);
+      if (existingIdx === -1) {
+        return [
+          ...prev,
+          {
+            slug,
+            postTitle: null,
+            postPublished: null,
+            matchKind: "none" as const,
+            orphaned: true,
+            fileCount: 1,
+            totalSize: file.size,
+            files: [file],
+          },
+        ];
+      }
+      const next = [...prev];
+      const dir = next[existingIdx];
+      next[existingIdx] = {
+        ...dir,
+        files: [...dir.files, file],
+        fileCount: dir.fileCount + 1,
+        totalSize: dir.totalSize + file.size,
+      };
+      return next;
+    });
+  }
+
+  const existingSlugs = useMemo(
+    () => directories.map((d) => d.slug).sort(),
+    [directories]
+  );
+
   if (directories.length === 0 && looseFiles.length === 0) {
     return (
-      <p className="font-mono text-xs text-on-surface-variant">
-        No image directories found under <code>public/images/</code>.
-      </p>
+      <div className="space-y-8">
+        <ImageUploadForm existingSlugs={existingSlugs} onUploaded={handleUploaded} />
+        <p className="font-mono text-xs text-on-surface-variant">
+          No image directories found under <code>public/images/</code>.
+        </p>
+      </div>
     );
   }
 
@@ -106,6 +145,8 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
           {error}
         </div>
       )}
+
+      <ImageUploadForm existingSlugs={existingSlugs} onUploaded={handleUploaded} />
 
       {looseFiles.length > 0 && (
         <section>
