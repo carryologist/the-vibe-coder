@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getUpNextItems, renderInlineMarkdown } from "@/lib/todo";
+import LaunchAgentButton from "@/components/admin/LaunchAgentButton";
 
 export const metadata: Metadata = {
   title: "TODO — Admin",
@@ -65,10 +66,12 @@ export default async function AdminTodoPage() {
                 {item.checked ? "✓" : ""}
               </span>
               <span
+                className="flex-1"
                 dangerouslySetInnerHTML={{
                   __html: renderInlineMarkdown(item.text),
                 }}
               />
+              {!item.checked && <LaunchAgentButton text={item.text} />}
             </li>
           ))}
         </ul>
