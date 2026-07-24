@@ -30,9 +30,9 @@ export function AdminNav() {
   }
 
   return (
-    <nav className="flex items-center gap-6 border-b border-outline-variant px-6 py-3">
+    <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-outline-variant px-4 py-3 sm:px-6">
       <span className="font-mono text-xs text-outline">// admin</span>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-x-4 gap-y-2">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -49,7 +49,7 @@ export function AdminNav() {
       </div>
       <button
         onClick={handleLogout}
-        className="ml-auto font-mono text-xs text-outline transition-colors hover:text-red-400"
+        className="font-mono text-xs text-outline transition-colors hover:text-red-400 sm:ml-auto"
       >
         Logout
       </button>

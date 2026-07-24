@@ -104,7 +104,7 @@ export function ImageUploadForm({ existingSlugs, onUploaded }: Props) {
           <select
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="rounded-lg border border-outline-variant bg-bg px-2 py-1 font-mono text-xs text-on-surface outline-none focus:border-primary/50"
+            className="w-full max-w-full truncate rounded-lg border border-outline-variant bg-bg px-2 py-1 font-mono text-xs text-on-surface outline-none focus:border-primary/50 sm:w-auto"
           >
             {existingSlugs.map((slug) => (
               <option key={slug} value={slug}>
