@@ -62,3 +62,4 @@ content/settings.json
 content/TODO.md
 blog-drafts/
 /public/images
+.env*
