@@ -126,7 +126,7 @@ export function TodoReorderList({ initialItems }: Props) {
               setDragIndex(null);
               setDragOverIndex(null);
             }}
-            className={`flex items-start gap-3 rounded-lg border px-4 py-3 font-mono text-sm leading-relaxed transition-colors ${
+            className={`flex flex-col gap-3 rounded-lg border px-4 py-3 font-mono text-sm leading-relaxed transition-colors sm:flex-row sm:items-start ${
               item.checked
                 ? "border-outline-variant/10 bg-surface-low text-on-surface-variant line-through"
                 : "border-outline-variant/20 bg-surface-low text-on-surface"
@@ -134,45 +134,55 @@ export function TodoReorderList({ initialItems }: Props) {
               dragIndex === i ? "opacity-40" : ""
             }`}
           >
-            <span
-              aria-hidden
-              className="mt-0.5 cursor-grab select-none font-mono text-xs text-outline"
-              title="Drag to reorder"
-            >
-              ⠿
-            </span>
-            <span
-              aria-hidden
-              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
-                item.checked
-                  ? "border-outline-variant/40 bg-outline-variant/20"
-                  : "border-primary/50 text-primary"
-              }`}
-            >
-              {item.checked ? "✓" : ""}
-            </span>
-            <span
-              className="flex-1"
-              dangerouslySetInnerHTML={{ __html: item.html }}
-            />
-            {!item.checked && <LaunchAgentButton text={item.text} />}
-            <div className="ml-2 flex shrink-0 flex-col gap-0.5">
-              <button
-                onClick={() => move(i, i - 1)}
-                disabled={i === 0}
-                aria-label="Move up"
-                className="rounded border border-outline-variant/20 px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-30"
+            <div className="flex items-start gap-3">
+              <span
+                aria-hidden
+                className="mt-0.5 cursor-grab select-none font-mono text-xs text-outline"
+                title="Drag to reorder"
               >
-                ↑
-              </button>
-              <button
-                onClick={() => move(i, i + 1)}
-                disabled={i === items.length - 1}
-                aria-label="Move down"
-                className="rounded border border-outline-variant/20 px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-30"
+                ⠿
+              </span>
+              <span
+                aria-hidden
+                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+                  item.checked
+                    ? "border-outline-variant/40 bg-outline-variant/20"
+                    : "border-primary/50 text-primary"
+                }`}
               >
-                ↓
-              </button>
+                {item.checked ? "✓" : ""}
+              </span>
+              <span
+                className="flex-1"
+                dangerouslySetInnerHTML={{ __html: item.html }}
+              />
+            </div>
+            {/* On mobile this row stacks below the text so the launch-agent
+                button/error and the reorder arrows have room to breathe
+                instead of cramming into one line and overlapping. At sm+
+                `contents` drops this wrapper from the box model so its
+                children rejoin the outer flex row, matching the original
+                single-row desktop layout. */}
+            <div className="flex items-center justify-between gap-2 sm:contents">
+              {!item.checked && <LaunchAgentButton text={item.text} />}
+              <div className="flex shrink-0 gap-1 sm:ml-2 sm:flex-col sm:gap-0.5">
+                <button
+                  onClick={() => move(i, i - 1)}
+                  disabled={i === 0}
+                  aria-label="Move up"
+                  className="rounded border border-outline-variant/20 px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-30"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => move(i, i + 1)}
+                  disabled={i === items.length - 1}
+                  aria-label="Move down"
+                  className="rounded border border-outline-variant/20 px-1.5 py-0.5 font-mono text-[10px] text-on-surface-variant transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-30"
+                >
+                  ↓
+                </button>
+              </div>
             </div>
           </li>
         ))}
