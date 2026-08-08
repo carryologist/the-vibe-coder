@@ -11,6 +11,24 @@ interface Props {
   looseFiles?: LooseImageFile[];
 }
 
+/**
+ * Whether orphan detection had the data it needed for this entry. The
+ * server clears this flag when the static reference manifest or the post
+ * index could not be read, in which case everything looks unreferenced and
+ * an "orphaned" label would be a lie. The field is optional so the UI keeps
+ * working against servers that do not report it yet.
+ */
+function detectionAvailable(entry: ImageDirectory | LooseImageFile): boolean {
+  // Read through a cast so this compiles against server versions that do
+  // not report the field yet.
+  const flag = (entry as { orphanDetectionAvailable?: boolean })
+    .orphanDetectionAvailable;
+  return flag ?? true;
+}
+
+const DETECTION_UNAVAILABLE_NOTE =
+  "Reference data could not be loaded, so nothing can be confirmed as unused. Deletion is disabled until it is available again.";
+
 export function ImageManager({ directories: initial, looseFiles: initialLoose = [] }: Props) {
   const [directories, setDirectories] = useState(initial);
   const [looseFiles, setLooseFiles] = useState(initialLoose);
@@ -25,7 +43,13 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
   const [error, setError] = useState<string | null>(null);
 
   const orphans = useMemo(
-    () => directories.filter((d) => d.orphaned),
+    () => directories.filter((d) => d.orphaned && detectionAvailable(d)),
+    [directories]
+  );
+  // Directories that only *look* orphaned because reference data was
+  // unavailable. Surfaced separately, without any delete affordance.
+  const unverified = useMemo(
+    () => directories.filter((d) => d.orphaned && !detectionAvailable(d)),
     [directories]
   );
   const matched = useMemo(
@@ -162,6 +186,7 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
               <LooseFileCard
                 key={file.repoPath}
                 file={file}
+                deletable={!file.orphaned || detectionAvailable(file)}
                 onDelete={() => setPendingLoose(file)}
               />
             ))}
@@ -186,6 +211,22 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
                   })
                 }
               />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {unverified.length > 0 && (
+        <section>
+          <h2 className="mb-3 font-mono text-[11px] uppercase tracking-widest text-amber-400">
+            Unverified ({unverified.length})
+          </h2>
+          <p className="mb-3 font-mono text-[11px] text-on-surface-variant">
+            {DETECTION_UNAVAILABLE_NOTE}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {unverified.map((dir) => (
+              <DirectoryCard key={dir.slug} dir={dir} />
             ))}
           </div>
         </section>
@@ -297,9 +338,11 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
 
 function LooseFileCard({
   file,
+  deletable,
   onDelete,
 }: {
   file: LooseImageFile;
+  deletable: boolean;
   onDelete: () => void;
 }) {
   return (
@@ -319,20 +362,39 @@ function LooseFileCard({
         <LooseFileBadge file={file} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-on-surface-variant">
+      <div className="mt-3 flex items-center justify-between gap-3 font-mono text-[11px] text-on-surface-variant">
         <span>{formatBytes(file.size)}</span>
-        <button
-          onClick={onDelete}
-          className="rounded-lg border border-red-500/30 px-2 py-0.5 text-[11px] text-red-400 transition-colors hover:bg-red-500/10"
-        >
-          Delete
-        </button>
+        {deletable ? (
+          <button
+            onClick={onDelete}
+            className="rounded-lg border border-red-500/30 px-2 py-0.5 text-[11px] text-red-400 transition-colors hover:bg-red-500/10"
+          >
+            Delete
+          </button>
+        ) : (
+          <span
+            title={DETECTION_UNAVAILABLE_NOTE}
+            className="text-right text-[10px] text-amber-400"
+          >
+            Delete disabled: references unknown
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
 function LooseFileBadge({ file }: { file: LooseImageFile }) {
+  if (file.orphaned && !detectionAvailable(file)) {
+    return (
+      <span
+        title={DETECTION_UNAVAILABLE_NOTE}
+        className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-amber-400"
+      >
+        unverified
+      </span>
+    );
+  }
   if (file.orphaned) {
     return (
       <span className="rounded bg-red-500/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-red-400">
@@ -398,7 +460,7 @@ function DirectoryCard({
           {dir.fileCount} {dir.fileCount === 1 ? "file" : "files"} ·{" "}
           {formatBytes(dir.totalSize)}
         </span>
-        {dir.orphaned && onDeleteDirectory && dir.fileCount > 0 && (
+        {dir.orphaned && detectionAvailable(dir) && onDeleteDirectory && dir.fileCount > 0 && (
           <button
             onClick={() => onDeleteDirectory(dir)}
             className="rounded-lg border border-red-500/30 px-2 py-0.5 text-[11px] text-red-400 transition-colors hover:bg-red-500/10"
@@ -412,6 +474,16 @@ function DirectoryCard({
 }
 
 function MatchBadge({ dir }: { dir: ImageDirectory }) {
+  if (dir.orphaned && !detectionAvailable(dir)) {
+    return (
+      <span
+        title={DETECTION_UNAVAILABLE_NOTE}
+        className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-amber-400"
+      >
+        unverified
+      </span>
+    );
+  }
   if (dir.orphaned) {
     return (
       <span className="rounded bg-red-500/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-red-400">
