@@ -27,7 +27,7 @@ function detectionAvailable(entry: ImageDirectory | LooseImageFile): boolean {
 }
 
 const DETECTION_UNAVAILABLE_NOTE =
-  "Reference data could not be loaded, so nothing can be confirmed as unused. Deletion is disabled until it is available again.";
+  "Reference data (the static image manifest and the post index) could not be read, so nothing can be confirmed as unused. Orphan detection and deletion are disabled until it is available again.";
 
 export function ImageManager({ directories: initial, looseFiles: initialLoose = [] }: Props) {
   const [directories, setDirectories] = useState(initial);
@@ -42,18 +42,20 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // The server reports the flag per entry but computes it once per page,
+  // so a single false means orphan detection did not run at all.
+  const detectionUnavailable = useMemo(
+    () =>
+      [...directories, ...looseFiles].some((e) => !detectionAvailable(e)),
+    [directories, looseFiles]
+  );
+
   const orphans = useMemo(
     () => directories.filter((d) => d.orphaned && detectionAvailable(d)),
     [directories]
   );
-  // Directories that only *look* orphaned because reference data was
-  // unavailable. Surfaced separately, without any delete affordance.
-  const unverified = useMemo(
-    () => directories.filter((d) => d.orphaned && !detectionAvailable(d)),
-    [directories]
-  );
   const matched = useMemo(
-    () => directories.filter((d) => !d.orphaned),
+    () => directories.filter((d) => !d.orphaned || !detectionAvailable(d)),
     [directories]
   );
 
@@ -127,7 +129,8 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
             postTitle: null,
             postPublished: null,
             matchKind: "none" as const,
-            orphaned: true,
+            orphaned: !detectionUnavailable,
+            orphanDetectionAvailable: !detectionUnavailable,
             fileCount: 1,
             totalSize: file.size,
             files: [file],
@@ -170,6 +173,12 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
         </div>
       )}
 
+      {detectionUnavailable && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-2 font-mono text-xs text-amber-400">
+          {DETECTION_UNAVAILABLE_NOTE}
+        </div>
+      )}
+
       <ImageUploadForm existingSlugs={existingSlugs} onUploaded={handleUploaded} />
 
       {looseFiles.length > 0 && (
@@ -186,7 +195,7 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
               <LooseFileCard
                 key={file.repoPath}
                 file={file}
-                deletable={!file.orphaned || detectionAvailable(file)}
+                deletable={!detectionUnavailable}
                 onDelete={() => setPendingLoose(file)}
               />
             ))}
@@ -211,22 +220,6 @@ export function ImageManager({ directories: initial, looseFiles: initialLoose = 
                   })
                 }
               />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {unverified.length > 0 && (
-        <section>
-          <h2 className="mb-3 font-mono text-[11px] uppercase tracking-widest text-amber-400">
-            Unverified ({unverified.length})
-          </h2>
-          <p className="mb-3 font-mono text-[11px] text-on-surface-variant">
-            {DETECTION_UNAVAILABLE_NOTE}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {unverified.map((dir) => (
-              <DirectoryCard key={dir.slug} dir={dir} />
             ))}
           </div>
         </section>
@@ -385,7 +378,7 @@ function LooseFileCard({
 }
 
 function LooseFileBadge({ file }: { file: LooseImageFile }) {
-  if (file.orphaned && !detectionAvailable(file)) {
+  if (!detectionAvailable(file) && (file.orphaned || file.matchKind === "none")) {
     return (
       <span
         title={DETECTION_UNAVAILABLE_NOTE}
@@ -474,7 +467,7 @@ function DirectoryCard({
 }
 
 function MatchBadge({ dir }: { dir: ImageDirectory }) {
-  if (dir.orphaned && !detectionAvailable(dir)) {
+  if (!detectionAvailable(dir) && (dir.orphaned || dir.matchKind === "none")) {
     return (
       <span
         title={DETECTION_UNAVAILABLE_NOTE}
