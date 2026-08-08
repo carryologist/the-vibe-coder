@@ -17,8 +17,11 @@ async function verifySlackSignature(req: NextRequest, body: string): Promise<boo
   if (!timestamp || !signature || !signingSecret) return false;
 
   // Reject requests older than 5 minutes to prevent replay attacks.
+  // Number("abc") is NaN and Math.abs(NaN) > 300 is false, so a
+  // non-numeric timestamp used to skip this check entirely.
+  const ts = Number(timestamp);
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - Number(timestamp)) > 300) return false;
+  if (!Number.isFinite(ts) || Math.abs(now - ts) > 300) return false;
 
   const basestring = `v0:${timestamp}:${body}`;
   const hmac = createHmac("sha256", signingSecret)
@@ -100,6 +103,9 @@ async function commitTodoFile(content: string, sha: string, message: string) {
 
 type Section = "next" | "backlog";
 
+/** Upper bound on a single TODO bullet added from Slack. */
+const MAX_ITEM_LENGTH = 500;
+
 function insertTodoItem(
   markdown: string,
   item: string,
@@ -137,15 +143,33 @@ function insertTodoItem(
 }
 
 function parseCommand(text: string): { item: string; section: Section } {
-  const trimmed = text.trim();
+  const trimmed = sanitizeItem(text);
 
   // Support "backlog: item text" prefix.
   const backlogMatch = trimmed.match(/^backlog:\s*(.+)/i);
   if (backlogMatch) {
-    return { item: backlogMatch[1].trim(), section: "backlog" };
+    return { item: sanitizeItem(backlogMatch[1]), section: "backlog" };
   }
 
   return { item: trimmed, section: "next" };
+}
+
+/**
+ * Flatten Slack-supplied text into a single safe bullet.
+ *
+ * The text lands in content/TODO.md, which is parsed back by
+ * src/lib/todo.ts and can be handed to an autonomous coding agent from
+ * /admin/todo. Newlines would let a Slack user inject extra bullets or
+ * a "## " heading and restructure the file; leading list/heading
+ * markers would do the same on a single line.
+ */
+function sanitizeItem(text: string): string {
+  return text
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[#>*\-\s]+/, "")
+    .trim()
+    .slice(0, MAX_ITEM_LENGTH);
 }
 
 // ----------------------------------------------------------------
@@ -178,6 +202,12 @@ export async function POST(req: NextRequest) {
   }
 
   const { item, section } = parseCommand(text);
+  if (!item) {
+    return NextResponse.json({
+      response_type: "ephemeral",
+      text: "Nothing to add. Usage: `/todo Fix the RSS feed`",
+    });
+  }
   const sectionLabel = section === "backlog" ? "Ideas / Backlog" : "Up Next";
 
   try {
@@ -194,10 +224,12 @@ export async function POST(req: NextRequest) {
       text: `Added to *${sectionLabel}*:\n> - [ ] ${item}`,
     });
   } catch (err) {
+    // Log the detail rather than echoing GitHub's response body into a
+    // Slack channel.
     console.error("Failed to update TODO.md:", err);
     return NextResponse.json({
       response_type: "ephemeral",
-      text: `Failed to update TODO.md: ${err instanceof Error ? err.message : "unknown error"}`,
+      text: "Failed to update TODO.md. Check the server logs for details.",
     });
   }
 }
