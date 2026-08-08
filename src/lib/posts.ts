@@ -4,18 +4,9 @@ import matter from "gray-matter";
 import readingTime from "reading-time";
 import { cache } from "react";
 import { Post, PostMeta } from "./types";
+import { isSafeSlug } from "./slug";
 
 const POSTS_DIR = path.join(process.cwd(), "content/posts");
-
-/**
- * True for a plain post slug. Kept local rather than imported from
- * src/lib/slug.ts because that module only exposes the coercing
- * `sanitizeSlug`, and a loader must reject bad input rather than rewrite
- * it into a different post's path.
- */
-function isSafeSlug(slug: string): boolean {
-  return /^[a-z0-9][a-z0-9-]*$/.test(slug);
-}
 
 /**
  * Coerce a frontmatter date to a YYYY-MM-DD string.

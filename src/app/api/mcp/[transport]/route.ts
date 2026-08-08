@@ -12,7 +12,7 @@ import {
 import { listDirectory } from "@/lib/github-list";
 import { isValidApiToken } from "@/lib/mcp-auth";
 import { mcpLog } from "@/lib/mcp-log";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { sanitizeSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
-import { setFrontmatterField } from "@/components/admin/DraftsList";
+import { setFrontmatterField } from "@/lib/frontmatter";
 
 interface EditPostPageProps {
   params: Promise<{ slug: string }>;
