@@ -9,6 +9,16 @@ interface DisplayItem {
   html: string;
 }
 
+/**
+ * A DisplayItem with a client-only identity. Item text is not unique (the
+ * backlog legitimately contains repeated bullets, and reorderUpNext treats
+ * them as a multiset), so text cannot be used as a React key: duplicates
+ * would collide and reconcile the wrong row on a move.
+ */
+interface KeyedItem extends DisplayItem {
+  uid: string;
+}
+
 interface Props {
   initialItems: DisplayItem[];
 }
@@ -21,8 +31,10 @@ interface Props {
  * doesn't fire a Vercel deploy per move.
  */
 export function TodoReorderList({ initialItems }: Props) {
-  const [items, setItems] = useState(initialItems);
-  const [baseline, setBaseline] = useState(initialItems);
+  const [items, setItems] = useState<KeyedItem[]>(() =>
+    initialItems.map((item, i) => ({ ...item, uid: `item-${i}` }))
+  );
+  const [baseline, setBaseline] = useState<KeyedItem[]>(items);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -31,7 +43,7 @@ export function TodoReorderList({ initialItems }: Props) {
   const dragImageRef = useRef<HTMLDivElement | null>(null);
 
   const dirty = useMemo(
-    () => items.some((item, i) => item.text !== baseline[i]?.text),
+    () => items.some((item, i) => item.uid !== baseline[i]?.uid),
     [items, baseline]
   );
 
@@ -104,7 +116,7 @@ export function TodoReorderList({ initialItems }: Props) {
       <ul className="space-y-2">
         {items.map((item, i) => (
           <li
-            key={item.text}
+            key={item.uid}
             draggable
             onDragStart={(e) => {
               setDragIndex(i);
