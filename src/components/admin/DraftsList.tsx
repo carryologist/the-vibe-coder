@@ -17,6 +17,51 @@ interface DraftsListProps {
   drafts: Draft[];
 }
 
+/**
+ * Replace, add, or remove a single frontmatter key in a raw MDX document.
+ * Passing `null` removes the key. Returns the rewritten document.
+ *
+ * The previous implementation regex-patched `date: '...'` and only matched
+ * single-quoted values, so posts whose frontmatter carries an unquoted YAML
+ * date (common in this content set, see normalizeDate in src/lib/posts.ts)
+ * silently kept their old date on publish. This matches the key however its
+ * value is quoted, edits only inside the frontmatter block, and throws when
+ * there is no frontmatter so the failure surfaces instead of no-opping.
+ *
+ * Exported so the single-post editor applies the exact same rewrite.
+ */
+export function setFrontmatterField(
+  source: string,
+  key: string,
+  value: string | null,
+): string {
+  // Anchored at the start of the document, so the match always begins at
+  // index 0 and the body is everything after it.
+  const fm = source.match(/^---\r?\n([\s\S]*?)\r?\n---[ \t]*(\r?\n|$)/);
+  if (!fm) {
+    throw new Error("Post has no frontmatter block");
+  }
+
+  const lines = fm[1].split(/\r?\n/);
+  const keyLine = new RegExp(`^${key}:`);
+  const hasKey = lines.some((line) => keyLine.test(line));
+
+  let nextLines: string[];
+  if (value === null) {
+    if (!hasKey) return source;
+    nextLines = lines.filter((line) => !keyLine.test(line));
+  } else if (hasKey) {
+    nextLines = lines.map((line) =>
+      keyLine.test(line) ? `${key}: ${value}` : line,
+    );
+  } else {
+    nextLines = [...lines, `${key}: ${value}`];
+  }
+
+  const body = source.slice(fm[0].length);
+  return `---\n${nextLines.join("\n")}\n---\n${body}`;
+}
+
 function relativeTime(dateStr: string): string {
   const target = new Date(dateStr);
   const now = new Date();
@@ -62,17 +107,11 @@ export function DraftsList({ drafts }: DraftsListProps) {
       const data = await getRes.json();
 
       const today = new Date().toISOString().split("T")[0];
-      let published = data.content.replace(
-        /^published:\s*false\s*$/m,
-        "published: true",
-      );
+      let published = setFrontmatterField(data.content, "published", "true");
       // Update the post date to the publish date
-      published = published.replace(
-        /^date:\s*'[^']*'/m,
-        `date: '${today}'`,
-      );
+      published = setFrontmatterField(published, "date", `'${today}'`);
       // Remove publishAt if present (no longer needed)
-      published = published.replace(/^publishAt:.*\n?/m, "");
+      published = setFrontmatterField(published, "publishAt", null);
 
       const putRes = await fetch("/api/posts", {
         method: "PUT",
@@ -108,20 +147,12 @@ export function DraftsList({ drafts }: DraftsListProps) {
       if (!getRes.ok) throw new Error("Failed to load post");
       const data = await getRes.json();
 
-      let updated = data.content as string;
       // Add or update publishAt in frontmatter
-      if (/^publishAt:/m.test(updated)) {
-        updated = updated.replace(
-          /^publishAt:.*$/m,
-          `publishAt: '${publishAt}'`,
-        );
-      } else {
-        // Insert after the published: line
-        updated = updated.replace(
-          /^(published:.*$)/m,
-          `$1\npublishAt: '${publishAt}'`,
-        );
-      }
+      const updated = setFrontmatterField(
+        data.content as string,
+        "publishAt",
+        `'${publishAt}'`,
+      );
 
       const putRes = await fetch("/api/posts", {
         method: "PUT",
@@ -155,9 +186,10 @@ export function DraftsList({ drafts }: DraftsListProps) {
       if (!getRes.ok) throw new Error("Failed to load post");
       const data = await getRes.json();
 
-      const updated = (data.content as string).replace(
-        /^publishAt:.*\n?/m,
-        "",
+      const updated = setFrontmatterField(
+        data.content as string,
+        "publishAt",
+        null,
       );
 
       const putRes = await fetch("/api/posts", {
