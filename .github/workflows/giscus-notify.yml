@@ -4,6 +4,10 @@ on:
   discussion_comment:
     types: [created]
 
+# The job only posts to an outbound Slack webhook; it never calls the
+# GitHub API, so it needs no GITHUB_TOKEN scopes at all.
+permissions: {}
+
 jobs:
   notify:
     runs-on: ubuntu-latest
@@ -11,7 +15,8 @@ jobs:
     # and skip comments from the repo owner to avoid
     # self-notifications.
     if: >-
-      github.event.discussion.category.name == 'Announcements'
+      github.event.discussion.category.name == 'Announcements' &&
+      github.event.comment.user.login != github.event.repository.owner.login
     steps:
       - name: Send Slack notification
         env:
