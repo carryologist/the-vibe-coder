@@ -101,6 +101,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reject a colliding slug before writing anything. The image commits
+    // below are unconditional upserts, so running them first would clobber
+    // the existing post's images even though the post commit is then
+    // rejected as a create-only conflict.
+    const path = `content/posts/${safeSlug}.mdx`;
+    const existing = await readFileWithSha(path);
+    if (existing) {
+      return NextResponse.json(
+        { error: "A post with that slug already exists." },
+        { status: 409 }
+      );
+    }
+
     // Commit images first.
     for (const image of images) {
       // Strip path separators and dangerous characters to prevent
@@ -132,8 +145,8 @@ export async function POST(request: NextRequest) {
     // Commit the post MDX file. expectedSha: null makes this a create,
     // not an upsert: without it, publishing a draft whose slug collapses
     // to an existing one ("My Post!", "my/post" and "my--post" all
-    // sanitise to "my-post") silently overwrote the live post.
-    const path = `content/posts/${safeSlug}.mdx`;
+    // sanitise to "my-post") silently overwrote the live post. The
+    // pre-check above catches the common case; this closes the race.
     const fixedContent = fixDateYear(content);
     const sha = await commitFile(path, fixedContent, `post: add "${safeSlug}"`, {
       expectedSha: null,

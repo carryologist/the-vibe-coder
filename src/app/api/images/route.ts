@@ -156,10 +156,10 @@ export async function DELETE(request: NextRequest) {
       await deleteFile(p, `image: delete ${p.replace(/^public\//, "")}`);
       results.push({ path: p, ok: true });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "unknown delete error";
+      // The underlying error can embed a verbatim GitHub API response body.
+      // Keep it in the server log and return a generic message instead.
       console.error(`Image delete failed for ${p}:`, err);
-      results.push({ path: p, ok: false, error: message });
+      results.push({ path: p, ok: false, error: "delete failed" });
     }
   }
 

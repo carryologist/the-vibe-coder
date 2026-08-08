@@ -51,6 +51,11 @@ export async function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(NONCE_HEADER, nonce);
+  // Next derives the nonce it stamps onto its own inline bootstrap and
+  // flight-data scripts from the Content-Security-Policy *request* header.
+  // Setting it here is the documented contract; relying on Next reading the
+  // response header instead would break hydration if that behaviour changes.
+  requestHeaders.set("Content-Security-Policy", csp);
 
   const withCsp = (response: NextResponse) => {
     response.headers.set("Content-Security-Policy", csp);

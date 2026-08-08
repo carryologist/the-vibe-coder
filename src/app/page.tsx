@@ -5,7 +5,9 @@ import { getPostViewCounts } from "@/lib/analytics";
 import { AnimateIn } from "@/components/AnimateIn";
 import { PostListWithFilters } from "@/components/PostListWithFilters";
 
-export const revalidate = 60;
+// The root layout reads headers() for the CSP nonce, which opts every HTML
+// route into dynamic rendering. A revalidate window here would be inert, so
+// it is deliberately omitted rather than left as a misleading no-op.
 
 export default async function HomePage() {
   // Admin state is resolved on the client by the AdminCardControlsIsland

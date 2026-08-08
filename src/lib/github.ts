@@ -98,7 +98,18 @@ async function putContents(
 
   if (!res.ok) {
     const err = await res.text();
-    if (res.status === 409 || (res.status === 422 && options.expectedSha === null)) {
+    // 409 always means the SHA precondition failed. 422 is GitHub's generic
+    // validation status and also covers oversized content and invalid paths,
+    // so only treat it as a conflict when the body names the existence or
+    // missing-SHA condition. Anything else must surface as a real error
+    // rather than a misleading "slug already exists".
+    const isExistenceConflict =
+      res.status === 422 &&
+      options.expectedSha === null &&
+      /already exists|sha.{0,20}(wasn't|was not) supplied|does not match/i.test(
+        err
+      );
+    if (res.status === 409 || isExistenceConflict) {
       throw new GitHubConflictError(
         `${path} changed since it was read (GitHub returned ${res.status})`
       );
