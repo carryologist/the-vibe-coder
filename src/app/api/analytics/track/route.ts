@@ -35,6 +35,13 @@ function isAllowedPath(p: string): boolean {
 const ANALYTICS_LIMIT = 60;
 const ANALYTICS_WINDOW_SECONDS = 60;
 
+/**
+ * Retention for per-day counters: 400 days, a little over a year so
+ * year-over-year comparisons still work. Without a TTL these keys
+ * accumulated forever.
+ */
+const DATED_KEY_TTL_SECONDS = 400 * 24 * 60 * 60;
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limit first so a probe that fails the path allowlist still
@@ -73,9 +80,17 @@ export async function POST(request: NextRequest) {
 
     // Increment daily total and per-path counters.
     // Use a pipeline for efficiency.
+    //
+    // The dated keys carry a TTL so history does not accumulate in
+    // Redis forever; the lifetime-total keys are deliberately
+    // permanent. The two sets stay bounded on their own: `views:dates`
+    // gains one member per day, and `views:paths` is bounded by the
+    // path allowlist above.
     const pipeline = redis.pipeline();
     pipeline.incr(`views:${today}:total`);
+    pipeline.expire(`views:${today}:total`, DATED_KEY_TTL_SECONDS);
     pipeline.incr(`views:${today}:${cleanPath}`);
+    pipeline.expire(`views:${today}:${cleanPath}`, DATED_KEY_TTL_SECONDS);
     pipeline.incr(`views:total:${cleanPath}`);
 
     // Also maintain a set of all dates that have data.

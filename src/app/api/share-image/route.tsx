@@ -260,9 +260,8 @@ export async function POST(request: NextRequest) {
     return image;
   } catch (err) {
     console.error("[share-image] ERROR:", err);
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to generate image" },
-      { status: 500 },
-    );
+    // This route is public, so the message is deliberately generic;
+    // the detail is in the runtime logs.
+    return Response.json({ error: "Failed to generate image" }, { status: 500 });
   }
 }
