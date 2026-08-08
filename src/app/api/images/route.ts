@@ -3,6 +3,7 @@ import { commitFileRaw, deleteFile } from "@/lib/github";
 import { isValidImageRepoPath } from "@/lib/images";
 import { sanitizeSlug } from "@/lib/slug";
 import { requireAdmin } from "@/lib/require-admin";
+import { validateImageUpload } from "@/lib/image-upload";
 
 function sanitizeFilename(name: string): string {
   return name
@@ -28,7 +29,27 @@ export async function POST(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+    if (!safeSlug) {
+      return NextResponse.json(
+        { error: "slug must contain at least one letter or digit" },
+        { status: 400 }
+      );
+    }
     const safeName = sanitizeFilename(file.name);
+
+    // Anything committed under public/ is served from this origin, so
+    // an .html or .svg upload would be stored XSS. There was also no
+    // size cap, so an arbitrarily large blob went into the content repo
+    // permanently.
+    const check = validateImageUpload({
+      filename: safeName,
+      byteLength: file.size,
+      mimeType: file.type,
+    });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 400 });
+    }
+
     const imagePath = `public/images/${safeSlug}/${safeName}`;
 
     // Convert file to base64.
