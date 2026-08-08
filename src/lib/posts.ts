@@ -8,6 +8,16 @@ import { Post, PostMeta } from "./types";
 const POSTS_DIR = path.join(process.cwd(), "content/posts");
 
 /**
+ * True for a plain post slug. Kept local rather than imported from
+ * src/lib/slug.ts because that module only exposes the coercing
+ * `sanitizeSlug`, and a loader must reject bad input rather than rewrite
+ * it into a different post's path.
+ */
+function isSafeSlug(slug: string): boolean {
+  return /^[a-z0-9][a-z0-9-]*$/.test(slug);
+}
+
+/**
  * Coerce a frontmatter date to a YYYY-MM-DD string.
  * gray-matter auto-casts unquoted YAML dates to Date objects;
  * this normalizes them so downstream code always sees a string.
@@ -102,6 +112,12 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
 }
 
 function _getPostBySlug(slug: string): Post | null {
+  // Route params reach here unvalidated; reject anything that isn't a
+  // plain slug so no caller can steer the join outside content/posts.
+  if (!isSafeSlug(slug)) {
+    return null;
+  }
+
   const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
 
   if (!fs.existsSync(filePath)) {
@@ -134,6 +150,10 @@ function _getPostBySlug(slug: string): Post | null {
 
 /** Like getPostBySlug but includes unpublished drafts. Admin-only. */
 export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }) | null {
+  if (!isSafeSlug(slug)) {
+    return null;
+  }
+
   const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
 
   if (!fs.existsSync(filePath)) {
