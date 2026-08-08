@@ -5,6 +5,53 @@ import { remarkSmartQuotes } from "./remark-smart-quotes";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
+import { visit } from "unist-util-visit";
+import type { Root, Table, Parent } from "mdast";
+
+export interface MdxToFeedHtmlOptions {
+  /**
+   * Replace every GFM table with an <img> pointing at
+   * /api/share-image/table instead of emitting real <table> HTML.
+   * Substack's importer silently strips <table> elements on import,
+   * so the curated syndication feed (/syndicate.xml) opts into this;
+   * the main /feed.xml keeps real tables for readers that support
+   * them.
+   */
+  tablesAsImages?: boolean;
+  /** Required when tablesAsImages is set -- used to build the image URL. */
+  slug?: string;
+}
+
+/**
+ * Remark plugin: when `enabled`, replaces each `table` node with a
+ * paragraph wrapping a single image node, in document order, pointing
+ * at a stable per-table image URL. Table N (0-based, per post) always
+ * maps to the same URL, so re-fetching a feed is idempotent. No-ops
+ * when disabled, so it's always safe to include in the pipeline.
+ */
+function remarkTablesToImages(siteUrl: string, options: MdxToFeedHtmlOptions) {
+  return (tree: Root) => {
+    if (!options.tablesAsImages || !options.slug) return;
+    const slug = options.slug;
+    let index = 0;
+    visit(tree, "table", (node: Table, i, parent) => {
+      if (i == null || !parent) return;
+      const url = `${siteUrl}/api/share-image/table?slug=${encodeURIComponent(slug)}&index=${index}`;
+      const replacement = {
+        type: "paragraph",
+        children: [
+          {
+            type: "image",
+            url,
+            alt: `Table ${index + 1}`,
+          },
+        ],
+      };
+      (parent as Parent).children[i] = replacement as never;
+      index++;
+    });
+  };
+}
 
 /**
  * Render an MDX post body into syndication-ready HTML for RSS
@@ -22,6 +69,7 @@ import rehypeStringify from "rehype-stringify";
 export async function mdxToFeedHtml(
   mdx: string,
   siteUrl: string,
+  options: MdxToFeedHtmlOptions = {},
 ): Promise<string> {
   const stripped = stripJsx(mdx);
 
@@ -29,6 +77,7 @@ export async function mdxToFeedHtml(
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkSmartQuotes)
+    .use(() => remarkTablesToImages(siteUrl, options))
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeStringify, { allowDangerousHtml: true })
