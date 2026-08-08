@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/require-admin";
 
 // Coder Agents Chats API (experimental) — see
 // https://coder.com/docs/ai-coder/agents/tasks-to-chats-migration
@@ -27,8 +28,10 @@ function buildPrompt(itemText: string): string {
   );
 }
 
-// Auth is enforced by src/middleware.ts, which gates all /api/* routes
-// behind the admin session cookie — no separate check needed here.
+// Authorization is enforced twice: src/middleware.ts gates all /api/*
+// routes behind the admin session cookie, and requireAdmin() below
+// repeats the check in the handler so a middleware bypass alone cannot
+// create a real, billable workspace.
 //
 // The entire body below is wrapped in one outer try/catch as a last
 // resort. Two prior fixes (maxDuration, and guarding the response-body
@@ -38,6 +41,9 @@ function buildPrompt(itemText: string): string {
 // also console.error()s before returning, so the real cause shows up in
 // `vercel logs` / the dashboard's Runtime Logs on the next attempt.
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.CODER_API_TOKEN;
     if (!token) {

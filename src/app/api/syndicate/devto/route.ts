@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { readFile, commitFile } from "@/lib/github";
 import { sanitizeSlug } from "@/lib/slug";
+import { requireAdmin } from "@/lib/require-admin";
 
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { slug: rawSlug } = await request.json();
     if (!rawSlug) {

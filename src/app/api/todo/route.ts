@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, commitFile } from "@/lib/github";
 import { reorderUpNext, TodoConflictError } from "@/lib/todo";
+import { requireAdmin } from "@/lib/require-admin";
 
 const TODO_PATH = "content/TODO.md";
 
@@ -11,6 +12,9 @@ const TODO_PATH = "content/TODO.md";
  * change; item text/checked state are never touched here.
  */
 export async function PUT(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await request.json();
     const order = body?.order;

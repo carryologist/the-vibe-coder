@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
 import { commitFile, commitFileRaw, deleteFile, readFile } from "@/lib/github";
 import { sanitizeSlug } from "@/lib/slug";
+import { requireAdmin } from "@/lib/require-admin";
 
 /**
  * Fix frontmatter dates with the wrong year. If the date's year is
@@ -47,6 +48,9 @@ function stampPublishDate(oldContent: string | null, newContent: string): string
 
 // Create a new post, optionally with images.
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { slug, content, images = [] } = (await request.json()) as {
       slug: string;
@@ -113,6 +117,9 @@ function generateDiffSummary(oldContent: string, newContent: string): string {
 
 // Update an existing post.
 export async function PUT(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { slug, content, summary, autoSummary } = await request.json() as {
       slug: string;
@@ -182,6 +189,9 @@ export async function PUT(request: NextRequest) {
 
 // Delete a post.
 export async function DELETE(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { slug } = await request.json();
 
@@ -208,6 +218,9 @@ export async function DELETE(request: NextRequest) {
 
 // Get a post's raw MDX content (for the editor).
 export async function GET(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");

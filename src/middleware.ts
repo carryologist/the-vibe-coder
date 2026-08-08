@@ -8,6 +8,29 @@ function getSecret() {
   return new TextEncoder().encode(secret);
 }
 
+// Routes that authenticate themselves and therefore do not need the
+// admin session cookie. Listed exactly rather than by prefix: a prefix
+// match means any route added under /api/auth/ or /api/slack/ later is
+// unauthenticated by default.
+//
+// Each enforces its own credential:
+//   /api/auth/*           password, or self-checks the session
+//   /api/analytics/track  public beacon, path allowlist + rate limit
+//   /api/slack/todo       Slack HMAC signature over the raw body
+const SELF_AUTHENTICATING = [
+  "/admin/login",
+  "/api/auth/login",
+  "/api/auth/logout",
+  "/api/auth/check",
+  "/api/analytics/track",
+  "/api/slack/todo",
+];
+
+// Prefix-matched exceptions, for routes with dynamic segments:
+//   /api/share-image*  public share button, rate limited
+//   /api/mcp/*         MCP_API_TOKEN bearer auth
+const SELF_AUTHENTICATING_PREFIXES = ["/api/share-image", "/api/mcp/"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -33,14 +56,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Allow login page and auth API routes through.
+  // Allow the login page and the routes that authenticate themselves.
   if (
-    pathname === "/admin/login" ||
-    pathname.startsWith("/api/auth/") ||
-    pathname === "/api/analytics/track" ||
-    pathname.startsWith("/api/slack/") ||
-    pathname.startsWith("/api/share-image") ||
-    pathname.startsWith("/api/mcp/")
+    SELF_AUTHENTICATING.includes(pathname) ||
+    SELF_AUTHENTICATING_PREFIXES.some((p) => pathname.startsWith(p))
   ) {
     return NextResponse.next();
   }

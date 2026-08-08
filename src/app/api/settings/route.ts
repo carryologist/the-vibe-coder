@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { commitFile } from "@/lib/github";
 import { getSettings } from "@/lib/settings";
+import { requireAdmin } from "@/lib/require-admin";
 
 const SETTINGS_PATH = "content/settings.json";
 
 export async function GET() {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const settings = await getSettings();
     return NextResponse.json(settings);
@@ -18,6 +22,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await request.json();
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { commitFileRaw, deleteFile } from "@/lib/github";
 import { isValidImageRepoPath } from "@/lib/images";
 import { sanitizeSlug } from "@/lib/slug";
+import { requireAdmin } from "@/lib/require-admin";
 
 function sanitizeFilename(name: string): string {
   return name
@@ -11,6 +12,9 @@ function sanitizeFilename(name: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const formData = await request.formData();
     const slug = formData.get("slug") as string;
@@ -71,6 +75,9 @@ export async function POST(request: NextRequest) {
  * error.
  */
 export async function DELETE(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   let body: unknown;
   try {
     body = await request.json();
