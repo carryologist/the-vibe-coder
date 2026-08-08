@@ -39,7 +39,10 @@ export async function GET() {
     await Promise.all(
       posts.map(async (post) => {
         const url = `${siteUrl}/posts/${post.slug}`;
-        const html = await mdxToFeedHtml(post.content, siteUrl);
+        const html = await mdxToFeedHtml(post.content, siteUrl, {
+          tablesAsImages: true,
+          slug: post.slug,
+        });
         return `        <item>
             <title>${cdata(post.title)}</title>
             <link>${url}</link>
