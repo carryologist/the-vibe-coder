@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validatePassword, createSession, sessionCookieOptions } from "@/lib/auth";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { isSameOrigin } from "@/lib/origin";
 
 // Constants here rather than env vars: a one-person admin endpoint
 // does not need operational tuning, and bumping them in source forces
@@ -16,23 +17,8 @@ export async function POST(request: NextRequest) {
     //    server is cheaper and louder. We accept requests with no
     //    Origin header (some non-browser clients omit it) and only
     //    reject the case where Origin is present and clearly foreign.
-    const origin = request.headers.get("origin");
-    const host = request.headers.get("host");
-    if (origin && host) {
-      try {
-        const originHost = new URL(origin).host;
-        if (originHost !== host) {
-          return NextResponse.json(
-            { error: "Bad origin" },
-            { status: 403 }
-          );
-        }
-      } catch {
-        return NextResponse.json(
-          { error: "Bad origin" },
-          { status: 403 }
-        );
-      }
+    if (!isSameOrigin(request)) {
+      return NextResponse.json({ error: "Bad origin" }, { status: 403 });
     }
 
     // 2) Per-IP rate limit. Incremented on every attempt (success or

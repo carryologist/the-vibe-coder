@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { isSessionRevoked } from "@/lib/session-revocation";
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -55,21 +56,34 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get("admin_session")?.value;
   const secret = getSecret();
 
-  if (!token || !secret) {
+  const reject = () => {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/admin/login", request.url));
+  };
+
+  if (!token || !secret) {
+    return reject();
   }
 
   try {
-    await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret);
+
+    // Assert the claims the token was minted with rather than
+    // accepting any well-signed JWT, and honour the revocation
+    // denylist so logout (and incident response) can invalidate a
+    // token that has not expired yet.
+    const valid =
+      payload.role === "admin" &&
+      typeof payload.jti === "string" &&
+      payload.jti.length > 0 &&
+      !(await isSessionRevoked(payload.jti));
+
+    if (!valid) return reject();
     return NextResponse.next();
   } catch {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return reject();
   }
 }
 

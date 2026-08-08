@@ -1,9 +1,19 @@
-import { createHash, timingSafeEqual } from "crypto";
+import { createHash, randomUUID, timingSafeEqual } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { isSessionRevoked, revokeSession } from "@/lib/session-revocation";
 
 const COOKIE_NAME = "admin_session";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+
+// Sessions are short-lived. A stolen token is only useful until it
+// expires, and the denylist below covers the window in between.
+const SESSION_TTL_SECONDS = 60 * 60 * 24; // 24 hours
+const COOKIE_MAX_AGE = SESSION_TTL_SECONDS;
+
+export interface SessionClaims {
+  jti: string;
+  exp: number;
+}
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -11,22 +21,53 @@ function getSecret() {
   return new TextEncoder().encode(secret);
 }
 
+/**
+ * Mint a session token.
+ *
+ * Every token carries a unique `jti` so it can be revoked individually.
+ * Without one, logout is purely client-side (clearing the cookie) and a
+ * leaked token stays valid for its full lifetime with no remediation
+ * short of rotating SESSION_SECRET.
+ */
 export async function createSession(): Promise<string> {
   const token = await new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
+    .setJti(randomUUID())
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime(`${SESSION_TTL_SECONDS}s`)
     .sign(getSecret());
   return token;
 }
 
-export async function verifySession(token: string): Promise<boolean> {
+/**
+ * Verify a session token's signature, its `role` claim, and that it has
+ * not been revoked.
+ *
+ * Returns the claims on success and null on any failure, so callers
+ * cannot accidentally treat a rejected token as valid.
+ */
+export async function verifySessionClaims(
+  token: string
+): Promise<SessionClaims | null> {
   try {
-    await jwtVerify(token, getSecret());
-    return true;
+    const { payload } = await jwtVerify(token, getSecret());
+
+    // The role claim is signed at mint time; assert it rather than
+    // accepting any well-signed token.
+    if (payload.role !== "admin") return null;
+    if (typeof payload.jti !== "string" || !payload.jti) return null;
+    if (typeof payload.exp !== "number") return null;
+
+    if (await isSessionRevoked(payload.jti)) return null;
+
+    return { jti: payload.jti, exp: payload.exp };
   } catch {
-    return false;
+    return null;
   }
+}
+
+export async function verifySession(token: string): Promise<boolean> {
+  return (await verifySessionClaims(token)) !== null;
 }
 
 export async function getSession(): Promise<boolean> {
@@ -34,6 +75,28 @@ export async function getSession(): Promise<boolean> {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return false;
   return verifySession(token);
+}
+
+/**
+ * Add the current session's `jti` to the denylist so the token stops
+ * working immediately, even if a copy of the cookie was captured.
+ */
+export async function revokeCurrentSession(): Promise<void> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) return;
+
+  // Verify without the revocation lookup: an already-revoked token
+  // needs no second write, and a token that fails signature checks is
+  // not worth storing.
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (typeof payload.jti === "string" && typeof payload.exp === "number") {
+      await revokeSession(payload.jti, payload.exp);
+    }
+  } catch {
+    // Malformed or expired token: nothing to revoke.
+  }
 }
 
 export function sessionCookieOptions(token: string) {
@@ -76,3 +139,5 @@ export function validatePassword(password: string): boolean {
   const b = createHash("sha256").update(adminPassword).digest();
   return timingSafeEqual(a, b);
 }
+
+export const SESSION_COOKIE_NAME = COOKIE_NAME;
