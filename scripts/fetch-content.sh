@@ -20,9 +20,22 @@ fi
 
 echo "[fetch-content] Cloning ${CONTENT_REPO}..."
 TMPDIR=$(mktemp -d)
-git clone --depth 1 \
-  "https://x-access-token:${GITHUB_TOKEN}@github.com/${CONTENT_REPO}.git" \
-  "$TMPDIR"
+# Always clean up: the clone tree is credential-adjacent and "set -e"
+# used to leave it behind on any failure after this point.
+trap 'rm -rf "$TMPDIR"' EXIT
+
+# Authenticate with an HTTP header supplied through git's environment-based
+# config (GIT_CONFIG_*) rather than embedding the token in the remote URL.
+# A URL-embedded token is visible in /proc/<pid>/cmdline, is written into
+# $TMPDIR/.git/config, and is echoed back by git's own error output on a
+# failed clone, which lands it in build logs.
+GIT_AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
+GIT_CONFIG_COUNT=1 \
+GIT_CONFIG_KEY_0="http.https://github.com/.extraheader" \
+GIT_CONFIG_VALUE_0="$GIT_AUTH_HEADER" \
+  git clone --depth 1 \
+    "https://github.com/${CONTENT_REPO}.git" \
+    "$TMPDIR"
 
 # Overlay content into the build tree.
 mkdir -p content public/images
@@ -30,5 +43,4 @@ cp -r "$TMPDIR/content/"* content/
 [ -d "$TMPDIR/blog-drafts" ] && cp -r "$TMPDIR/blog-drafts" .
 [ -d "$TMPDIR/public/images" ] && cp -r "$TMPDIR/public/images/"* public/images/
 
-rm -rf "$TMPDIR"
 echo "[fetch-content] Content fetched."
