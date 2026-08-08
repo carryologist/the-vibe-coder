@@ -56,7 +56,9 @@ export async function getSettings(): Promise<Settings> {
   };
 }
 
-function isPromptMap(value: unknown): value is Record<string, PromptPreset> {
+export function isPromptMap(
+  value: unknown
+): value is Record<string, PromptPreset> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -69,6 +71,6 @@ function isPromptMap(value: unknown): value is Record<string, PromptPreset> {
   );
 }
 
-function isStringArray(value: unknown): value is string[] {
+export function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((v) => typeof v === "string");
 }
