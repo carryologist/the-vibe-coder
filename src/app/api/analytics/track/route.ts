@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 function getRedis() {
   const url = process.env.KV_REST_API_URL;
@@ -39,9 +39,8 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit first so a probe that fails the path allowlist still
     // counts against the attacker's quota.
-    const ip = clientIp(request);
     const rl = await rateLimit(
-      `ratelimit:analytics:${ip}`,
+      rateLimitKey("analytics", request),
       ANALYTICS_LIMIT,
       ANALYTICS_WINDOW_SECONDS
     );

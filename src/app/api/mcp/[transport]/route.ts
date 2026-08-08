@@ -52,16 +52,20 @@ function corsHeaders(req: Request): Record<string, string> {
 // times the limit. Switched to the same Upstash-backed limiter used
 // for login and analytics, which is shared across every instance.
 // Fails open (see lib/rate-limit.ts) if Redis is unreachable or
-// unconfigured, matching every other rate-limited route in the app.
+// unconfigured, matching every other non-credential rate-limited route
+// in the app.
+//
+// The bucket is keyed by `rateLimitKey`, which uses only
+// platform-supplied IP headers. Reading the left-most `x-forwarded-for`
+// entry (the previous implementation) let a caller mint a fresh bucket
+// per request by setting that header itself.
 // ---------------------------------------------------------------------------
 const MCP_RATE_LIMIT = 120;
 const MCP_RATE_WINDOW_SECONDS = 60;
 
 async function checkRateLimit(req: Request): Promise<Response | null> {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const rl = await rateLimit(
-    `ratelimit:mcp:${ip}`,
+    rateLimitKey("mcp", req),
     MCP_RATE_LIMIT,
     MCP_RATE_WINDOW_SECONDS,
   );
