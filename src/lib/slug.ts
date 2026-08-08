@@ -16,3 +16,16 @@ export function sanitizeSlug(slug: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
+/**
+ * True when `slug` is already safe to interpolate into a repo path or a
+ * filesystem path: lowercase letters, digits and hyphens, starting with
+ * an alphanumeric.
+ *
+ * Use this to validate a slug that arrives from a route param, where
+ * silently rewriting it (as sanitizeSlug does) would resolve a
+ * mistyped or hostile value to some other real post instead of a 404.
+ */
+export function isSafeSlug(slug: string): boolean {
+  return typeof slug === "string" && /^[a-z0-9][a-z0-9-]*$/.test(slug);
+}

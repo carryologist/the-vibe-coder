@@ -25,6 +25,7 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [cursor, setCursor] = useState<CursorPosition>({ line: 1, col: 1 });
   const originalContent = useRef("");
+  const originalSha = useRef<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterInnerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +39,7 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
       }
       const data = await res.json();
       originalContent.current = data.content ?? "";
+      originalSha.current = data.sha ?? null;
       setContent(originalContent.current);
       setState({ phase: "editing" });
     } catch (err) {
@@ -101,7 +103,14 @@ export default function InlineEditor({ slug, onClose }: InlineEditorProps) {
       const res = await fetch("/api/posts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, content, autoSummary: true }),
+        body: JSON.stringify({
+          slug,
+          content,
+          autoSummary: true,
+          // Concurrency precondition: the server rejects the write with
+          // 409 if the post changed since it was loaded.
+          sha: originalSha.current ?? undefined,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
-import { readFile, commitFile } from "@/lib/github";
+import { readFile, updateFile } from "@/lib/github";
 import { sanitizeSlug } from "@/lib/slug";
 import { requireAdmin } from "@/lib/require-admin";
 
@@ -14,6 +14,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No slug provided" }, { status: 400 });
     }
     const slug = sanitizeSlug(rawSlug);
+    if (!slug) {
+      return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+    }
 
     const apiKey = process.env.DEVTO_API_KEY;
     if (!apiKey) {
@@ -65,13 +68,22 @@ export async function POST(request: NextRequest) {
     const devtoUrl = devtoData.url;
 
     // Update the post frontmatter with the Dev.to URL.
+    //
+    // Re-read and re-apply rather than committing the copy we parsed
+    // before the Dev.to call: the article is already live at this
+    // point, so failing (or clobbering a concurrent edit) is worse than
+    // merging the one field we own into whatever the file says now.
     if (devtoUrl) {
-      const updatedMeta = { ...meta, devtoUrl };
-      const updatedRaw = matter.stringify(content, updatedMeta);
-      await commitFile(
+      await updateFile(
         `content/posts/${slug}.mdx`,
-        updatedRaw,
-        `syndicate: add Dev.to URL to "${meta.title}"`
+        `syndicate: add Dev.to URL to "${meta.title}"`,
+        (currentRaw) => {
+          const parsed = matter(currentRaw);
+          return matter.stringify(parsed.content, {
+            ...parsed.data,
+            devtoUrl,
+          });
+        }
       );
     }
 

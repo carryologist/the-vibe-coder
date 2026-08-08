@@ -2,7 +2,13 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import matter from "gray-matter";
 import { Redis } from "@upstash/redis";
-import { commitFile, readFile, deleteFile } from "@/lib/github";
+import {
+  commitFile,
+  readFile,
+  readFileWithSha,
+  updateFile,
+  deleteFile,
+} from "@/lib/github";
 import { listDirectory } from "@/lib/github-list";
 import { isValidApiToken } from "@/lib/mcp-auth";
 import { mcpLog } from "@/lib/mcp-log";
@@ -345,6 +351,9 @@ const handler = createMcpHandler(
           path,
           mdx,
           `[mcp] post: create "${safeSlug}"`,
+          // Create only. The existence check above races with any other
+          // writer; this makes GitHub itself reject an overwrite.
+          { expectedSha: null },
         );
 
         return {
@@ -408,8 +417,8 @@ const handler = createMcpHandler(
         const safeSlug = sanitizeSlug(slug);
         const path = `content/posts/${safeSlug}.mdx`;
 
-        const raw = await readFile(path);
-        if (!raw) {
+        const current = await readFileWithSha(path);
+        if (!current) {
           return {
             content: [
               {
@@ -421,7 +430,7 @@ const handler = createMcpHandler(
           };
         }
 
-        const parsed = matter(raw);
+        const parsed = matter(current.content);
 
         // Update frontmatter fields (only those provided)
         if (title !== undefined) parsed.data.title = title;
@@ -469,6 +478,9 @@ const handler = createMcpHandler(
           path,
           mdx,
           `[mcp] post: update "${safeSlug}"`,
+          // Pin to the blob we read above so a concurrent edit from the
+          // admin UI is rejected instead of silently overwritten.
+          { expectedSha: current.sha },
         );
 
         return {
@@ -505,8 +517,8 @@ const handler = createMcpHandler(
         const safeSlug = sanitizeSlug(slug);
         const path = `content/posts/${safeSlug}.mdx`;
 
-        const raw = await readFile(path);
-        if (!raw) {
+        const current = await readFileWithSha(path);
+        if (!current) {
           return {
             content: [
               {
@@ -518,7 +530,7 @@ const handler = createMcpHandler(
           };
         }
 
-        const parsed = matter(raw);
+        const parsed = matter(current.content);
 
         if (publishAt) {
           // Schedule instead of immediate publish
@@ -528,6 +540,7 @@ const handler = createMcpHandler(
             path,
             mdx,
             `[mcp] post: schedule "${safeSlug}" for ${publishAt}`,
+            { expectedSha: current.sha },
           );
           return {
             content: [
@@ -559,6 +572,7 @@ const handler = createMcpHandler(
           path,
           mdx,
           `[mcp] post: publish "${safeSlug}"`,
+          { expectedSha: current.sha },
         );
 
         // Trigger deploy
@@ -596,8 +610,8 @@ const handler = createMcpHandler(
         const safeSlug = sanitizeSlug(slug);
         const path = `content/posts/${safeSlug}.mdx`;
 
-        const raw = await readFile(path);
-        if (!raw) {
+        const current = await readFileWithSha(path);
+        if (!current) {
           return {
             content: [
               {
@@ -609,13 +623,14 @@ const handler = createMcpHandler(
           };
         }
 
-        const parsed = matter(raw);
+        const parsed = matter(current.content);
         parsed.data.published = false;
         const mdx = matter.stringify(parsed.content, parsed.data);
         const sha = await commitFile(
           path,
           mdx,
           `[mcp] post: unpublish "${safeSlug}"`,
+          { expectedSha: current.sha },
         );
 
         const deployResult = await triggerDeploy();
@@ -1078,12 +1093,18 @@ const handler = createMcpHandler(
         const devtoUrl = devtoData.url;
 
         if (devtoUrl) {
-          const updatedMeta = { ...meta, devtoUrl };
-          const updatedRaw = matter.stringify(content, updatedMeta);
-          await commitFile(
+          // Re-read and merge: the article is already live on Dev.to,
+          // so recording the URL must not clobber a concurrent edit.
+          await updateFile(
             `content/posts/${safeSlug}.mdx`,
-            updatedRaw,
             `[mcp] syndicate: add Dev.to URL to "${meta.title}"`,
+            (currentRaw) => {
+              const reparsed = matter(currentRaw);
+              return matter.stringify(reparsed.content, {
+                ...reparsed.data,
+                devtoUrl,
+              });
+            },
           );
         }
 

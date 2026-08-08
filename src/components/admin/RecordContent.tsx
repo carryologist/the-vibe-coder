@@ -24,6 +24,7 @@ export function RecordContent() {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [mdx, setMdx] = useState("");
   const [existingContent, setExistingContent] = useState<string | undefined>();
+  const [existingSha, setExistingSha] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<{
@@ -69,6 +70,7 @@ export function RecordContent() {
         if (!res.ok) throw new Error("Failed to load post");
         const data = await res.json();
         setExistingContent(data.content);
+        setExistingSha(data.sha ?? null);
       } catch (err) {
         console.error("Failed to load existing post for editing:", err);
       }
@@ -132,7 +134,14 @@ export function RecordContent() {
       // Use PUT when editing an existing post, POST for new posts.
       const method = editSlug ? "PUT" : "POST";
       const body = editSlug
-        ? { slug, content: mdx, summary: "Updated via voice recording" }
+        ? {
+            slug,
+            content: mdx,
+            summary: "Updated via voice recording",
+            // Concurrency precondition: the server returns 409 if the
+            // post changed after it was loaded above.
+            sha: existingSha ?? undefined,
+          }
         : { slug, content: mdx, images };
 
       const res = await fetch("/api/posts", {
@@ -141,7 +150,12 @@ export function RecordContent() {
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) throw new Error(editSlug ? "Update failed" : "Publishing failed");
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null);
+        throw new Error(
+          detail?.error ?? (editSlug ? "Update failed" : "Publishing failed")
+        );
+      }
 
       const data = await res.json();
       setPublishResult(data);
