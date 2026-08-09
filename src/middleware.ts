@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { isSessionRevoked } from "@/lib/session-revocation";
+import { buildCsp, NONCE_HEADER } from "@/lib/csp";
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -7,8 +9,60 @@ function getSecret() {
   return new TextEncoder().encode(secret);
 }
 
+// Routes that authenticate themselves and therefore do not need the
+// admin session cookie. Listed exactly rather than by prefix: a prefix
+// match means any route added under /api/auth/ or /api/slack/ later is
+// unauthenticated by default.
+//
+// Each enforces its own credential:
+//   /api/auth/*           password, or self-checks the session
+//   /api/analytics/track  public beacon, path allowlist + rate limit
+//   /api/slack/todo       Slack HMAC signature over the raw body
+const SELF_AUTHENTICATING = [
+  "/admin/login",
+  "/api/auth/login",
+  "/api/auth/logout",
+  "/api/auth/check",
+  "/api/analytics/track",
+  "/api/slack/todo",
+];
+
+// Prefix-matched exceptions, for routes with dynamic segments:
+//   /api/share-image*  public share button, rate limited
+//   /api/mcp/*         MCP_API_TOKEN bearer auth
+const SELF_AUTHENTICATING_PREFIXES = ["/api/share-image", "/api/mcp/"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ---------------------------------------------------------------------
+  // Content Security Policy
+  //
+  // The policy carries a fresh nonce per request, which is why it is
+  // built here rather than as a static header in next.config.ts. The
+  // nonce is passed to the app through a request header; the two inline
+  // <script> blocks (the theme bootstrap and JSON-LD) read it and echo
+  // it back, so 'unsafe-inline' is no longer needed on script-src.
+  //
+  // Every response returned below goes through withCsp().
+  // ---------------------------------------------------------------------
+  const nonce = generateNonce();
+  const csp = buildCsp(nonce);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(NONCE_HEADER, nonce);
+  // Next derives the nonce it stamps onto its own inline bootstrap and
+  // flight-data scripts from the Content-Security-Policy *request* header.
+  // Setting it here is the documented contract; relying on Next reading the
+  // response header instead would break hydration if that behaviour changes.
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const withCsp = (response: NextResponse) => {
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
+  };
+  const proceed = () =>
+    withCsp(NextResponse.next({ request: { headers: requestHeaders } }));
 
   // ---------------------------------------------------------------------
   // Markdown content negotiation
@@ -26,22 +80,20 @@ export async function middleware(request: NextRequest) {
     if (prefersMarkdown(accept)) {
       const url = request.nextUrl.clone();
       url.pathname = pathname.replace(/\/?$/, "") + "/raw";
-      const res = NextResponse.rewrite(url);
+      const res = withCsp(
+        NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+      );
       res.headers.set("Vary", "Accept");
       return res;
     }
   }
 
-  // Allow login page and auth API routes through.
+  // Allow the login page and the routes that authenticate themselves.
   if (
-    pathname === "/admin/login" ||
-    pathname.startsWith("/api/auth/") ||
-    pathname === "/api/analytics/track" ||
-    pathname.startsWith("/api/slack/") ||
-    pathname.startsWith("/api/share-image") ||
-    pathname.startsWith("/api/mcp/")
+    SELF_AUTHENTICATING.includes(pathname) ||
+    SELF_AUTHENTICATING_PREFIXES.some((p) => pathname.startsWith(p))
   ) {
-    return NextResponse.next();
+    return proceed();
   }
 
   // Protect /admin/* and /api/* (non-auth) routes.
@@ -49,28 +101,52 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/admin") || pathname.startsWith("/api/");
 
   if (!isProtected) {
-    return NextResponse.next();
+    return proceed();
   }
 
   const token = request.cookies.get("admin_session")?.value;
   const secret = getSecret();
 
-  if (!token || !secret) {
+  const reject = () => {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return withCsp(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return withCsp(NextResponse.redirect(new URL("/admin/login", request.url)));
+  };
+
+  if (!token || !secret) {
+    return reject();
   }
 
   try {
-    await jwtVerify(token, secret);
-    return NextResponse.next();
+    const { payload } = await jwtVerify(token, secret);
+
+    // Assert the claims the token was minted with rather than
+    // accepting any well-signed JWT, and honour the revocation
+    // denylist so logout (and incident response) can invalidate a
+    // token that has not expired yet.
+    const valid =
+      payload.role === "admin" &&
+      typeof payload.jti === "string" &&
+      payload.jti.length > 0 &&
+      !(await isSessionRevoked(payload.jti));
+
+    if (!valid) return reject();
+    return proceed();
   } catch {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return reject();
   }
+}
+
+/**
+ * 128 bits of randomness, base64-encoded. Uses Web Crypto because
+ * middleware runs on the Edge runtime.
+ */
+function generateNonce(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return btoa(String.fromCharCode(...bytes));
 }
 
 /**
@@ -95,16 +171,14 @@ function prefersMarkdown(accept: string): boolean {
 }
 
 export const config = {
-  // Matchers must be static string literals — Next.js validates them at
-  // build time. The /posts/:path* and (/, /about, /tags) entries cover
-  // the markdown negotiation rewrites; the auth-guard logic above is
-  // unchanged.
+  // Matchers must be static string literals: Next.js validates them at
+  // build time.
+  //
+  // The policy header has to be attached to every HTML response, so
+  // this matches everything except Next's own static output and files
+  // served straight from public/. The auth-guard logic above is still
+  // scoped by pathname.
   matcher: [
-    "/admin/:path*",
-    "/api/:path*",
-    "/posts/:path*",
-    "/",
-    "/about",
-    "/tags",
+    "/((?!_next/static|_next/image|images/|favicon.ico|robots.txt|humans.txt|llms.txt|sitemap.xml|feed.xml|syndicate.xml).*)",
   ],
 };

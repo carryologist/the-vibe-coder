@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatDate } from "@/lib/format-date";
+import { setFrontmatterField } from "@/lib/frontmatter";
 
 interface Draft {
   slug: string;
@@ -62,17 +63,11 @@ export function DraftsList({ drafts }: DraftsListProps) {
       const data = await getRes.json();
 
       const today = new Date().toISOString().split("T")[0];
-      let published = data.content.replace(
-        /^published:\s*false\s*$/m,
-        "published: true",
-      );
+      let published = setFrontmatterField(data.content, "published", "true");
       // Update the post date to the publish date
-      published = published.replace(
-        /^date:\s*'[^']*'/m,
-        `date: '${today}'`,
-      );
+      published = setFrontmatterField(published, "date", `'${today}'`);
       // Remove publishAt if present (no longer needed)
-      published = published.replace(/^publishAt:.*\n?/m, "");
+      published = setFrontmatterField(published, "publishAt", null);
 
       const putRes = await fetch("/api/posts", {
         method: "PUT",
@@ -108,20 +103,12 @@ export function DraftsList({ drafts }: DraftsListProps) {
       if (!getRes.ok) throw new Error("Failed to load post");
       const data = await getRes.json();
 
-      let updated = data.content as string;
       // Add or update publishAt in frontmatter
-      if (/^publishAt:/m.test(updated)) {
-        updated = updated.replace(
-          /^publishAt:.*$/m,
-          `publishAt: '${publishAt}'`,
-        );
-      } else {
-        // Insert after the published: line
-        updated = updated.replace(
-          /^(published:.*$)/m,
-          `$1\npublishAt: '${publishAt}'`,
-        );
-      }
+      const updated = setFrontmatterField(
+        data.content as string,
+        "publishAt",
+        `'${publishAt}'`,
+      );
 
       const putRes = await fetch("/api/posts", {
         method: "PUT",
@@ -155,9 +142,10 @@ export function DraftsList({ drafts }: DraftsListProps) {
       if (!getRes.ok) throw new Error("Failed to load post");
       const data = await getRes.json();
 
-      const updated = (data.content as string).replace(
-        /^publishAt:.*\n?/m,
-        "",
+      const updated = setFrontmatterField(
+        data.content as string,
+        "publishAt",
+        null,
       );
 
       const putRes = await fetch("/api/posts", {

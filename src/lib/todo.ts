@@ -132,8 +132,17 @@ export function reorderUpNext(raw: string, newOrder: string[]): string {
   return newLines.join("\n");
 }
 
+// Escapes the five HTML-significant characters. Quotes are included
+// because the escaped text is interpolated into double-quoted attribute
+// values (the `href` in renderInlineMarkdown), where an unescaped quote
+// would close the attribute and let following text become new attributes.
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
@@ -146,7 +155,7 @@ function escapeHtml(text: string): string {
 export function renderInlineMarkdown(text: string): string {
   let html = escapeHtml(text);
   html = html.replace(
-    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    /\[([^\]]+)\]\((https?:\/\/[^\s)"'<>]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2 hover:text-primary/80">$1</a>'
   );
   html = html.replace(

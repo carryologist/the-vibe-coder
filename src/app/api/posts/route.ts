@@ -1,24 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import matter from "gray-matter";
-import { commitFile, commitFileRaw, deleteFile, readFile } from "@/lib/github";
+import {
+  commitFile,
+  commitFileRaw,
+  deleteFile,
+  readFileWithSha,
+  GitHubConflictError,
+} from "@/lib/github";
 import { sanitizeSlug } from "@/lib/slug";
+import { requireAdmin } from "@/lib/require-admin";
+import { validateImageUpload, base64ByteLength } from "@/lib/image-upload";
+
+/**
+ * Frontmatter dates come back from gray-matter either as a string (when
+ * quoted in YAML) or as a Date (when not). Normalise to YYYY-MM-DD.
+ */
+function frontmatterDateString(value: unknown): string | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? null
+      : value.toISOString().split("T")[0];
+  }
+  if (typeof value === "string") return value;
+  return null;
+}
 
 /**
  * Fix frontmatter dates with the wrong year. If the date's year is
  * more than one year behind the current server year, replace it with
  * the current year. Catches the common AI-authored "2025" mistake.
+ *
+ * An unquoted YAML date parses to a Date, which has no .replace, so the
+ * previous implementation threw a TypeError here and the caller saw an
+ * opaque 500 for any post with a stale unquoted date.
  */
 function fixDateYear(content: string): string {
   const parsed = matter(content);
-  if (!parsed.data.date) return content;
+  const dateString = frontmatterDateString(parsed.data.date);
+  if (!dateString) return content;
 
-  const postDate = new Date(parsed.data.date);
+  const postDate = new Date(dateString);
+  if (Number.isNaN(postDate.getTime())) return content;
+
   const now = new Date();
   if (now.getFullYear() - postDate.getFullYear() >= 1) {
-    const corrected = parsed.data.date.replace(
-      /^\d{4}/,
-      String(now.getFullYear())
-    );
+    const corrected = dateString.replace(/^\d{4}/, String(now.getFullYear()));
     parsed.data.date = corrected;
     return matter.stringify(parsed.content, parsed.data);
   }
@@ -47,6 +73,9 @@ function stampPublishDate(oldContent: string | null, newContent: string): string
 
 // Create a new post, optionally with images.
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { slug, content, images = [] } = (await request.json()) as {
       slug: string;
@@ -62,6 +91,28 @@ export async function POST(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+    if (!safeSlug) {
+      // sanitizeSlug strips every disallowed character, so inputs like
+      // "..." or "!!!" collapse to "" and would produce the dotfile
+      // path content/posts/.mdx.
+      return NextResponse.json(
+        { error: "slug must contain at least one letter or digit" },
+        { status: 400 }
+      );
+    }
+
+    // Reject a colliding slug before writing anything. The image commits
+    // below are unconditional upserts, so running them first would clobber
+    // the existing post's images even though the post commit is then
+    // rejected as a create-only conflict.
+    const path = `content/posts/${safeSlug}.mdx`;
+    const existing = await readFileWithSha(path);
+    if (existing) {
+      return NextResponse.json(
+        { error: "A post with that slug already exists." },
+        { status: 409 }
+      );
+    }
 
     // Commit images first.
     for (const image of images) {
@@ -71,6 +122,18 @@ export async function POST(request: NextRequest) {
         .replace(/[\/\\]/g, "")
         .replace(/\.\./g, "")
         .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      const check = validateImageUpload({
+        filename: safeName,
+        byteLength: base64ByteLength(image.base64),
+      });
+      if (!check.ok) {
+        return NextResponse.json(
+          { error: `${image.name}: ${check.error}` },
+          { status: 400 }
+        );
+      }
+
       const imagePath = `public/images/${safeSlug}/${safeName}`;
       await commitFileRaw(
         imagePath,
@@ -79,13 +142,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Commit the post MDX file.
-    const path = `content/posts/${safeSlug}.mdx`;
+    // Commit the post MDX file. expectedSha: null makes this a create,
+    // not an upsert: without it, publishing a draft whose slug collapses
+    // to an existing one ("My Post!", "my/post" and "my--post" all
+    // sanitise to "my-post") silently overwrote the live post. The
+    // pre-check above catches the common case; this closes the race.
     const fixedContent = fixDateYear(content);
-    const sha = await commitFile(path, fixedContent, `post: add "${safeSlug}"`);
+    const sha = await commitFile(path, fixedContent, `post: add "${safeSlug}"`, {
+      expectedSha: null,
+    });
 
     return NextResponse.json({ success: true, sha, path });
   } catch (error) {
+    if (error instanceof GitHubConflictError) {
+      return NextResponse.json(
+        { error: "A post with that slug already exists." },
+        { status: 409 }
+      );
+    }
     console.error("Publish error:", error);
     return NextResponse.json(
       { error: "Failed to publish post" },
@@ -113,13 +187,24 @@ function generateDiffSummary(oldContent: string, newContent: string): string {
 
 // Update an existing post.
 export async function PUT(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
-    const { slug, content, summary, autoSummary } = await request.json() as {
-      slug: string;
-      content: string;
-      summary?: string;
-      autoSummary?: boolean;
-    };
+    const { slug, content, summary, autoSummary, sha: expectedSha } =
+      (await request.json()) as {
+        slug: string;
+        content: string;
+        summary?: string;
+        autoSummary?: boolean;
+        /**
+         * Blob SHA the client read before editing. Sent by the admin
+         * UI so a concurrent edit is rejected rather than silently
+         * overwritten. Omitted by older clients, which keeps the
+         * previous last-write-wins behaviour for them.
+         */
+        sha?: string;
+      };
 
     if (!slug || !content) {
       return NextResponse.json(
@@ -129,6 +214,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+    if (!safeSlug) {
+      return NextResponse.json(
+        { error: "slug must contain at least one letter or digit" },
+        { status: 400 }
+      );
+    }
     const path = `content/posts/${safeSlug}.mdx`;
 
     // Resolve the changelog summary: use explicit summary, auto-generate
@@ -142,7 +233,21 @@ export async function PUT(request: NextRequest) {
 
     // Read the existing file so we can detect draft → published transitions
     // and (optionally) auto-generate changelog summaries.
-    const existing = await readFile(path);
+    const current = await readFileWithSha(path);
+    const existing = current?.content ?? null;
+
+    // Reject a stale edit outright rather than reading the current file
+    // again at write time, which always wins and silently discards
+    // whatever the other writer committed.
+    if (expectedSha && current && expectedSha !== current.sha) {
+      return NextResponse.json(
+        {
+          error:
+            "This post changed since you opened it. Reload to pick up the latest version.",
+        },
+        { status: 409 }
+      );
+    }
 
     // Stamp today's date when publishing a draft.
     finalContent = stampPublishDate(existing, finalContent);
@@ -168,10 +273,24 @@ export async function PUT(request: NextRequest) {
       finalContent = matter.stringify(parsed.content, parsed.data);
     }
 
-    const sha = await commitFile(path, finalContent, `post: update "${safeSlug}"`);
+    const sha = await commitFile(
+      path,
+      finalContent,
+      `post: update "${safeSlug}"`,
+      { expectedSha: expectedSha ?? current?.sha }
+    );
 
     return NextResponse.json({ success: true, sha, path });
   } catch (error) {
+    if (error instanceof GitHubConflictError) {
+      return NextResponse.json(
+        {
+          error:
+            "This post changed since you opened it. Reload to pick up the latest version.",
+        },
+        { status: 409 }
+      );
+    }
     console.error("Update error:", error);
     return NextResponse.json(
       { error: "Failed to update post" },
@@ -182,6 +301,9 @@ export async function PUT(request: NextRequest) {
 
 // Delete a post.
 export async function DELETE(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { slug } = await request.json();
 
@@ -193,6 +315,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+    if (!safeSlug) {
+      return NextResponse.json(
+        { error: "slug must contain at least one letter or digit" },
+        { status: 400 }
+      );
+    }
     const path = `content/posts/${safeSlug}.mdx`;
     const sha = await deleteFile(path, `post: delete "${safeSlug}"`);
 
@@ -208,6 +336,9 @@ export async function DELETE(request: NextRequest) {
 
 // Get a post's raw MDX content (for the editor).
 export async function GET(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
@@ -220,14 +351,26 @@ export async function GET(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+    if (!safeSlug) {
+      return NextResponse.json(
+        { error: "slug must contain at least one letter or digit" },
+        { status: 400 }
+      );
+    }
     const path = `content/posts/${safeSlug}.mdx`;
-    const content = await readFile(path);
+    const current = await readFileWithSha(path);
 
-    if (!content) {
+    if (!current) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ slug: safeSlug, content });
+    // The SHA goes back to the client so it can send it with the
+    // subsequent PUT as a concurrency precondition.
+    return NextResponse.json({
+      slug: safeSlug,
+      content: current.content,
+      sha: current.sha,
+    });
   } catch (error) {
     console.error("Read error:", error);
     return NextResponse.json(

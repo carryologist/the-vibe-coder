@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validatePassword, createSession, sessionCookieOptions } from "@/lib/auth";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { isSameOrigin } from "@/lib/origin";
 
 // Constants here rather than env vars: a one-person admin endpoint
 // does not need operational tuning, and bumping them in source forces
@@ -16,23 +17,8 @@ export async function POST(request: NextRequest) {
     //    server is cheaper and louder. We accept requests with no
     //    Origin header (some non-browser clients omit it) and only
     //    reject the case where Origin is present and clearly foreign.
-    const origin = request.headers.get("origin");
-    const host = request.headers.get("host");
-    if (origin && host) {
-      try {
-        const originHost = new URL(origin).host;
-        if (originHost !== host) {
-          return NextResponse.json(
-            { error: "Bad origin" },
-            { status: 403 }
-          );
-        }
-      } catch {
-        return NextResponse.json(
-          { error: "Bad origin" },
-          { status: 403 }
-        );
-      }
+    if (!isSameOrigin(request)) {
+      return NextResponse.json({ error: "Bad origin" }, { status: 403 });
     }
 
     // 2) Per-IP rate limit. Incremented on every attempt (success or
@@ -40,13 +26,30 @@ export async function POST(request: NextRequest) {
     //    rarely needs more than 1-2 attempts; 5 per 15 minutes is
     //    plenty of headroom for typos without giving a brute-forcer
     //    anywhere near enough volume to be useful.
-    const ip = clientIp(request);
+    //
+    //    This limiter is fail-CLOSED. If Upstash is unconfigured or
+    //    unreachable, the request is rejected rather than allowed:
+    //    otherwise a Redis outage silently removes the only
+    //    brute-force control on the single admin credential. The
+    //    bucket is keyed off platform-supplied IP headers only, since
+    //    a client-settable header lets an attacker mint a fresh bucket
+    //    per request.
     const rl = await rateLimit(
-      `ratelimit:login:${ip}`,
+      rateLimitKey("login", request),
       LOGIN_LIMIT,
-      LOGIN_WINDOW_SECONDS
+      LOGIN_WINDOW_SECONDS,
+      { failClosed: true }
     );
     if (!rl.ok) {
+      if (rl.degraded) {
+        return NextResponse.json(
+          {
+            error:
+              "Login is temporarily unavailable. Try again in a few minutes.",
+          },
+          { status: 503, headers: { "Retry-After": "60" } }
+        );
+      }
       const minutes = Math.ceil(rl.retryAfter / 60);
       return NextResponse.json(
         {

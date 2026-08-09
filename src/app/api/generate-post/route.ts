@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateBlogPost } from "@/lib/claude";
 import { getSettings, DEFAULT_STYLE_PROMPT } from "@/lib/settings";
 import matter from "gray-matter";
+import { requireAdmin } from "@/lib/require-admin";
 
 export const maxDuration = 120;
 
@@ -13,6 +14,9 @@ interface ArtifactPayload {
 }
 
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const {
       transcript,

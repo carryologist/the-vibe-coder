@@ -21,6 +21,9 @@ import { getAllPostsAdmin } from "./posts";
 const GITHUB_API = "https://api.github.com";
 const FETCH_TIMEOUT_MS = 15_000;
 
+/** Maximum concurrent GitHub Contents API listings. */
+const DIRECTORY_FETCH_CONCURRENCY = 5;
+
 function getConfig() {
   const token = process.env.GITHUB_TOKEN;
   const repo = process.env.GITHUB_REPO;
@@ -110,11 +113,15 @@ interface PostInfo {
 /**
  * Read the build-time manifest of `/images/...` paths referenced directly
  * from static app source (see scripts/generate-image-references.ts).
- * Tolerant of a missing file (e.g. local `next dev` without having run
- * `npm run prebuild`) — falls back to "nothing statically referenced"
- * rather than crashing the admin page.
+ *
+ * Returns null when the manifest cannot be read (e.g. local `next dev`
+ * without having run `npm run prebuild`, or a deploy that stripped it).
+ * That is deliberately distinct from an empty manifest: "we do not know
+ * what is referenced" must not be treated as "nothing is referenced",
+ * which would flag every branding asset as an orphan and offer it for
+ * one-click deletion.
  */
-function loadStaticImageReferences(): Set<string> {
+function loadStaticImageReferences(): Set<string> | null {
   try {
     const manifestPath = path.join(
       process.cwd(),
@@ -123,10 +130,10 @@ function loadStaticImageReferences(): Set<string> {
     );
     const raw = fs.readFileSync(manifestPath, "utf-8");
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set();
+    if (!Array.isArray(parsed)) return null;
     return new Set(parsed.filter((p): p is string => typeof p === "string"));
   } catch {
-    return new Set();
+    return null;
   }
 }
 
@@ -183,11 +190,13 @@ function entriesToImageFiles(
 }
 
 /**
- * Hydrate the post-slug index used for orphan detection. Wrapped so a
- * missing content directory (e.g. fresh local dev without content cloned)
- * is tolerated rather than crashing the admin page.
+ * Hydrate the post-slug index used for orphan detection.
+ *
+ * Returns null when the content directory cannot be read, for the same
+ * reason as loadStaticImageReferences: an empty index would mark every
+ * post image as unreferenced.
  */
-function safePostIndex(): PostInfo[] {
+function safePostIndex(): PostInfo[] | null {
   try {
     return getAllPostsAdmin().map((p) => ({
       slug: p.slug,
@@ -196,8 +205,37 @@ function safePostIndex(): PostInfo[] {
       content: p.content,
     }));
   } catch {
-    return [];
+    return null;
   }
+}
+
+/**
+ * Run `task` over `items` with at most `limit` in flight.
+ *
+ * The directory listing used to be a bare Promise.all over every image
+ * directory, which fans out one GitHub Contents API request per
+ * directory with no cap and fails the whole page if any one of them is
+ * rate-limited.
+ */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  task: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await task(items[index]);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker)
+  );
+  return results;
 }
 
 /**
@@ -207,6 +245,7 @@ function safePostIndex(): PostInfo[] {
 export async function listImageDirectories(): Promise<{
   directories: ImageDirectory[];
   looseFiles: LooseImageFile[];
+  orphanDetectionAvailable: boolean;
 }> {
   const [topLevel, posts] = await Promise.all([
     listGitHubDirectory("public/images"),
@@ -214,25 +253,36 @@ export async function listImageDirectories(): Promise<{
   ]);
   const staticRefs = loadStaticImageReferences();
 
+  // Orphan detection needs both reference sources. If either is
+  // unavailable, nothing is reported as orphaned: a false orphan is one
+  // click away from an irreversible delete on main (see the Apr 30
+  // incident referenced above).
+  const orphanDetectionAvailable = posts !== null && staticRefs !== null;
+  const knownPosts = posts ?? [];
+  const knownStaticRefs = staticRefs ?? new Set<string>();
+
   const dirs = topLevel.filter((e) => e.type === "dir");
   const looseEntries = topLevel.filter((e) => e.type === "file");
 
-  const directories = await Promise.all(
-    dirs.map(async (dir): Promise<ImageDirectory> => {
+  const directories = await mapWithConcurrency(
+    dirs,
+    DIRECTORY_FETCH_CONCURRENCY,
+    async (dir): Promise<ImageDirectory> => {
       const entries = await listGitHubDirectory(dir.path);
       const files = entriesToImageFiles(dir.name, entries);
-      const match = matchPost(dir.name, posts, staticRefs);
+      const match = matchPost(dir.name, knownPosts, knownStaticRefs);
       return {
         slug: dir.name,
         postTitle: match?.post?.title ?? null,
         postPublished: match?.post?.published ?? null,
         matchKind: match?.kind ?? "none",
-        orphaned: match === null,
+        orphaned: orphanDetectionAvailable && match === null,
+        orphanDetectionAvailable,
         fileCount: files.length,
         totalSize: files.reduce((acc, f) => acc + f.size, 0),
         files,
       };
-    })
+    }
   );
 
   // Loose files live directly under public/images/ (repoPath has exactly
@@ -240,7 +290,7 @@ export async function listImageDirectories(): Promise<{
   // publicPath construction doesn't apply here — build it from the root.
   const looseFiles: LooseImageFile[] = looseEntries.map((e) => {
     const publicPath = `/images/${e.name}`;
-    const match = matchLooseFile(publicPath, posts, staticRefs);
+    const match = matchLooseFile(publicPath, knownPosts, knownStaticRefs);
     return {
       name: e.name,
       publicPath,
@@ -249,7 +299,8 @@ export async function listImageDirectories(): Promise<{
       sha: e.sha,
       isImage: isImageFilename(e.name),
       matchKind: match?.kind ?? "none",
-      orphaned: match === null,
+      orphaned: orphanDetectionAvailable && match === null,
+      orphanDetectionAvailable,
     };
   });
 
@@ -263,7 +314,7 @@ export async function listImageDirectories(): Promise<{
     return a.name.localeCompare(b.name);
   });
 
-  return { directories, looseFiles };
+  return { directories, looseFiles, orphanDetectionAvailable };
 }
 
 /** Get a single directory by slug, or null when it doesn't exist. */
@@ -282,15 +333,17 @@ export async function getImageDirectory(
 
   const posts = safePostIndex();
   const staticRefs = loadStaticImageReferences();
+  const orphanDetectionAvailable = posts !== null && staticRefs !== null;
   const files = entriesToImageFiles(slug, entries);
-  const match = matchPost(slug, posts, staticRefs);
+  const match = matchPost(slug, posts ?? [], staticRefs ?? new Set<string>());
 
   return {
     slug,
     postTitle: match?.post?.title ?? null,
     postPublished: match?.post?.published ?? null,
     matchKind: match?.kind ?? "none",
-    orphaned: match === null,
+    orphaned: orphanDetectionAvailable && match === null,
+    orphanDetectionAvailable,
     fileCount: files.length,
     totalSize: files.reduce((acc, f) => acc + f.size, 0),
     files,
@@ -304,9 +357,16 @@ export async function getImageDirectory(
 // Stricter than `startsWith("public/images/")`:
 //   - rejects empty strings
 //   - rejects ".." anywhere (path-traversal block)
-//   - requires exactly two segments after the prefix (slug + filename)
+//   - requires one or two segments after the prefix (slug + filename)
 //   - requires both segments to be non-empty
-//   - slug must be safe for the GitHub URL path (no slashes, dots)
+//   - slug and filename must both match a strict character allowlist
+//
+// The filename check used to reject only backslashes and leading dots,
+// which let a percent-encoded separator (`%2f`) collapse a two-segment
+// path back into a deeper one, defeating the segment-count rule, and
+// let `?` or `#` alter or truncate the Contents API request URL. Both
+// are closed by the allowlist below; src/lib/github.ts additionally
+// encodes each path segment before building the URL.
 // ----------------------------------------------------------------------
 
 export function isValidImageRepoPath(repoPath: string): boolean {
@@ -332,8 +392,8 @@ export function isValidImageRepoPath(repoPath: string): boolean {
 }
 
 function isValidFilename(file: string): boolean {
-  if (!file || file.includes("\\") || file.startsWith(".")) return false;
-  return true;
+  if (!file) return false;
+  return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(file);
 }
 
 function isValidSlug(slug: string): boolean {

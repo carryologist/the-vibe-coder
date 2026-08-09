@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import readingTime from "reading-time";
 import { cache } from "react";
 import { Post, PostMeta } from "./types";
+import { isSafeSlug } from "./slug";
 
 const POSTS_DIR = path.join(process.cwd(), "content/posts");
 
@@ -102,6 +103,12 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
 }
 
 function _getPostBySlug(slug: string): Post | null {
+  // Route params reach here unvalidated; reject anything that isn't a
+  // plain slug so no caller can steer the join outside content/posts.
+  if (!isSafeSlug(slug)) {
+    return null;
+  }
+
   const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
 
   if (!fs.existsSync(filePath)) {
@@ -134,6 +141,10 @@ function _getPostBySlug(slug: string): Post | null {
 
 /** Like getPostBySlug but includes unpublished drafts. Admin-only. */
 export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }) | null {
+  if (!isSafeSlug(slug)) {
+    return null;
+  }
+
   const filePath = path.join(POSTS_DIR, `${slug}.mdx`);
 
   if (!fs.existsSync(filePath)) {

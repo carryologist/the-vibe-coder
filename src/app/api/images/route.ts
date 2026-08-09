@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { commitFileRaw, deleteFile } from "@/lib/github";
 import { isValidImageRepoPath } from "@/lib/images";
 import { sanitizeSlug } from "@/lib/slug";
+import { requireAdmin } from "@/lib/require-admin";
+import { validateImageUpload } from "@/lib/image-upload";
 
 function sanitizeFilename(name: string): string {
   return name
@@ -11,6 +13,9 @@ function sanitizeFilename(name: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const formData = await request.formData();
     const slug = formData.get("slug") as string;
@@ -24,7 +29,27 @@ export async function POST(request: NextRequest) {
     }
 
     const safeSlug = sanitizeSlug(slug);
+    if (!safeSlug) {
+      return NextResponse.json(
+        { error: "slug must contain at least one letter or digit" },
+        { status: 400 }
+      );
+    }
     const safeName = sanitizeFilename(file.name);
+
+    // Anything committed under public/ is served from this origin, so
+    // an .html or .svg upload would be stored XSS. There was also no
+    // size cap, so an arbitrarily large blob went into the content repo
+    // permanently.
+    const check = validateImageUpload({
+      filename: safeName,
+      byteLength: file.size,
+      mimeType: file.type,
+    });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 400 });
+    }
+
     const imagePath = `public/images/${safeSlug}/${safeName}`;
 
     // Convert file to base64.
@@ -71,6 +96,9 @@ export async function POST(request: NextRequest) {
  * error.
  */
 export async function DELETE(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -128,10 +156,10 @@ export async function DELETE(request: NextRequest) {
       await deleteFile(p, `image: delete ${p.replace(/^public\//, "")}`);
       results.push({ path: p, ok: true });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "unknown delete error";
+      // The underlying error can embed a verbatim GitHub API response body.
+      // Keep it in the server log and return a generic message instead.
       console.error(`Image delete failed for ${p}:`, err);
-      results.push({ path: p, ok: false, error: message });
+      results.push({ path: p, ok: false, error: "delete failed" });
     }
   }
 

@@ -58,8 +58,32 @@ function Paragraph(props: ComponentPropsWithoutRef<"p">) {
   );
 }
 
+/**
+ * Link schemes we are willing to render as a real anchor. Post bodies are
+ * generated from transcripts and committed by the admin UI, so an href can
+ * carry any scheme; `javascript:` and `data:text/html,` would execute in
+ * every reader's browser. Anything not on this list renders as plain text.
+ */
+function isSafeHref(href: string): boolean {
+  // Site-relative, root-relative and in-page targets never carry a scheme.
+  if (href.startsWith("/") || href.startsWith("#") || href.startsWith("?")) {
+    return true;
+  }
+  try {
+    const { protocol } = new URL(href, "https://vibescoder.dev");
+    return protocol === "http:" || protocol === "https:" || protocol === "mailto:";
+  } catch {
+    return false;
+  }
+}
+
 function Anchor(props: ComponentPropsWithoutRef<"a">) {
   const { href = "#", children, ...rest } = props;
+
+  if (!isSafeHref(href)) {
+    return <span {...rest}>{children}</span>;
+  }
+
   const isExternal = href.startsWith("http");
 
   if (isExternal) {

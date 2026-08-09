@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { requireAdmin } from "@/lib/require-admin";
 
 function getRedis() {
   const url = process.env.KV_REST_API_URL;
@@ -22,6 +23,9 @@ function todayInTz(tz: string): string {
 }
 
 export async function GET(request: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const redis = getRedis();
     if (!redis) {

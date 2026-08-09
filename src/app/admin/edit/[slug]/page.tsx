@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import { setFrontmatterField } from "@/lib/frontmatter";
 
 interface EditPostPageProps {
   params: Promise<{ slug: string }>;
@@ -66,15 +67,9 @@ export default function EditPostPage({ params }: EditPostPageProps) {
 
     try {
       const today = new Date().toISOString().split("T")[0];
-      let published = content.replace(
-        /^published:\s*false\s*$/m,
-        "published: true",
-      );
+      let published = setFrontmatterField(content, "published", "true");
       // Update the post date to the publish date
-      published = published.replace(
-        /^date:\s*'[^']*'/m,
-        `date: '${today}'`,
-      );
+      published = setFrontmatterField(published, "date", `'${today}'`);
       const res = await fetch("/api/posts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

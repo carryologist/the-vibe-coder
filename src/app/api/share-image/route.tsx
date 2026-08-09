@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { smartQuotes } from "@/lib/typography";
 import {
   COLORS,
@@ -128,9 +128,8 @@ export async function POST(request: NextRequest) {
     // neither: an arbitrarily large `content` string, with no cap on
     // rendered height, was reachable by anyone with no throttling,
     // making it a real rendering-cost DoS vector.
-    const ip = clientIp(request);
     const rl = await rateLimit(
-      `ratelimit:share-image:${ip}`,
+      rateLimitKey("share-image", request),
       SHARE_IMAGE_RATE_LIMIT,
       SHARE_IMAGE_RATE_WINDOW_SECONDS,
     );
@@ -261,9 +260,8 @@ export async function POST(request: NextRequest) {
     return image;
   } catch (err) {
     console.error("[share-image] ERROR:", err);
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to generate image" },
-      { status: 500 },
-    );
+    // This route is public, so the message is deliberately generic;
+    // the detail is in the runtime logs.
+    return Response.json({ error: "Failed to generate image" }, { status: 500 });
   }
 }

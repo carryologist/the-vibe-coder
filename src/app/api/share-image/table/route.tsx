@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { getPostBySlug } from "@/lib/posts";
 import { extractMarkdownTables, buildTableImageResponse, TableImageError } from "@/lib/table-image";
 
@@ -24,8 +24,11 @@ const RATE_WINDOW_SECONDS = 60;
  * disappear silently.
  */
 export async function GET(request: NextRequest) {
-  const ip = clientIp(request);
-  const rl = await rateLimit(`ratelimit:share-image-table:${ip}`, RATE_LIMIT, RATE_WINDOW_SECONDS);
+  const rl = await rateLimit(
+    rateLimitKey("share-image-table", request),
+    RATE_LIMIT,
+    RATE_WINDOW_SECONDS,
+  );
   if (!rl.ok) {
     return Response.json(
       { error: "rate_limited" },

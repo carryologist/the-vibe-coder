@@ -35,6 +35,14 @@ export interface ImageDirectory {
   matchKind: "exact" | "prefix" | "content" | "static" | "none";
   /** True when no post or static reference matches this directory by any rule. */
   orphaned: boolean;
+  /**
+   * False when orphan detection could not run because a reference
+   * source (the static manifest or the post index) was unavailable. In
+   * that state `orphaned` is always false and callers must not offer
+   * bulk deletion: "we do not know what references this" is not the
+   * same as "nothing references this".
+   */
+  orphanDetectionAvailable: boolean;
   fileCount: number;
   totalSize: number;
   files: ImageFile[];
@@ -54,6 +62,8 @@ export interface LooseImageFile extends ImageFile {
   matchKind: "content" | "static" | "none";
   /** True when nothing references this file by any rule. */
   orphaned: boolean;
+  /** See `ImageDirectory.orphanDetectionAvailable`. */
+  orphanDetectionAvailable: boolean;
 }
 
 /** Human-readable byte count: `1.4 MB`, `12.0 KB`, `512 B`. */

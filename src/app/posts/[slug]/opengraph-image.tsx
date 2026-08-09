@@ -15,11 +15,20 @@ export async function generateStaticParams() {
 
 /**
  * Extract the first markdown/MDX image src from post content.
- * Matches ![alt](/images/...) patterns.
+ * Matches ![alt](/images/...) patterns. Post bodies are AI-generated and
+ * the result is passed to readFileSync, so only site-relative paths under
+ * `/images/` with no traversal segment are accepted.
  */
 function extractFirstImage(content: string): string | null {
   const match = content.match(/!\[[^\]]*\]\(([^)]+)\)/);
-  return match ? match[1] : null;
+  if (!match) return null;
+
+  // Drop any optional markdown title suffix: ![alt](/images/x.png "title").
+  const src = match[1].trim().split(/\s+/)[0];
+  if (!/^\/images\/[A-Za-z0-9._/-]+$/.test(src)) return null;
+  if (src.split("/").includes("..")) return null;
+
+  return src;
 }
 
 export default async function OgImage({
