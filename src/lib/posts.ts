@@ -18,6 +18,18 @@ function normalizeDate(raw: unknown): string {
   return String(raw);
 }
 
+/**
+ * Estimate reading time from what a reader sees by default, not from
+ * collapsed reference material. Posts sometimes embed large appendices
+ * (raw source dumps, full data tables) inside <details> blocks that stay
+ * closed unless a reader opens them; counting those words inflates the
+ * displayed read time well past what most readers will actually read.
+ */
+function estimateReadingTime(content: string): string {
+  const visibleContent = content.replace(/<details>[\s\S]*?<\/details>/gi, "");
+  return readingTime(visibleContent).text;
+}
+
 // React.cache dedupes calls within a single server render pass so that
 // the homepage and the sitemap (or any other parallel callers) only
 // hit the filesystem once per request. The wrapped functions are
@@ -54,7 +66,7 @@ function _getAllPosts(): Post[] {
       return {
         slug,
         content,
-        readingTime: readingTime(content).text,
+        readingTime: estimateReadingTime(content),
         ...meta,
         date: dateStr,
         type: meta.type ?? 'how-to',
@@ -86,7 +98,7 @@ export function getAllPostsAdmin(): (Post & { published: boolean; publishAt?: st
       return {
         slug,
         content,
-        readingTime: readingTime(content).text,
+        readingTime: estimateReadingTime(content),
         ...meta,
         date: dateStr,
         type: meta.type ?? 'how-to',
@@ -132,7 +144,7 @@ function _getPostBySlug(slug: string): Post | null {
   return {
     slug,
     content,
-    readingTime: readingTime(content).text,
+    readingTime: estimateReadingTime(content),
     ...meta,
     date: dateStr,
     type: meta.type ?? 'how-to',
@@ -159,7 +171,7 @@ export function getPostBySlugAdmin(slug: string): (Post & { published: boolean }
   return {
     slug,
     content,
-    readingTime: readingTime(content).text,
+    readingTime: estimateReadingTime(content),
     ...meta,
     date: dateStr,
     type: meta.type ?? 'how-to',
