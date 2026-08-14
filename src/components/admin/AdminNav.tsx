@@ -30,7 +30,7 @@ export function AdminNav() {
   }
 
   return (
-    <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-outline-variant px-4 py-3 sm:px-6">
+    <nav className="print:hidden flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-outline-variant px-4 py-3 sm:px-6">
       <span className="font-mono text-xs text-outline">// admin</span>
       <div className="flex flex-wrap gap-x-4 gap-y-2">
         {links.map((link) => (

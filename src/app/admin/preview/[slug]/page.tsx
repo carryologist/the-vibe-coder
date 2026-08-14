@@ -10,6 +10,7 @@ import { MDXComponents } from "@/components/MDXComponents";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { AnimateIn } from "@/components/AnimateIn";
 import { TagBadge } from "@/components/TagBadge";
+import { ExportPdfButton } from "@/components/admin/ExportPdfButton";
 import Changelog from "@/components/Changelog";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import type { Metadata } from "next";
@@ -41,7 +42,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
       <ReadingProgress />
 
       {/* Admin controls */}
-      <div className="mb-6 flex flex-wrap items-center gap-1.5 rounded-lg border border-outline-variant bg-bg px-3 py-2.5">
+      <div className="print:hidden mb-6 flex flex-wrap items-center gap-1.5 rounded-lg border border-outline-variant bg-bg px-3 py-2.5">
         <span className="font-mono text-[11px] text-outline">// admin</span>
         {!post.published && (
           <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
@@ -60,11 +61,12 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
         >
           Record Edits
         </Link>
+        <ExportPdfButton />
       </div>
 
       <article>
         {/* Back link */}
-        <AnimateIn>
+        <AnimateIn className="print:hidden">
           <Link
             href="/admin/drafts"
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-on-surface-variant/50 transition-colors hover:text-primary mb-10"

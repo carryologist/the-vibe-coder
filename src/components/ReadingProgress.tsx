@@ -21,7 +21,7 @@ export function ReadingProgress() {
   if (progress === 0) return null;
 
   return (
-    <div className="fixed top-0 left-0 z-50 h-[2px] w-full">
+    <div className="print:hidden fixed top-0 left-0 z-50 h-[2px] w-full">
       <div
         className="reading-progress h-full"
         style={{ width: `${progress}%` }}
