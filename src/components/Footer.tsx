@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="mt-auto bg-surface-lowest">
+    <footer className="print:hidden mt-auto bg-surface-lowest">
       <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
         <p
           className="text-xs uppercase tracking-widest text-on-surface-variant"

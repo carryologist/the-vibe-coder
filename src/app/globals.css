@@ -203,9 +203,25 @@ pre > code {
    hidden via print:hidden in the components themselves; this block
    handles the parts that aren't reachable with a Tailwind utility. */
 @media print {
-  header,
-  footer {
-    display: none !important;
+  @page {
+    margin: 0.6in;
+  }
+
+  /* Site chrome (Header, Footer, AdminNav) carries its own print:hidden
+     Tailwind class -- do NOT blanket-hide the header/footer/nav *tags*
+     here, because the post's own <header> (title, date, tags,
+     changelog) and any in-content <nav> both reuse those same semantic
+     elements and would get caught by a bare tag selector too. */
+
+  /* The root layout and admin layout reserve generous on-screen
+     whitespace (nav height offsets, max-width centering, large
+     vertical padding) that just wastes paper in a PDF. Zero it out so
+     the printed page uses the full sheet instead of a narrow column
+     with big gaps top and bottom. */
+  main {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Force light, high-contrast colors regardless of the reader's
@@ -244,7 +260,6 @@ pre > code {
 
   img {
     max-width: 100% !important;
-    page-break-inside: avoid;
   }
 
   h2,

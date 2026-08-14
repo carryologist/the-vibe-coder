@@ -91,7 +91,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-xl shadow-header">
+    <header className="print:hidden sticky top-0 z-50 bg-bg/80 backdrop-blur-xl shadow-header">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <Link
           href="/"
