@@ -194,3 +194,61 @@ pre > code {
     transform: none;
   }
 }
+
+/* ── Print (Export to PDF) ──────────────────────────────────────────────
+   The admin preview page's "Export to PDF" button just calls
+   window.print(); these rules are what make that output look like a
+   clean document instead of a dark-mode screenshot of the whole site.
+   Site chrome (header/footer/reading progress/admin bar/back link) is
+   hidden via print:hidden in the components themselves; this block
+   handles the parts that aren't reachable with a Tailwind utility. */
+@media print {
+  header,
+  footer {
+    display: none !important;
+  }
+
+  /* Force light, high-contrast colors regardless of the reader's
+     current theme (dark is the default) so printed text isn't pale
+     gray-on-white or, worse, near-invisible light-on-white. */
+  :root,
+  [data-theme="dark"],
+  [data-theme="light"] {
+    --color-bg: #ffffff;
+    --color-surface-lowest: #ffffff;
+    --color-surface-low: #ffffff;
+    --color-surface: #ffffff;
+    --color-on-surface: #000000;
+    --color-on-surface-variant: #333333;
+    --color-outline: #666666;
+    --color-outline-variant: #cccccc;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* .animate-in normally starts at opacity:0 and animates in on mount;
+     print should never race that, so force the settled end state. */
+  .animate-in {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
