@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { setFrontmatterField } from "@/lib/frontmatter";
 
 interface AdminCardControlsProps {
   slug: string;
@@ -10,25 +11,44 @@ interface AdminCardControlsProps {
 
 export function AdminCardControls({ slug }: AdminCardControlsProps) {
   const router = useRouter();
-  const [deleting, setDeleting] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
 
-  async function handleDelete(e: React.MouseEvent) {
+  async function handleUnpublish(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm("Delete this post? This cannot be undone.")) return;
+    if (
+      !confirm(
+        "Unpublish this post? It will disappear from the public site until republished. The file itself is not deleted.",
+      )
+    )
+      return;
 
-    setDeleting(true);
+    setUnpublishing(true);
     try {
-      const res = await fetch("/api/posts", {
-        method: "DELETE",
+      const getRes = await fetch(`/api/posts?slug=${slug}`);
+      if (!getRes.ok) throw new Error("Failed to load post");
+      const data = await getRes.json();
+
+      const updated = setFrontmatterField(
+        data.content as string,
+        "published",
+        "false",
+      );
+
+      const putRes = await fetch("/api/posts", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({
+          slug,
+          content: updated,
+          summary: "Unpublished post",
+        }),
       });
-      if (!res.ok) throw new Error("Delete failed");
+      if (!putRes.ok) throw new Error("Unpublish failed");
       router.refresh();
     } catch (err) {
-      console.error("Delete error:", err);
-      setDeleting(false);
+      console.error("Unpublish error:", err);
+      setUnpublishing(false);
     }
   }
 
@@ -44,11 +64,11 @@ export function AdminCardControls({ slug }: AdminCardControlsProps) {
         Edit
       </Link>
       <button
-        onClick={handleDelete}
-        disabled={deleting}
-        className="rounded border border-outline-variant px-2 py-1 font-mono text-xs text-on-surface-variant transition-colors hover:border-red-400/30 hover:text-red-400 disabled:opacity-50"
+        onClick={handleUnpublish}
+        disabled={unpublishing}
+        className="rounded border border-outline-variant px-2 py-1 font-mono text-xs text-on-surface-variant transition-colors hover:border-amber-400/30 hover:text-amber-400 disabled:opacity-50"
       >
-        {deleting ? "…" : "Delete"}
+        {unpublishing ? "…" : "Unpublish"}
       </button>
     </div>
   );
