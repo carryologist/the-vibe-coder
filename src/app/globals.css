@@ -217,12 +217,7 @@ pre > code {
    handles the parts that aren't reachable with a Tailwind utility. */
 @media print {
   @page {
-    /* Slightly more headroom at the top than the other three edges.
-       Chrome's print dialog can inject its own page header (date/title/
-       URL) inside the CSS margin area when "Headers and footers" is
-       enabled, and a tight margin leaves no room for that plus our own
-       title before they visually collide. */
-    margin: 0.75in 0.6in 0.6in 0.6in;
+    margin: 0.6in;
   }
 
   /* Site chrome (Header, Footer, AdminNav) carries its own print:hidden
@@ -240,6 +235,19 @@ pre > code {
     max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Real in-flow spacing above the post, independent of @page margin.
+     Safari has long-standing bugs where it doesn't fully honor
+     `@page { margin }` (see
+     https://github.com/mdn/browser-compat-data/issues/23178) -- it can
+     ignore/shrink it, which lets the very top of the first heading
+     render right against, or effectively clipped by, the page's hard
+     edge. Padding on a normal content box is plain CSS box model, not
+     a Paged Media feature, so every engine honors it the same way. This
+     is the primary defense; @page margin above is a secondary one. */
+  article {
+    padding-top: 0.35in;
   }
 
   /* Force light, high-contrast colors regardless of the reader's
