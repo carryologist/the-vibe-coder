@@ -195,6 +195,19 @@ pre > code {
   }
 }
 
+/* Set by ExportPdfButton just before calling window.print(), and given a
+   couple of animation frames to commit before the print snapshot is
+   taken. This settles the intro fade/slide on the *screen* stylesheet
+   (not gated by @media print's own timing), which sidesteps a race where
+   some browsers snapshot a mid-transform frame of a still-animating
+   .animate-in element -- most visibly a headline whose wrapped first
+   line renders as if its top were clipped. */
+.exporting-pdf .animate-in {
+  opacity: 1 !important;
+  animation: none !important;
+  transform: none !important;
+}
+
 /* ── Print (Export to PDF) ──────────────────────────────────────────────
    The admin preview page's "Export to PDF" button just calls
    window.print(); these rules are what make that output look like a
@@ -204,7 +217,12 @@ pre > code {
    handles the parts that aren't reachable with a Tailwind utility. */
 @media print {
   @page {
-    margin: 0.6in;
+    /* Slightly more headroom at the top than the other three edges.
+       Chrome's print dialog can inject its own page header (date/title/
+       URL) inside the CSS margin area when "Headers and footers" is
+       enabled, and a tight margin leaves no room for that plus our own
+       title before they visually collide. */
+    margin: 0.75in 0.6in 0.6in 0.6in;
   }
 
   /* Site chrome (Header, Footer, AdminNav) carries its own print:hidden
