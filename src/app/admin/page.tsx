@@ -68,14 +68,37 @@ export default function AdminDashboardPage() {
           href="/admin/images"
           className="group glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high"
         >
-          <div className="mb-2 text-2xl">🖼️</div>
+          <div className="mb-2 text-2xl">📷</div>
           <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
             Images
           </h2>
           <p className="mt-1 text-xs text-on-surface-variant">
-            Browse, preview, and delete post images. Orphan detection included.
+            Browse, preview, and delete post images.
           </p>
         </Link>
+
+        <Link
+          href="/admin/tags"
+          className="group glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high"
+        >
+          <div className="mb-2 text-2xl">🏷️</div>
+          <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
+            Tags
+          </h2>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Manage and organize post tags.
+          </p>
+        </Link>
+
+        <div className="rounded-xl border border-outline-variant/10 p-6 opacity-50">
+          <div className="mb-2 text-2xl">⚙️</div>
+          <h2 className="font-mono text-sm font-medium text-on-surface-variant">
+            Settings
+          </h2>
+          <p className="mt-1 text-xs text-outline">
+            Configure style prompt and preferences. (Coming soon)
+          </p>
+        </div>
       </div>
     </div>
   );
