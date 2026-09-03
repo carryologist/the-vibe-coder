@@ -96,6 +96,9 @@ export default async function PostPage({ params }: PostPageProps) {
           { name: post.title, url: `https://vibescoder.dev/posts/${slug}` },
         ]}
       />
+      {post.faq && post.faq.length > 0 && (
+        <JsonLd type="faq" entries={post.faq} />
+      )}
       <ReadingProgress />
       <article>
         {/* Back link */}
