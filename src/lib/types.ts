@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 /** Content type — controlled vocabulary for primary navigation. */
 export type PostType = 'how-to' | 'opinion';
 
+/**
+ * A question/answer pair rendered as FAQPage JSON-LD on the post page.
+ * Optional frontmatter — authored per post, typically on how-to posts
+ * that follow a problem/solution pattern. Answers are plain text (no
+ * markdown rendering) because they land in structured data, not HTML.
+ */
+export interface FaqEntry {
+  question: string;
+  answer: string;
+}
+
 /** Frontmatter fields parsed from MDX files. */
 export interface PostMeta {
   title: string;
@@ -25,6 +36,8 @@ export interface PostMeta {
    * platforms). Default: false — most posts stay blog-only.
    */
   syndicate?: boolean;
+  /** Optional FAQ entries emitted as FAQPage JSON-LD on the post page. */
+  faq?: FaqEntry[];
 }
 
 /** Fully resolved post used by pages and components. */
@@ -43,4 +56,5 @@ export interface Post {
   commentCount?: number;
   viewCount?: number;
   syndicate?: boolean;
+  faq?: FaqEntry[];
 }

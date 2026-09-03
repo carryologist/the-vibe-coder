@@ -21,7 +21,16 @@ interface BreadcrumbJsonLdProps {
   items: { name: string; url: string }[];
 }
 
-type JsonLdProps = WebSiteJsonLdProps | BlogPostingJsonLdProps | BreadcrumbJsonLdProps;
+interface FaqJsonLdProps {
+  type: "faq";
+  entries: { question: string; answer: string }[];
+}
+
+type JsonLdProps =
+  | WebSiteJsonLdProps
+  | BlogPostingJsonLdProps
+  | BreadcrumbJsonLdProps
+  | FaqJsonLdProps;
 
 export async function JsonLd(props: JsonLdProps) {
   let data: Record<string, unknown>;
@@ -107,6 +116,21 @@ export async function JsonLd(props: JsonLdProps) {
           position: index + 1,
           name: item.name,
           item: item.url,
+        })),
+      };
+      break;
+
+    case "faq":
+      data = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: props.entries.map((entry) => ({
+          "@type": "Question",
+          name: entry.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: entry.answer,
+          },
         })),
       };
       break;
