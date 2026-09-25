@@ -29,14 +29,14 @@ export default function AdminDashboardPage() {
         <AnalyticsChart />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/admin/record"
           className="group glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high"
         >
           <div className="mb-2 text-2xl">🎙️</div>
           <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
-            Record New Post
+            Record
           </h2>
           <p className="mt-1 text-xs text-on-surface-variant">
             Dictate your thoughts and generate a new blog post.
@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
         <div className="glow-card rounded-xl border border-outline-variant/10 bg-surface-low p-6 transition-all duration-300 hover:border-primary/20 hover:bg-surface-high">
           <div className="mb-2 text-2xl">✏️</div>
           <h2 className="mb-3 font-mono text-sm font-medium text-on-surface">
-            Edit Existing Post
+            Edit
           </h2>
           <EditPostPicker posts={posts} />
         </div>
@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
         >
           <div className="mb-2 text-2xl">📡</div>
           <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
-            Syndication
+            Syndicate
           </h2>
           <p className="mt-1 text-xs text-on-surface-variant">
             Publish posts to Dev.to. Bulk or one-at-a-time.
@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
         >
           <div className="mb-2 text-2xl">🖼️</div>
           <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
-            Images
+            Manage
           </h2>
           <p className="mt-1 text-xs text-on-surface-variant">
             Browse, preview, and delete post images. Orphan detection included.
