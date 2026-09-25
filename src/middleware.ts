@@ -88,6 +88,31 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // The same negotiation for the site-level pages: an agent asking the
+  // homepage (or /about, /tags) for markdown gets /llms.txt — the
+  // hand-curated markdown summary of the site. This shipped originally
+  // in 7c55e3c and was lost in a later middleware rewrite; restored
+  // 2026-09 (the Cloudflare agent-readiness checker probes GET / with
+  // Accept: text/markdown).
+  if (pathname === "/" || pathname === "/about" || pathname === "/tags") {
+    const accept = request.headers.get("accept") ?? "";
+    if (prefersMarkdown(accept)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/llms.txt";
+      const res = withCsp(
+        NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+      );
+      res.headers.set("Vary", "Accept");
+      res.headers.set("Content-Type", "text/markdown; charset=utf-8");
+      return res;
+    }
+    // Note: the HTML representation of these paths technically varies
+    // on Accept too, but Next replaces any Vary set here with its own
+    // (rsc, next-router-*) at render time, so we can't declare it from
+    // middleware. Acceptable: the HTML responses are no-store, so no
+    // shared cache holds them anyway.
+  }
+
   // Allow the login page and the routes that authenticate themselves.
   if (
     SELF_AUTHENTICATING.includes(pathname) ||

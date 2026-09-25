@@ -7,19 +7,34 @@
 - Focus: AI-assisted software development, agentic coding, local LLMs, developer tools
 - Stack: Next.js, Vercel, MDX, Tailwind CSS
 - Content type: Technical blog posts, benchmarks, how-to guides, build journals
+- Cadence: New posts near-daily; every post carries a dated changelog
 
 ## What This Site Covers
 - Real-world experiences building software with AI coding agents
-- Benchmarking local vs cloud LLMs for coding tasks
+- Benchmarking local vs cloud LLMs for coding and agentic tool-calling (the "Local Agent Bakeoff" and "Model Showdown" series)
 - Setting up self-hosted AI development environments (GPU, models, infrastructure)
 - Building and deploying with agentic coding tools (Coder workspaces, Claude, etc.)
-- Practical guides for developer tooling, homelab setup, and workflow automation
+- Practical guides for developer tooling, homelab setup, home automation, and workflow automation
 - The "vibe coding" methodology — building entirely through AI conversation
+
+## Key Series
+- Local Agent Bakeoff: recurring benchmark of local LLMs on real agentic tasks (Home Assistant control, calendar, coding), run on a single RTX 5090 homelab: https://vibescoder.dev/tags/benchmark
+- Model Showdown: head-to-head frontier and local model comparisons on real coding tasks: https://vibescoder.dev/tags/model-showdown
+- Friday Fixes: weekly engineering-log posts on bugs found and fixed: https://vibescoder.dev/tags/friday-fixes
+- Thursday Thoughts: opinion essays on the AI industry: https://vibescoder.dev/tags/thursday-thoughts
+- Smart Home, Dumb Luck: home automation build journal: https://vibescoder.dev/tags/home-automation
+
+## For AI Agents
+- Full content of every published post, one plain-text endpoint: https://vibescoder.dev/llms-full.txt
+- Per-post raw markdown: append /raw to any post URL (e.g. https://vibescoder.dev/posts/<slug>/raw), or request any post URL with Accept: text/markdown
+- Requesting /, /about, or /tags with Accept: text/markdown returns this file
+- Machine-readable structured data: JSON-LD (WebSite, BlogPosting, BreadcrumbList, Person) on every page
+- Link response headers on every page advertise this file, llms-full.txt, the RSS feed, and the sitemap (RFC 8288)
 
 ## Links
 - Homepage: https://vibescoder.dev
 - About: https://vibescoder.dev/about
 - All tags: https://vibescoder.dev/tags
-- RSS Feed: https://vibescoder.dev/feed.xml
+- RSS Feed (full content): https://vibescoder.dev/feed.xml
 - Sitemap: https://vibescoder.dev/sitemap.xml
 - Full content for LLMs: https://vibescoder.dev/llms-full.txt
