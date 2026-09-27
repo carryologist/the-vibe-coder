@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
         >
           <div className="mb-2 text-2xl">🖼️</div>
           <h2 className="font-mono text-sm font-medium text-on-surface group-hover:text-primary">
-            Manage
+            Picture
           </h2>
           <p className="mt-1 text-xs text-on-surface-variant">
             Browse, preview, and delete post images. Orphan detection included.
