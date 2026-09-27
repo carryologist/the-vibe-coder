@@ -1,20 +1,17 @@
 /**
  * Content Security Policy.
  *
- * The policy is built per request in src/middleware.ts so it can carry
- * a fresh nonce. It used to be a static header in next.config.ts with
- * 'unsafe-inline' on script-src, which meant CSP provided no protection
- * against injected inline script: any XSS that reached the DOM could
- * execute an event handler or a <script> block.
+ * Static public pages are the primary cost-control mechanism for this
+ * site. A per-request CSP nonce forces App Router pages into dynamic
+ * rendering, which burns Vercel Fluid CPU on every page view. Keep this
+ * policy static so it can be attached in next.config.ts without touching
+ * request headers in React Server Components.
  *
- * The only inline scripts the app renders are the theme bootstrap in
- * src/app/layout.tsx and the JSON-LD blocks in src/components/JsonLd.tsx.
- * Both read the nonce from the request header set by middleware, so
- * 'unsafe-inline' is gone.
- *
- * 'strict-dynamic' is deliberately not used: Next.js loads its own
- * chunks from 'self', which the policy already allows, and adding it
- * would silently ignore the host allowlist on browsers that support it.
+ * Next.js emits inline bootstrap/flight scripts, and the site also has a
+ * small theme bootstrap plus JSON-LD blocks. The static policy therefore
+ * allows inline scripts. That is weaker than nonce-only CSP, but it keeps
+ * the public blog cacheable instead of trading every reader hit for a
+ * server function invocation.
  *
  * Allowed origins (and why):
  *   self                                 Site assets, MDX-rendered images
@@ -31,13 +28,10 @@
  * weaker vector than inline script.
  */
 
-/** Request header used to pass the per-request nonce into the app. */
-export const NONCE_HEADER = "x-csp-nonce";
-
-export function buildCsp(nonce: string): string {
+export function buildCsp(): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://va.vercel-scripts.com`,
+    "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline'",
     // Previously "https:", which allowed images from any host. No post
     // references an off-site image; the two GitHub hosts are there for

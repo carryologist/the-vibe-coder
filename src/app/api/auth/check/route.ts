@@ -11,18 +11,15 @@ import { getSession } from "@/lib/auth";
 // admin controls when the author is logged in. The island fetches
 // this on mount; the rest of the page is cacheable.
 export async function GET() {
+  const headers = {
+    // Never cache the auth result. A Vercel edge cache hit could
+    // otherwise leak admin state across users.
+    "Cache-Control": "no-store",
+  };
+
   const ok = await getSession();
   if (!ok) {
-    return NextResponse.json({ ok: false }, { status: 401 });
+    return NextResponse.json({ ok: false }, { status: 401, headers });
   }
-  return NextResponse.json(
-    { ok: true },
-    {
-      headers: {
-        // Never cache the auth result. A Vercel edge cache hit could
-        // otherwise leak admin state across users.
-        "Cache-Control": "no-store",
-      },
-    },
-  );
+  return NextResponse.json({ ok: true }, { headers });
 }

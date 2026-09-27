@@ -1,6 +1,3 @@
-import { headers } from "next/headers";
-import { NONCE_HEADER } from "@/lib/csp";
-
 interface WebSiteJsonLdProps {
   type: "website";
 }
@@ -23,7 +20,7 @@ interface BreadcrumbJsonLdProps {
 
 type JsonLdProps = WebSiteJsonLdProps | BlogPostingJsonLdProps | BreadcrumbJsonLdProps;
 
-export async function JsonLd(props: JsonLdProps) {
+export function JsonLd(props: JsonLdProps) {
   let data: Record<string, unknown>;
 
   switch (props.type) {
@@ -112,16 +109,9 @@ export async function JsonLd(props: JsonLdProps) {
       break;
   }
 
-  // The nonce is required now that script-src no longer allows
-  // 'unsafe-inline'. Browsers apply script-src to <script> elements of
-  // any type, including application/ld+json, so without it the
-  // structured data is dropped.
-  const nonce = (await headers()).get(NONCE_HEADER) ?? undefined;
-
   return (
     <script
       type="application/ld+json"
-      nonce={nonce}
       // Escape the '<' character to '\u003c' so a frontmatter field
       // containing '</script>' cannot terminate this script tag and
       // inject HTML. JSON.stringify does not escape '<' by default.

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { Inter, Space_Grotesk, Fira_Code } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { PageViewTracker } from "@/components/PageViewTracker";
@@ -7,7 +6,6 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
 import { JsonLd } from "@/components/JsonLd";
-import { NONCE_HEADER } from "@/lib/csp";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -63,17 +61,11 @@ export const metadata: Metadata = {
 
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(!t)t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","dark")}})()`;
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Nonce for the inline scripts below, set per request by
-  // src/middleware.ts. Reading it here opts the tree into dynamic
-  // rendering, which is the documented cost of nonce-based CSP in the
-  // App Router.
-  const nonce = (await headers()).get(NONCE_HEADER) ?? undefined;
-
   return (
     <html
       lang="en"
@@ -82,7 +74,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="alternate" type="application/rss+xml" title="vibescoder RSS Feed" href="/feed.xml" />
         <JsonLd type="website" />
       </head>
