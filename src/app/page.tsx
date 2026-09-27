@@ -5,9 +5,10 @@ import { getPostViewCounts } from "@/lib/analytics";
 import { AnimateIn } from "@/components/AnimateIn";
 import { PostListWithFilters } from "@/components/PostListWithFilters";
 
-// The root layout reads headers() for the CSP nonce, which opts every HTML
-// route into dynamic rendering. A revalidate window here would be inert, so
-// it is deliberately omitted rather than left as a misleading no-op.
+// Keep the homepage on ISR instead of the per-request function path.
+// Counts are allowed to lag; saving Fluid CPU matters more than live
+// comment/view numbers on every reader hit.
+export const revalidate = 300;
 
 export default async function HomePage() {
   // Admin state is resolved on the client by the AdminCardControlsIsland

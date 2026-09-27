@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
+import { buildCsp } from "./src/lib/csp";
 
-// Security headers that do not vary per request. The Content Security
-// Policy is NOT here: it carries a per-request nonce and is built in
-// src/middleware.ts (see src/lib/csp.ts).
+const CONTENT_SECURITY_POLICY = buildCsp();
+
+// Security headers that do not vary per request.
 
 // Link response headers (RFC 8288) advertising agent-discoverable
 // resources from the site root. We send these on every response — the
@@ -30,6 +31,10 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: CONTENT_SECURITY_POLICY,
+          },
           {
             key: "X-Frame-Options",
             value: "DENY",
