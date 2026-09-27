@@ -43,7 +43,7 @@ export default async function HomePage() {
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Coder</span>
           </h1>
           <p className="mt-4 text-base sm:text-lg text-on-surface-variant max-w-2xl">
-            Vibe coder. Dangerous coder. CEO of Coder. Thoughts are mine and my agent&apos;s.
+            Vibe coder. Homelab enthusiast. AI pilled. Thoughts are mine and my agent&apos;s.
           </p>
         </section>
       </AnimateIn>
