@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DraftReadinessChecklist } from "@/components/admin/DraftReadinessChecklist";
 
 interface PostPreviewProps {
   mdx: string;
@@ -44,6 +45,8 @@ export function PostPreview({
         rows={24}
         className="w-full resize-y rounded-xl border border-outline-variant bg-bg px-4 py-3 font-mono text-xs leading-relaxed text-on-surface outline-none transition-colors focus:border-primary/50"
       />
+
+      <DraftReadinessChecklist mdx={mdx} slug={slug} />
 
       <div className="flex items-end gap-4">
         <div className="flex flex-col gap-1">

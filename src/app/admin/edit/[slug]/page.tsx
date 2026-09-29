@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { setFrontmatterField } from "@/lib/frontmatter";
+import { DraftReadinessChecklist } from "@/components/admin/DraftReadinessChecklist";
 
 interface EditPostPageProps {
   params: Promise<{ slug: string }>;
@@ -149,6 +150,10 @@ export default function EditPostPage({ params }: EditPostPageProps) {
           <p className="font-mono text-xs text-red-400">{error}</p>
         </div>
       )}
+
+      <div className="mb-3">
+        <DraftReadinessChecklist mdx={content} slug={slug} />
+      </div>
 
       <textarea
         value={content}
