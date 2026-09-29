@@ -101,7 +101,7 @@ export function AdminPostControls({ slug }: AdminPostControlsProps) {
   return (
     <div className="mb-6">
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-bg px-4 py-3">
-        <span className="font-mono text-xs text-outline">// admin</span>
+        <span className="font-mono text-xs text-outline">{"// admin"}</span>
         <button
           onClick={() => setEditing(!editing)}
           className={`rounded border px-3 py-1.5 font-mono text-xs transition-colors ${
@@ -205,7 +205,7 @@ function DeleteConfirmModal({
     >
       <div className="w-full max-w-md rounded-xl border border-red-500/30 bg-surface-low p-6">
         <h3 className="mb-3 font-mono text-xs uppercase tracking-widest text-red-400">
-          // Confirm Delete
+          {"// Confirm Delete"}
         </h3>
         <p className="mb-1 font-mono text-sm text-on-surface">
           Delete <span className="text-red-400">{slug}</span>?

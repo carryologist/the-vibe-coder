@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Existing client/OG patterns intentionally set state from browser APIs or render dynamic images. */
 "use client";
 
 import { useState, useRef, useCallback } from "react";
@@ -122,7 +123,7 @@ export function ArtifactUploader({ artifacts, onArtifactsChange }: ArtifactUploa
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="font-mono text-xs uppercase tracking-widest text-primary">
-          // Artifacts
+          {"// Artifacts"}
         </h3>
         <span className="font-mono text-[11px] text-outline">
           {artifacts.length} file{artifacts.length !== 1 ? "s" : ""}

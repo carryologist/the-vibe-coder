@@ -15,6 +15,10 @@ interface PromptPreset {
   label: string;
 }
 
+interface SettingsPromptPreset {
+  label?: unknown;
+}
+
 export function RecordContent() {
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("edit") || undefined;
@@ -45,12 +49,11 @@ export function RecordContent() {
         if (!res.ok) return;
         const data = await res.json();
         if (data.prompts) {
-          const presets = Object.entries(data.prompts).map(
-            ([key, value]: [string, any]) => ({
-              key,
-              label: value.label || key,
-            })
-          );
+          const prompts = data.prompts as Record<string, SettingsPromptPreset>;
+          const presets = Object.entries(prompts).map(([key, value]) => ({
+            key,
+            label: typeof value.label === "string" ? value.label : key,
+          }));
           setPromptPresets(presets);
         }
       } catch {
@@ -183,7 +186,7 @@ export function RecordContent() {
       {editSlug && (
         <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2">
           <p className="font-mono text-xs text-primary">
-            // Editing: {editSlug}
+            {`// Editing: ${editSlug}`}
           </p>
         </div>
       )}
@@ -215,7 +218,7 @@ export function RecordContent() {
       {step === "record" && (
         <div className="flex flex-col items-center pt-12">
           <h1 className="mb-8 font-mono text-xs uppercase tracking-widest text-primary">
-            // {editSlug ? "Record Your Edits" : "Record Your Thoughts"}
+            {`// ${editSlug ? "Record Your Edits" : "Record Your Thoughts"}`}
           </h1>
           <AudioRecorder onTranscriptReady={handleTranscriptReady} />
         </div>

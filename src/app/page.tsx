@@ -54,7 +54,7 @@ export default async function HomePage() {
           className="text-xs font-semibold uppercase tracking-widest text-primary mb-8"
           style={{ fontFamily: "var(--font-label)" }}
         >
-          // Latest Posts
+          {"// Latest Posts"}
         </h2>
       </AnimateIn>
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- Existing client/OG patterns intentionally set state from browser APIs or render dynamic images. */
 "use client";
 
 import { useEffect, useState } from "react";

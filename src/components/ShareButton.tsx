@@ -16,7 +16,7 @@ const SOCIAL_LINKS = [
   {
     label: "LinkedIn",
     icon: "in",
-    url: (postUrl: string, _title: string) =>
+    url: (postUrl: string) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`,
   },
   {
@@ -162,7 +162,7 @@ export function ShareButton({
           {/* Image actions */}
           <div className="mb-1 px-2 py-1">
             <span className="font-mono text-[10px] uppercase tracking-widest text-outline">
-              // image
+              {"// image"}
             </span>
           </div>
           <button
@@ -186,7 +186,7 @@ export function ShareButton({
           <div className="mt-1 border-t border-outline-variant/10 pt-1">
             <div className="px-2 py-1">
               <span className="font-mono text-[10px] uppercase tracking-widest text-outline">
-                // share post
+                {"// share post"}
               </span>
             </div>
             {SOCIAL_LINKS.map((social) => (

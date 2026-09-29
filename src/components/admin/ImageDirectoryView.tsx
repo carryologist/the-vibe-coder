@@ -145,7 +145,7 @@ export function ImageDirectoryView({ directory: initial }: Props) {
             className="font-mono text-xs uppercase tracking-widest text-primary"
             title={directory.slug}
           >
-            // {directory.slug}
+            {`// ${directory.slug}`}
           </h1>
           {directory.postTitle && (
             <p
@@ -281,7 +281,7 @@ function ConfirmDialog({
     >
       <div className="w-full max-w-md rounded-xl border border-red-500/30 bg-surface-low p-6">
         <h3 className="mb-3 font-mono text-xs uppercase tracking-widest text-red-400">
-          // Confirm Delete
+          {"// Confirm Delete"}
         </h3>
         {isBatch ? (
           <p className="mb-1 font-mono text-sm text-on-surface">

@@ -129,7 +129,7 @@ export default async function OgImage({
               display: "flex",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img
               src={firstImage}
               alt=""
@@ -152,7 +152,7 @@ export default async function OgImage({
             marginBottom: "40px",
           }}
         >
-          {bars.map(([y, h, opacity], i) => (
+          {bars.map(([, h, opacity], i) => (
             <div
               key={i}
               style={{

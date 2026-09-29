@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- Existing client/OG patterns intentionally set state from browser APIs or render dynamic images. */
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -228,7 +229,7 @@ export function AudioRecorder({ onTranscriptReady }: AudioRecorderProps) {
       {/* Live transcript preview */}
       {(status === "recording" || finalText) && (
         <div className="w-full max-w-2xl rounded-xl border border-outline-variant bg-bg p-4">
-          <p className="font-mono text-[11px] text-outline mb-2">// live transcript</p>
+          <p className="font-mono text-[11px] text-outline mb-2">{"// live transcript"}</p>
           <p className="text-sm leading-relaxed text-on-surface-variant">
             {finalText}
             {interimText && (

@@ -43,7 +43,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
 
       {/* Admin controls */}
       <div className="print:hidden mb-6 flex flex-wrap items-center gap-1.5 rounded-lg border border-outline-variant bg-bg px-3 py-2.5">
-        <span className="font-mono text-[11px] text-outline">// admin</span>
+        <span className="font-mono text-[11px] text-outline">{"// admin"}</span>
         {!post.published && (
           <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
             draft

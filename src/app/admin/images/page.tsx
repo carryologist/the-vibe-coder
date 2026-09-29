@@ -38,7 +38,7 @@ export default async function AdminImagesPage() {
     <div>
       <div className="mb-8 flex items-baseline justify-between">
         <h1 className="font-mono text-xs uppercase tracking-widest text-primary">
-          // Images
+          {"// Images"}
         </h1>
         <span className="font-mono text-xs text-on-surface-variant">
           <span className="text-on-surface font-medium">{totalDirs}</span>{" "}

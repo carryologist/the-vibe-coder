@@ -28,7 +28,7 @@ export function TranscriptEditor({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="font-mono text-xs uppercase tracking-widest text-primary">
-          // Transcript
+          {"// Transcript"}
         </h2>
         <span className="font-mono text-[11px] text-outline">
           {transcript.split(/\s+/).filter(Boolean).length} words

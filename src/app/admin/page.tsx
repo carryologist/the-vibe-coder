@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
   return (
     <div>
       <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-8">
-        // Dashboard
+        {"// Dashboard"}
       </h1>
 
       <div className="mb-8">

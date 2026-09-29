@@ -24,7 +24,7 @@ export default function SyndicationPage() {
   return (
     <div>
       <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-8">
-        // Syndication
+        {"// Syndication"}
       </h1>
       <SyndicationDashboard posts={posts} />
     </div>
