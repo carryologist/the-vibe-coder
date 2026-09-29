@@ -36,7 +36,7 @@ export function PostPreview({
   return (
     <div className="flex flex-col gap-4">
       <h2 className="font-mono text-xs uppercase tracking-widest text-primary">
-        // {isEditing ? "Updated Post" : "Draft Preview"}
+        {`// ${isEditing ? "Updated Post" : "Draft Preview"}`}
       </h2>
 
       <textarea

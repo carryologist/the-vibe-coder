@@ -17,7 +17,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [isDraft, setIsDraft] = useState(false);
+  const isDraft = /^published:\s*false\s*$/m.test(content);
 
   useEffect(() => {
     async function load() {
@@ -26,7 +26,6 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         if (!res.ok) throw new Error("Failed to load post");
         const data = await res.json();
         setContent(data.content);
-        setIsDraft(/^published:\s*false\s*$/m.test(data.content));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load post");
       } finally {
@@ -35,11 +34,6 @@ export default function EditPostPage({ params }: EditPostPageProps) {
     }
     load();
   }, [slug]);
-
-  // Keep draft state in sync as the user edits.
-  useEffect(() => {
-    setIsDraft(/^published:\s*false\s*$/m.test(content));
-  }, [content]);
 
   async function handleSave() {
     setSaving(true);
@@ -82,7 +76,6 @@ export default function EditPostPage({ params }: EditPostPageProps) {
       });
       if (!res.ok) throw new Error("Failed to publish");
       setContent(published);
-      setIsDraft(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -111,7 +104,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
             ← {isDraft ? "back to preview" : "back to post"}
           </Link>
           <h1 className="font-mono text-xs uppercase tracking-widest text-primary">
-            // editing: {slug}
+            {`// editing: ${slug}`}
           </h1>
           {isDraft && (
             <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] text-primary">
