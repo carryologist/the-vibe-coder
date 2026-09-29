@@ -33,14 +33,34 @@ export function DraftReadinessChecklist({
   const errors = report.issues.filter((i) => i.severity === "error");
   const warnings = report.issues.filter((i) => i.severity === "warning");
 
+  const hasErrors = report.errorCount > 0;
+
   return (
-    <div className="rounded-lg border border-tertiary/30 bg-tertiary/5 px-3 py-2.5">
+    <div
+      className={
+        hasErrors
+          ? "rounded-lg border border-tertiary/30 bg-tertiary/5 px-3 py-2.5"
+          : "rounded-lg border border-secondary/30 bg-secondary/5 px-3 py-2.5"
+      }
+    >
       <div className="mb-1.5 flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[11px] uppercase tracking-widest text-tertiary">
+        <span
+          className={
+            hasErrors
+              ? "font-mono text-[11px] uppercase tracking-widest text-tertiary"
+              : "font-mono text-[11px] uppercase tracking-widest text-secondary"
+          }
+        >
           Draft readiness
         </span>
-        <span className="rounded bg-tertiary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-tertiary">
-          {report.errorCount} issue{report.errorCount === 1 ? "" : "s"}
+        <span
+          className={
+            hasErrors
+              ? "rounded bg-tertiary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-tertiary"
+              : "rounded bg-secondary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-secondary"
+          }
+        >
+          {report.errorCount} error{report.errorCount === 1 ? "" : "s"}
           {report.warningCount > 0 &&
             ` · ${report.warningCount} warning${report.warningCount === 1 ? "" : "s"}`}
         </span>
