@@ -40,7 +40,7 @@ export function AnalyticsChart() {
     return (
       <div className="rounded-xl border border-outline-variant/10 bg-surface-low p-6">
         <h2 className="font-mono text-xs uppercase tracking-widest text-primary mb-4">
-          // Analytics
+          {"// Analytics"}
         </h2>
         <div className="flex h-40 items-center justify-center">
           <span className="font-mono text-xs text-on-surface-variant animate-pulse">
@@ -55,7 +55,7 @@ export function AnalyticsChart() {
     return (
       <div className="rounded-xl border border-outline-variant/10 bg-surface-low p-6">
         <h2 className="font-mono text-xs uppercase tracking-widest text-primary mb-4">
-          // Analytics
+          {"// Analytics"}
         </h2>
         <div className="rounded-lg border border-outline-variant/10 bg-surface p-4">
           <p className="font-mono text-xs text-on-surface-variant">
@@ -79,7 +79,7 @@ export function AnalyticsChart() {
     <div className="rounded-xl border border-outline-variant/10 bg-surface-low p-6">
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="font-mono text-xs uppercase tracking-widest text-primary">
-          // Analytics
+          {"// Analytics"}
         </h2>
         <span className="font-mono text-xs text-on-surface-variant">
           <span className="text-on-surface font-medium">

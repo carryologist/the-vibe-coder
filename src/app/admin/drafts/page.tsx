@@ -29,7 +29,7 @@ export default function DraftsPage() {
     <div>
       <div className="mb-8 flex items-baseline justify-between">
         <h1 className="font-mono text-xs uppercase tracking-widest text-primary">
-          // Drafts
+          {"// Drafts"}
         </h1>
         <span className="font-mono text-xs text-on-surface-variant">
           <span className="text-on-surface font-medium">{drafts.length}</span>{" "}

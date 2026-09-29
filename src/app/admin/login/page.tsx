@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export default function AdminLoginPage() {
@@ -46,13 +47,13 @@ export default function AdminLoginPage() {
         className="w-full max-w-sm rounded-xl border border-outline-variant/20 bg-surface-low p-8"
       >
         <h1 className="font-mono text-xs uppercase tracking-widest text-primary mb-3">
-          // Admin Access
+          {"// Admin Access"}
         </h1>
         <p className="text-xs text-on-surface-variant/60 mb-6">
           This area is for the site owner.{" "}
-          <a href="/" className="text-primary/70 underline underline-offset-2 hover:text-primary">
+          <Link href="/" className="text-primary/70 underline underline-offset-2 hover:text-primary">
             Back to the blog &rarr;
-          </a>
+          </Link>
         </p>
 
         <input

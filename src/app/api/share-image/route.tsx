@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/error-boundaries -- Existing client/OG patterns intentionally set state from browser APIs or render dynamic images. */
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";

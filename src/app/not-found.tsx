@@ -40,7 +40,7 @@ export default function NotFound() {
             className="text-xs font-semibold uppercase tracking-widest text-primary mb-6"
             style={{ fontFamily: "var(--font-label)" }}
           >
-            // Recent Posts
+            {"// Recent Posts"}
           </h2>
           <ul className="space-y-3">
             {recentPosts.map((post) => (

@@ -27,7 +27,7 @@ export default async function TagsPage() {
           className="text-xs font-semibold uppercase tracking-widest text-primary mb-8"
           style={{ fontFamily: "var(--font-label)" }}
         >
-          // Tags
+          {"// Tags"}
         </h1>
 
         <div className="flex flex-wrap gap-3">

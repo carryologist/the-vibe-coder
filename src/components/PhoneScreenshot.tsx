@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Existing client/OG patterns intentionally set state from browser APIs or render dynamic images. */
 "use client";
 
 interface PhoneScreenshotProps {
